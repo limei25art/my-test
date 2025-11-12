@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動貓咪 - Interactive Cat</title>
+    <style>
+        :root {
+  /* Primitive Color Tokens */
+  --color-white: rgba(255, 255, 255, 1);
+  --color-black: rgba(0, 0, 0, 1);
+  --color-cream-50: rgba(252, 252, 249, 1);
+  --color-cream-100: rgba(255, 255, 253, 1);
+  --color-gray-200: rgba(245, 245, 245, 1);
+  --color-gray-300: rgba(167, 169, 169, 1);
+  --color-gray-400: rgba(119, 124, 124, 1);
+  --color-slate-500: rgba(98, 108, 113, 1);
+  --color-brown-600: rgba(94, 82, 64, 1);
+  --color-charcoal-700: rgba(31, 33, 33, 1);
+  --color-charcoal-800: rgba(38, 40, 40, 1);
+  --color-slate-900: rgba(19, 52, 59, 1);
+  --color-teal-300: rgba(50, 184, 198, 1);
+  --color-teal-400: rgba(45, 166, 178, 1);
+  --color-teal-500: rgba(33, 128, 141, 1);
+  --color-teal-600: rgba(29, 116, 128, 1);
+  --color-teal-700: rgba(26, 104, 115, 1);
+  --color-teal-800: rgba(41, 150, 161, 1);
+  --color-red-400: rgba(255, 84, 89, 1);
+  --color-red-500: rgba(192, 21, 47, 1);
+  --color-orange-400: rgba(230, 129, 97, 1);
+  --color-orange-500: rgba(168, 75, 47, 1);
+
+  --color-background: #fff5e6;
+  --color-text: #333333;
+  --color-accent: #ffb366;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%);
+    min-height: 100vh;
+    overflow: hidden;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.instruction {
+    position: absolute;
+    top: 30px;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: center;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.action-display {
+    position: absolute;
+    bottom: 40px;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-accent);
+    text-align: center;
+    padding: 16px 32px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 25px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    min-width: 150px;
+    transition: all 0.3s ease;
+}
+
+.cat-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.cat {
+    width: 100%;
+    height: auto;
+    max-width: 280px;
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.15));
+    transition: transform 0.1s ease;
+}
+
+.cat.active {
+    transform: scale(0.95);
+}
+
+/* Animation Classes */
+.cat.jump {
+    animation: jumpAnimation 0.4s ease-in-out;
+}
+
+.cat.wave {
+    animation: waveAnimation 0.4s ease-in-out;
+}
+
+.cat.dance {
+    animation: danceAnimation 0.4s ease-in-out;
+}
+
+.cat.spin {
+    animation: spinAnimation 0.4s ease-in-out;
+}
+
+@keyframes jumpAnimation {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    25% {
+        transform: translateY(-50px) scale(1.05);
+    }
+    50% {
+        transform: translateY(-80px) scale(1.1);
+    }
+    75% {
+        transform: translateY(-50px) scale(1.05);
+    }
+}
+
+@keyframes waveAnimation {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-15deg);
+    }
+    50% {
+        transform: rotate(15deg);
+    }
+    75% {
+        transform: rotate(-10deg);
+    }
+}
+
+@keyframes danceAnimation {
+    0%, 100% {
+        transform: translateX(0) rotate(0deg);
+    }
+    25% {
+        transform: translateX(-30px) rotate(-5deg);
+    }
+    50% {
+        transform: translateX(30px) rotate(5deg);
+    }
+    75% {
+        transform: translateX(-20px) rotate(-3deg);
+    }
+}
+
+@keyframes spinAnimation {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    50% {
+        transform: rotate(180deg) scale(1.1);
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
+    }
+}
+
+/* Touch Ripple Effect */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 179, 102, 0.6) 0%, rgba(255, 179, 102, 0) 70%);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: rippleAnimation 0.6s ease-out forwards;
+}
+
+@keyframes rippleAnimation {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+    100% {
+        width: 200px;
+        height: 200px;
+        opacity: 0;
+    }
+}
+
+/* Particle Effects */
+.particle {
+    position: absolute;
+    pointer-events: none;
+    font-size: 24px;
+    animation: particleFloat 1s ease-out forwards;
+    z-index: 50;
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translate(-50%, -50%) translateY(0) scale(0);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-60px) scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) translateY(-120px) scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .instruction {
+        font-size: 20px;
+        top: 20px;
+        padding: 10px 20px;
+    }
+    
+    .action-display {
+        font-size: 24px;
+        bottom: 30px;
+        padding: 12px 24px;
+    }
+    
+    .cat-container {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .cat {
+        max-width: 230px;
+    }
+}
+
+@media (max-width: 480px) {
+    .instruction {
+        font-size: 18px;
+        top: 15px;
+        padding: 8px 16px;
+    }
+    
+    .action-display {
+        font-size: 20px;
+        bottom: 20px;
+        padding: 10px 20px;
+    }
+    
+    .cat-container {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .cat {
+        max-width: 180px;
+    }
+}
+
+/* Glow Effect */
+.cat-glow {
+    animation: glowPulse 0.4s ease-out;
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.15));
+    }
+    50% {
+        filter: drop-shadow(0 0 30px rgba(255, 179, 102, 0.8)) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.15));
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="instruction">觸摸螢幕來和貓咪互動！ 🐾</div>
+        
+        <div class="cat-container">
+            <img src="images/cat-container.png" alt="Cute Cat" class="cat" id="cat">
+        </div>
+        
+        <div class="action-display" id="actionDisplay">準備好了！</div>
+    </div>
+
+    <script>
+        // State management
+        let currentActionIndex = 0;
+        let isAnimating = false;
+        
+        const actions = [
+            { name: '跳躍', effect: 'jump', duration: 400 },
+            { name: '揮手', effect: 'wave', duration: 400 },
+            { name: '舞蹈', effect: 'dance', duration: 400 },
+            { name: '旋轉', effect: 'spin', duration: 400 }
+        ];
+        
+        const particles = ['❤️', '✨', '⭐', '💖', '🐾', '💫', '🌟'];
+        
+        // Elements
+        const container = document.getElementById('container');
+        const cat = document.getElementById('cat');
+        const actionDisplay = document.getElementById('actionDisplay');
+        
+        // Create ripple effect
+        function createRipple(x, y) {
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            container.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        }
+        
+        // Create particle effects
+        function createParticles(x, y) {
+            const numParticles = 6;
+            
+            for (let i = 0; i < numParticles; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.textContent = particles[Math.floor(Math.random() * particles.length)];
+                    
+                    // Random offset around the touch point
+                    const offsetX = (Math.random() - 0.5) * 100;
+                    const offsetY = (Math.random() - 0.5) * 100;
+                    
+                    particle.style.left = (x + offsetX) + 'px';
+                    particle.style.top = (y + offsetY) + 'px';
+                    
+                    container.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 1000);
+                }, i * 50);
+            }
+        }
+        
+        // Perform cat action
+        function performAction(x, y) {
+            if (isAnimating) return;
+            
+            isAnimating = true;
+            
+            // Get current action
+            const action = actions[currentActionIndex];
+            
+            // Update display
+            actionDisplay.textContent = action.name + '！';
+            actionDisplay.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                actionDisplay.style.transform = 'scale(1)';
+            }, 200);
+            
+            // Add animation class
+            cat.classList.add(action.effect);
+            cat.classList.add('cat-glow');
+            
+            // Create visual effects
+            createRipple(x, y);
+            createParticles(x, y);
+            
+            // Remove animation class after duration
+            setTimeout(() => {
+                cat.classList.remove(action.effect);
+                cat.classList.remove('cat-glow');
+                isAnimating = false;
+            }, action.duration);
+            
+            // Move to next action
+            currentActionIndex = (currentActionIndex + 1) % actions.length;
+        }
+        
+        // Touch event handler
+        function handleTouch(e) {
+            e.preventDefault();
+            
+            let x, y;
+            
+            if (e.type === 'touchstart') {
+                x = e.touches[0].clientX;
+                y = e.touches[0].clientY;
+            } else {
+                x = e.clientX;
+                y = e.clientY;
+            }
+            
+            // Add active state
+            cat.classList.add('active');
+            setTimeout(() => {
+                cat.classList.remove('active');
+            }, 100);
+            
+            performAction(x, y);
+        }
+        
+        // Event listeners
+        container.addEventListener('touchstart', handleTouch, { passive: false });
+        container.addEventListener('click', handleTouch);
+        
+        // Prevent default touch behaviors
+        document.body.addEventListener('touchstart', (e) => {
+            if (e.target === container || container.contains(e.target)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Initial setup
+        actionDisplay.textContent = '準備好了！';
+    </script>
+</body>
+</html>
