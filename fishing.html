@@ -12,18 +12,26 @@
     }
     
     body { 
-      background: #222; 
+      background: #111; 
       overflow: hidden;
       font-family: 'Noto Sans TC', 'Arial', sans-serif;
-      touch-action: none;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     
     #gameBg {
-      position: fixed;
-      top: 0;
-      left: 0;
+      position: relative;
       width: 100vw;
       height: 100vh;
+      max-width: calc(100vh * (9 / 16));
+      max-height: calc(100vw * (16 / 9));
+      aspect-ratio: 9 / 16;
+      background: #87ceeb;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -31,74 +39,42 @@
     }
     
     canvas { 
-      background: #87ceeb; 
+      background: transparent; 
       display: block; 
-      border-radius: 0;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-      max-width: 100%;
-      max-height: 100%;
     }
     
-    #restartBtn, #infoBtn {
+    #restartBtn, #infoBtn, #paramPanelBtn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
-      margin: 8px;
-      padding: 8px 22px;
-      background: rgba(74, 144, 226, 0.8);
+      margin: 4px;
+      padding: 8px 16px;
+      background: rgba(74, 144, 226, 0.85);
       color: white;
       border: none;
-      border-radius: 0;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s, transform 0.2s;
-      width: auto;
-      height: auto;
-      min-width: 48px;
-      min-height: 36px;
-      box-shadow: none;
-      backdrop-filter: none;
+      transition: background 0.2s, transform 0.2s;
+      min-width: 40px;
+      min-height: 40px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    #restartBtn:hover, #infoBtn:hover {
-      background: rgba(53, 122, 189, 0.9);
-      color: #fff;
-      transform: scale(1.07);
+    #restartBtn:hover, #infoBtn:hover, #paramPanelBtn:hover {
+      background: rgba(53, 122, 189, 0.95);
+      transform: scale(1.05);
     }
-    
-    @media (orientation: landscape) and (max-width: 900px) {
-      #restartBtn, #infoBtn {
-        font-size: 15px;
-        padding: 6px 14px;
-        min-width: 36px;
-        min-height: 28px;
-      }
-    }
-    @media (max-width: 768px) {
-      #restartBtn, #infoBtn {
-        font-size: 15px;
-        padding: 6px 14px;
-        min-width: 36px;
-        min-height: 28px;
-      }
-    }
-    @media (max-width: 480px) {
-      #restartBtn, #infoBtn {
-        font-size: 13px;
-        padding: 4px 10px;
-        min-width: 28px;
-        min-height: 22px;
-      }
-    }
-    
+
     .btn-row {
-      position: fixed;
-      top: 20px;
-      right: 20px;
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      right: 12px;
       display: flex;
       flex-direction: row;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
+      gap: 6px;
       z-index: 100;
     }
     
@@ -106,14 +82,13 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 24px;
-      margin-top: 24px;
+      gap: 16px;
+      margin-top: 20px;
     }
     
     .rank-btn-row button {
-      flex: 1 1 0;
-      max-width: 180px;
-      padding: 12px 20px;
+      flex: 1;
+      padding: 10px 16px;
       background: #4a90e2;
       color: white;
       border: none;
@@ -122,10 +97,10 @@
     }
     
     /* Modal styles */
-    #infoModal {
-      position: fixed;
+    #infoModal, #rankModal {
+      position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0,0,0,0.6);
       z-index: 1000;
       display: flex;
       align-items: center;
@@ -135,12 +110,10 @@
     .modal-content {
       position: relative;
       background: #fff;
-      border-radius: 22px;
-      padding: 36px 32px 28px 32px;
-      min-width: 320px;
-      max-width: 90vw;
-      min-height: 220px;
-      max-height: 80vh;
+      border-radius: 16px;
+      padding: 24px 20px 20px 20px;
+      width: 85%;
+      max-height: 80%;
       overflow-y: auto;
       font-family: 'Noto Sans TC', 'Arial', sans-serif;
       color: #222;
@@ -149,16 +122,15 @@
     
     .modal-close-x {
       position: absolute;
-      top: 14px;
-      right: 16px;
+      top: 10px;
+      right: 14px;
       background: none;
       border: none;
-      font-size: 26px;
+      font-size: 24px;
       color: #888;
       cursor: pointer;
       font-weight: bold;
       z-index: 10;
-      transition: color 0.2s;
     }
     
     .modal-close-x:hover {
@@ -167,41 +139,18 @@
     
     .modal-content h2 {
       margin-top: 0;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
       text-align: center;
-      font-size: 1.5em;
+      font-size: 1.3em;
       color: #0077cc;
     }
     
-    @media (max-width: 600px) {
-      .modal-content {
-        min-width: 0;
-        width: 96vw;
-        padding: 18px 6vw 18px 6vw;
-      }
-      .modal-close-x {
-        top: 8px;
-        right: 8px;
-        font-size: 22px;
-      }
-    }
-    
-    #rankModal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
     #joystick {
-      position: fixed;
-      left: 32px;
-      bottom: 32px;
-      width: 140px;
-      height: 140px;
+      position: absolute;
+      left: 20px;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      width: 110px;
+      height: 110px;
       z-index: 2000;
       touch-action: none;
     }
@@ -209,22 +158,22 @@
     #joystick-base {
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.4);
-      border: 3px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(255,255,255,0.4);
       border-radius: 50%;
       position: absolute;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(4px);
     }
     
     #joystick-knob {
-      width: 70px;
-      height: 70px;
+      width: 50px;
+      height: 50px;
       background: linear-gradient(135deg, #4a90e2, #357abd);
-      border: 2px solid rgba(255,255,255,0.5);
+      border: 2px solid rgba(255,255,255,0.6);
       border-radius: 50%;
       position: absolute;
-      left: 35px; top: 35px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      left: 30px; top: 30px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
       transition: left 0.05s, top 0.05s;
     }
     
@@ -239,8 +188,8 @@
     
     .direction-indicator {
       position: absolute;
-      width: 20px;
-      height: 20px;
+      width: 14px;
+      height: 14px;
       background: rgba(255,255,255,0.8);
       border-radius: 50%;
       transform: translate(-50%, -50%);
@@ -251,174 +200,229 @@
     .direction-indicator.active {
       opacity: 1;
       background: #4a90e2;
-      box-shadow: 0 0 10px rgba(74,144,226,0.6);
+      box-shadow: 0 0 8px rgba(74,144,226,0.8);
     }
     
-    .direction-indicator.up { top: 10px; left: 50%; }
-    .direction-indicator.down { bottom: 10px; left: 50%; }
-    .direction-indicator.left { left: 10px; top: 50%; }
-    .direction-indicator.right { right: 10px; top: 50%; }
-    .direction-indicator.up-left { top: 15px; left: 15px; }
-    .direction-indicator.up-right { top: 15px; right: 15px; }
-    .direction-indicator.down-left { bottom: 15px; left: 15px; }
-    .direction-indicator.down-right { bottom: 15px; right: 15px; }
+    .direction-indicator.up { top: 8px; left: 50%; }
+    .direction-indicator.down { bottom: 8px; left: 50%; }
+    .direction-indicator.left { left: 8px; top: 50%; }
+    .direction-indicator.right { right: 8px; top: 50%; }
+    .direction-indicator.up-left { top: 12px; left: 12px; }
+    .direction-indicator.up-right { top: 12px; right: 12px; }
+    .direction-indicator.down-left { bottom: 12px; left: 12px; }
+    .direction-indicator.down-right { bottom: 12px; right: 12px; }
     
     #screenButtons {
-      position: fixed;
-      right: 32px;
-      bottom: 48px;
+      position: absolute;
+      right: 20px;
+      bottom: max(20px, env(safe-area-inset-bottom));
       z-index: 2000;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
     }
     
     #screenButtons button {
-      width: 80px;
-      height: 80px;
+      width: 75px;
+      height: 75px;
       border-radius: 50%;
-      font-size: 1.2em;
+      font-size: 1.1em;
+      font-weight: bold;
       background: #ffb300;
       color: #fff;
       border: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
     }
-    
-    @media (orientation: landscape) and (max-width: 900px) {
-      #joystick, #screenButtons { display: block !important; }
-    }
-    
-    /* 手機直版模式 - 虛擬搖桿放在下方 */
-    @media (orientation: portrait) and (max-width: 768px) {
-      .btn-row {
-        flex-direction: row;
-        gap: 8px;
-        top: 20px;
-        right: 20px;
-        transform: none;
-        left: auto;
-      }
-      
-      #restartBtn, #infoBtn {
-        font-size: 15px;
-        padding: 6px 14px;
-        min-width: 36px;
-        min-height: 28px;
-      }
-      
-      #joystick {
-        display: block !important;
-        left: 30%;
-        bottom: max(36px, env(safe-area-inset-bottom, 0px) + 24px);
-        transform: translateX(-50%);
-        width: 130px;
-        height: 130px;
-      }
-      
-      #joystick-knob {
-        width: 65px;
-        height: 65px;
-        left: 32.5px;
-        top: 32.5px;
-      }
-      
-      #screenButtons {
-        display: block !important;
-        right: 28px;
-        bottom: max(48px, env(safe-area-inset-bottom, 0px) + 36px);
-        gap: 12px;
-      }
-      
-      #screenButtons button {
-        width: 96px;
-        height: 96px;
-        font-size: 1.25em;
-        font-weight: bold;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-      }
-    }
-    
-    /* 響應式設計 */
-    @media (max-width: 768px) {
-      .btn-row {
-        right: 15px;
-        gap: 12px;
-      }
-      
-      #restartBtn, #infoBtn {
-        font-size: 16px;
-        padding: 6px 14px;
-        min-width: 36px;
-        min-height: 28px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .btn-row {
-        right: 10px;
-        gap: 10px;
-      }
-      
-      #restartBtn, #infoBtn {
-        font-size: 14px;
-        padding: 4px 10px;
-        min-width: 28px;
-        min-height: 22px;
-      }
+    #screenButtons button:active {
+      transform: scale(0.95);
+      background: #e6a100;
     }
   
-    /* ===== 排行榜表格樣式 ===== */
-    .rank-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 0 auto 10px auto;
-    }
-    .rank-table th, .rank-table td {
-      padding: 8px 12px;
-      text-align: center;
-      font-size: 1.15em;
-    }
-    .rank-table th {
-      background: #f0f0ff;
-      color: #0077cc;
-    }
-    .rank-table tr:nth-child(even) { background: #f9f9f9; }
-    .rank-table tr:nth-child(odd) { background: #fff; }
-    .rank-table .self-score {
-      color: #e11;
-      font-weight: bold;
-      background: #ffeaea !important;
-    }
-    #playAgainBtn {
-      background: #0c0;
-      color: #fff;
-      border: 1.5px solid #0c0;
-    }
-    #playAgainBtn:hover {
-      background: #0a0;
-    }
-    #clearRankBtn {
-      background: #fff;
-      color: #e11;
-      border: 1.5px solid #e11;
-    }
-    #clearRankBtn:hover {
-      background: #ffeaea;
-    }
-  </style>
+.rank-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 auto 10px auto;
+}
+.rank-table th, .rank-table td {
+  padding: 6px 8px;
+  text-align: center;
+  font-size: 0.95em;
+}
+.rank-table th {
+  background: #f0f0ff;
+  color: #0077cc;
+}
+.rank-table tr:nth-child(even) { background: #f9f9f9; }
+.rank-table tr:nth-child(odd) { background: #fff; }
+.rank-table .self-score {
+  color: #e11;
+  font-weight: bold;
+  background: #ffeaea !important;
+}
+#playAgainBtn {
+  background: #0c0;
+  color: #fff;
+  border: 1.5px solid #0c0;
+}
+#playAgainBtn:hover {
+  background: #0a0;
+}
+#clearRankBtn {
+  background: #fff;
+  color: #e11;
+  border: 1.5px solid #e11;
+}
+#clearRankBtn:hover {
+  background: #ffeaea;
+}
+
+#paramPanel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1200;
+  display: none;
+  pointer-events: none;
+}
+.param-side-panel {
+  pointer-events: auto;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.98);
+  padding: 20px 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  font-family: 'Noto Sans TC', 'Arial', sans-serif;
+  color: #222;
+}
+.param-side-panel h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.2em;
+  color: #0077cc;
+  padding-right: 24px;
+}
+.param-hint {
+  font-size: 0.75em;
+  color: #0a0;
+  background: #eaffea;
+  border: 1px solid #bfe8bf;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+.param-sliders {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+.param-group {
+  margin-bottom: 10px;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fbfbfc;
+}
+.param-group[data-kind="line"] { border-color: #bcdcf7; }
+.param-group[data-kind="hook"] { border-color: #f7dcae; }
+.param-group summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  font-size: 0.82em;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  color: #fff;
+  background: #4a90e2;
+}
+.param-group[data-kind="hook"] summary { background: #e2984a; }
+.param-group summary::-webkit-details-marker { display: none; }
+.param-group summary::before {
+  content: '▶';
+  font-size: 0.7em;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.param-group[open] > summary::before { transform: rotate(90deg); }
+.param-group summary .param-group-count {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+.param-group-body { padding: 10px 10px 2px 10px; }
+.param-row { margin-bottom: 10px; }
+.param-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.param-row-top label { font-size: 0.78em; color: #444; flex: 1; }
+.param-num {
+  width: 70px;
+  font-size: 0.78em;
+  padding: 2px 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.param-row input[type="range"] { width: 100%; }
+.param-json-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.param-json-row label { font-size: 0.78em; color: #444; }
+#paramTextArea {
+  width: 100%;
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: 0.75em;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.param-btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.param-btn-row button {
+  flex: 1 1 auto;
+  padding: 6px 8px;
+  font-size: 0.8em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #4a90e2;
+  color: #fff;
+  transition: background 0.2s;
+}
+.param-btn-row button:hover { background: #357abd; }
+#resetParamsBtn {
+  background: #fff;
+  color: #e11;
+  border: 1.5px solid #e11 !important;
+}
+#resetParamsBtn:hover { background: #ffeaea; }
+.param-status {
+  min-height: 1.2em;
+  font-size: 0.78em;
+  color: #0a0;
+  margin-top: 6px;
+  text-align: center;
+</style>
 </head>
 <body>
-  <div id="gameBg" class="responsive-bg">
-    <div id="scoreBar">
-      <span id="scoreLabel"></span>
-      <span id="scoreCircles"></span>
-    </div>
-    <div id="hungerBar">
-      <span id="hungerLabel"></span>
-      <span id="hungerMeter"></span>
-    </div>
-    <canvas id="gameCanvas" width="540" height="960"></canvas>
-  </div>
+ 
+    
+    <!-- 設定為 900x1600 (9:16 直式解析度) -->
+     <canvas id="gameCanvas" width="540" height="960"></canvas>  
+   </div>
   <!-- 遊戲說明圖層（預設隱藏） -->
   <div id="infoModal" style="display:none;">
     <div class="modal-content">
@@ -441,11 +445,32 @@
       </div>
     </div>
   </div>
+  <!-- 調參面板：靠右側的側邊面板（不是全螢幕遮罩），開啟時遊戲仍會繼續運作，
+       只是元氣（時間）暫停扣除，方便玩家一邊調整一邊實際測試手感 -->
+  <div id="paramPanel" style="display:none;">
+    <div class="param-side-panel">
+      <button id="closeParamPanel" class="modal-close-x" title="關閉">×</button>
+      <h2>釣線／鉤子物理參數</h2>
+      <p class="param-hint">面板開啟時元氣不會扣，遊戲照常運作，可以邊調邊玩測試手感。</p>
+      <div id="paramSliders" class="param-sliders"></div>
+      <div class="param-json-row">
+        <label for="paramTextArea">參數總表（JSON，可複製 / 貼上）：</label>
+        <textarea id="paramTextArea" rows="8" spellcheck="false" placeholder="按「複製目前參數」會把目前數值產生在這裡；重開網頁後，把之前複製的內容貼回這裡，再按「套用貼上的參數」即可。"></textarea>
+      </div>
+      <div class="param-btn-row">
+        <button id="copyParamsBtn">複製目前參數</button>
+        <button id="applyParamsBtn">套用貼上的參數</button>
+        <button id="resetParamsBtn">還原預設值</button>
+      </div>
+      <div id="paramCopyStatus" class="param-status"></div>
+    </div>
+  </div>
   <div class="btn-row">
     <button id="restartBtn" title="重新開始">🔄</button>
     <button id="infoBtn" title="遊戲說明">ℹ️</button>
+   
   </div>
-  <div id="joystick" style="display:none;">
+  <div id="joystick" >
     <div id="joystick-base"></div>
     <div id="joystick-direction">
       <div class="direction-indicator up"></div>
@@ -459,7 +484,7 @@
     </div>
     <div id="joystick-knob"></div>
   </div>
-  <div id="screenButtons" style="display:none;">
+  <div id="screenButtons" >
     <button id="actionBtn">釣魚</button>
   </div>
   <script>
@@ -468,150 +493,217 @@ const ctx = canvas.getContext('2d');
 const restartBtn = document.getElementById('restartBtn');
 
 const FISH_COUNT = 20;
-const GAME_TIME = 100;
-const PASSIVE_DRAIN_BASE = GAME_TIME / 85;
-const PASSIVE_DRAIN_ACCEL_PER_SEC = 0.02;
-const PASSIVE_DRAIN_MAX = PASSIVE_DRAIN_BASE * 3;
-let elapsedGameTime = 0;
-const CATCH_FADE_HOLD_MS = 550;
-const CATCH_FADE_DURATION_MS = 850;
+const GAME_TIME = 100; // 以原版節奏為準，這裡當作元氣值上限
+// 參考版本（game-0.js）是每秒固定扣 1 點、上限 85，換算節奏後這裡當作「起始扣速」。
+// 另外原版的手感是「玩越久扣越快」：跟元氣高低無關，純粹跟這局已經玩了多久有關。
+const PASSIVE_DRAIN_BASE = GAME_TIME / 85;       // 遊戲剛開始時的扣速（每秒）
+const PASSIVE_DRAIN_ACCEL_PER_SEC = 0.02;        // 每經過1秒遊戲時間，扣速再增加多少（讓越後面扣越快）
+const PASSIVE_DRAIN_MAX = PASSIVE_DRAIN_BASE * 3; // 扣速上限，避免玩到後期扣到誇張快
+let elapsedGameTime = 0; // 這一局已經進行的時間（秒），用來讓扣速慢慢加速
+// 釣到東西後：先完全不透明停留一段時間（讓玩家看清楚），再花時間慢慢淡出
+// 修正前只淡出約 0.4 秒就整個消失，很容易讓人以為沒釣到，這裡拉長總時長
+const CATCH_FADE_HOLD_MS = 550;      // 釣到後維持完全顯示的時間（毫秒）
+const CATCH_FADE_DURATION_MS = 850;  // 開始淡出之後，淡出所花的時間（毫秒）
 const TRASH_PENALTY = 12;
 const BAD_FISH_PENALTY = 8;
-const SMALL_FISH_SCORE = 100;
+const SMALL_FISH_SCORE = 100;   // 小黃魚
 const SMALL_FISH_ENERGY = 5;
-const MID_FISH_SCORE = 200;
+const MID_FISH_SCORE = 200;     // 黃魚
 const MID_FISH_ENERGY = 10;
-const BIG_FISH_SCORE = 400;
+const BIG_FISH_SCORE = 400;     // 魷魚／章魚
 const BIG_FISH_ENERGY = 20;
-const SEA_CUCUMBER_SCORE = 20;
+const SEA_CUCUMBER_SCORE = 20;  // 海參（獨立最低分級距，不跟小黃魚共用）
 const SEA_CUCUMBER_ENERGY = 1;
 
 let fishes = [];
 let score = 0;
 let timeLeft = GAME_TIME;
-let displayTimeLeft = GAME_TIME;
+let displayTimeLeft = GAME_TIME; // 新增：用於時間條補間動畫
 let gameOver = false;
 let fishing = false;
+// 調參面板開啟時，暫停元氣（時間）扣除，讓玩家可以放心一直測試參數
 let paramPanelOpen = false;
 let pendingGameOver = false;
+// 新增：時間控制變數
 let lastTime = 0;
 let deltaTime = 0;
 const targetFPS = 60;
 const frameTime = 1000 / targetFPS;
+// 新增：鉤子拋物線動畫狀態
 let hookThrowing = false;
 let hookThrowT = 0;
 let hookThrowStartY = 0, hookThrowEndY = 0;
 let hookThrowStartX = 0, hookThrowEndX = 0;
-let hookThrowPlayerDir = 1;
-let hookThrowTiltAngle = 0;
-let hookDrawX = 0;
+let hookThrowPlayerDir = 1; // 新增：拉竿當下就凍結角色面向，整個迴圈甩竿動力學都用這個值，不受甩竿過程中角色轉向影響
+let hookThrowTiltAngle = 0; // 新增：拉竿當下凍結「精靈與魚鉤之間的傾斜角度」，整個迴圈橢圓的傾斜方向都直接沿用這個值
+let hookDrawX = 0; // 新增：鉤子目前實際繪製用的 x 座標（甩竿時會前拋、繞頭頂、再往後甩）
+// 鉤子水平方向的物理狀態：鉤子不再直接鎖定在角色背後的固定位置，
+// 而是像被釣線「拖著走」一樣，用彈簧+阻尼慢慢追向角色移動後的目標位置，
+// 這樣精靈左右移動時，鉤子會因為釣線擺動而被拉著晃過去，而不是瞬間跟著貼齊。
 let hookVelX = 0;
+// 鉤子預設在水下
 let hookY = 400;
 let hookTargetY = 400;
 let hookVelY = 0;
+// 鉤子沒有操作時，靜止回到的高度改由 LINE_PARAMS.hookRestY 控制（可在調參面板調整）
+
+// --- 新增：拉竿甩竿改為真正的物理模擬（初始衝力 + 重力），取代舊版固定速度的動畫內插 ---
+// hookThrowPhase 記錄甩竿目前在哪個物理階段：
+//   'loop'：拉竿瞬間給鉤子一股初始迴圈衝力，鉤子沿迴圈路徑往前往上衝，
+//           衝力會隨時間自然變慢（模擬重力/甩竿阻力），衝到接近頂端時最慢，因此有「衝到頂端再後甩」的手感
+//   'fall'：迴圈甩完之後，不再是內插動畫，而是真正用重力加速度讓鉤子在空中自由落下，
+//           一旦鉤子碰到水面，這次拉竿就算結束（不需要再沉到海底），
+//           整個 'loop' + 'fall' 過程 fishing/hookThrowing 都維持 true，
+//           所以拉竿甩竿、鉤子還在半空中下落的這段期間，重複按空白鍵完全無效，
+//           一碰到水面就會恢復成可以再按空白鍵甩下一竿
 let hookThrowPhase = 'loop';
-let hookThrowAngVel = 0;
-let hookThrowLoopElapsedMs = 0;
-let hookFallVelX = 0, hookFallVelY = 0;
+let hookThrowAngVel = 0;      // 迴圈甩竿的瞬時角速度，由拉竿當下給予的初始衝力決定，之後每幀自然衰減
+let hookThrowLoopElapsedMs = 0; // 新增：迴圈甩竿階段已經過的「真實」毫秒數，用來做強制完成的保險機制（見下方 hookLoopForceCompleteMs）
+let hookFallVelX = 0, hookFallVelY = 0; // 甩完之後自由落下階段，鉤子的真實水平/垂直速度（重力物理）
+// 新增：鉤子碰到水面、拉竿結束後，如果玩家還沒有再次拉竿也沒有按上下鍵操作，
+// 鉤子要靠這個旗標繼續自動往下沉到海底，碰底之後才會自動浮回待機高度（hookRestY）。
+// 只要玩家按了上/下鍵，或又按了一次拉竿，就會取消這個自動下沉、改成正常操作。
 let hookAutoSinking = false;
 
+// 控制狀態
 let keyState = { left: false, right: false, up: false, down: false };
 
-let catAnimFrame = 0;
-let catAnimTimer = 0;
-let catWasMoving = false;
-const CAT_ANIM_FRAME_MS = 60;
+// 新增：精靈（貓咪）移動動畫的影格控制——持續移動時才會一直換圖，停下來就凍結在目前影格
+let catAnimFrame = 0;          // 目前顯示第幾張移動圖（0~3，對應 cat_1.png ~ cat_4.png）
+let catAnimTimer = 0;          // 累計經過的時間（ms），用來控制多久換一次圖
+let catWasMoving = false;      // 上一幀是否正在移動，用來偵測「剛開始移動」的那一瞬間
+const CAT_ANIM_FRAME_MS = 60;  // 每張圖顯示的時間（ms），數字越小換圖越快
 
+// 物理魚線點數
 const LINE_POINTS = 20;
 let linePoints = [];
 let lineVels = [];
+// 新增：標記每段線是否碰撞
 let lineCollisions = [];
 
-const player = { x: 270, y: 180 };
+// 主角位置
+const player = {
+  x: 400,
+  y: 180
+};
 
-const pot = { x: 190, y: 120, w: 160, h: 80 };
+// 大鍋（船）的位置與大小
+const pot = {
+  x: 320,
+  y: 120,
+  w: 160,
+  h: 80
+};
 
-const bigFish = { x: 270, y: 220, w: 120, h: 50 };
-
+// 主角站在大魚上
+const bigFish = {
+  x: 400,
+  y: 220,
+  w: 120,
+  h: 50
+};
+// 新增：主角方向（1=右，-1=左）
 let playerDir = 1;
+// --- 新增：碗沉到底動畫 ---
 let bowlSinking = false;
 let bowlY = pot.y;
 let bowlSinkTargetY = null;
 let bowlSinkSpeed = 6;
 let bowlSinkCallback = null;
+// --- 新增：鍋子浮動速度 ---
 let bowlY_vel = 0;
-let bowlImpulseY = 0;
+let bowlImpulseY = 0; // 新增：碗的下沉衝擊
+
+// --- 新增：碗左右來回慢慢移動 ---
 let bowlX = pot.x;
-let bowlXDir = 1;
-const bowlXSpeed = 0.4;
+let bowlXDir = 1; // 1 = 向右，-1 = 向左
+const bowlXSpeed = 0.4; // 移動速度（慢慢地）
 const bowlXMargin = 40;
 const bowlXMin = bowlXMargin;
-const bowlXMax = 540 - pot.w - bowlXMargin;
+const bowlXMax = canvas.width - pot.w - bowlXMargin;
 
-let lidDropping = false;
-let lidDropOffset = 0;
-const LID_DROP_START_OFFSET = -260;
-const LID_DROP_SPEED = 9;
+// --- 新增：遊戲結束時，鍋蓋先從上方蓋下來，蓋緊後鍋子才開始下沉 ---
+let lidDropping = false;         // 是否正在播放「鍋蓋往下蓋」的動畫
+let lidDropOffset = 0;           // 鍋蓋目前相對於「蓋緊位置」的垂直偏移，負值代表還在上方、0 代表已完全蓋上
+const LID_DROP_START_OFFSET = -260; // 鍋蓋一開始距離蓋緊位置的高度
+const LID_DROP_SPEED = 9;        // 鍋蓋下落速度（每幀，會乘上 timeScale）
 
+
+// --- 新增：主角移動影響波浪 ---
 let waveDisturb = { x: 0, v: 0, t: 0 };
 
 const COLLISION_DIST = 38;
 
+// 甩竿完成後，鉤子應該落在角色「背後」（面向的反方向），而不是直接落在角色頭頂/正前方
+// 這個偏移只用來讓甩竿落地瞬間有點自然的甩動感，數值不宜太大，
+// 否則落地後要花很久才能盪回角色正下方，實際釣魚時看起來會一直是歪的。
+
+// ============================================================
+// 【可調式參數面板】釣線／鉤子相關的所有物理參數都集中放在這裡，
+// 讓右下角的「調參面板」可以即時讀取/修改，並且能複製成一份 JSON
+// 文字，重新整理網頁後貼回面板就能一次套用回去，不用每次都重改程式碼。
+// ============================================================
 let LINE_PARAMS = {
-  lineDamp: 0.86,
-  lineGravity: 0,
-  lineSpringBase: 0.30,
-  lineSpringRange: 0.16,
-  hookAccel: 2.6,
-  hookMaxVel: 20,
-  hookVelDamp: 0.86,
-  hookReturnUpRate: 0.0022,
-  hookReturnDownRate: 0.0009,
-  hookMinY: 200,
-  hookMaxY: 600,
-  hookRestY: 380,
-  hookXSpring: 0.0005,
-  hookXDamp: 0.93,
-  hookLandingBehindOffset: 11,
-  hookLoopHeight: 55,
-  hookLoopTurns: 0,
-  hookLoopDirection: -1,
-  hookLoopXScale: 0.3,
-  hookLoopTiltFactor: 1,
-  hookSettleDownSpeed: 8,
-  lineCollisionDist: 38,
-  hookCatchPadScaleX: 1.1,
-  hookCatchPadScaleY: 1.1,
-  hookCatchPadScaleXSpecial: 1.15,
-  hookCatchPadScaleYSpecial: 1.15,
-  lineStartImgX: 73,
-  lineStartImgY: 20,
-  lineStartImg2X: 58,
-  lineStartImg2Y: 2,
-  hookThrowSkyY: 0,
-  lineDrawWidth: 2,
-  lineDashLength: 6,
-  lineDashGap: 8,
-  hookDotRadius: 6,
-  hookCastImpulse: 0.02,
-  hookCastAngDamp: 0.995,
-  hookCastMinAngVel: 0.01,
-  hookFallGravity: 1.6,
-  hookFallVelXDamp: 0.9,
-  hookFallMaxVelY: 22,
-  hookLoopForceCompleteMs: 2000,
-  hookAutoSinkGravity: 0.5,
-  hookAutoSinkMaxVelY: 10,
-  hookAutoSinkVelXDamp: 0.85,
-  seaSurfaceY: 270,
-  waveAmplitudeMain: 12,
-  waveAmplitudeSecondary: 4,
-  waveDisturbAmplitude: 10,
-  bowlWaterOffsetY: -36
+  lineDamp: 0.86,            // 釣線中間點的阻尼（越小晃動停得越快）
+  lineGravity: 0,            // 釣線垂墜的重力強度
+  lineSpringBase: 0.30,      // 竿頭端的彈性係數（線比較硬的一端）
+  lineSpringRange: 0.16,     // 由竿頭到鉤端遞減的幅度（鉤端彈性 = base - range）
+  hookAccel: 2.6,            // 按上下鍵時鉤子的加速度
+  hookMaxVel: 20,            // 鉤子上下移動的速度上限
+  hookVelDamp: 0.86,         // 鉤子上下速度的阻尼
+  hookReturnUpRate: 0.0022,  // 放開按鍵後，鉤子往上浮回中間的速度係數
+  hookReturnDownRate: 0.0009,// 放開按鍵後，鉤子往下沉回中間的速度係數
+  hookMinY: 400,             // 鉤子可到達的最上方 Y 座標
+  hookMaxY: 920,             // 鉤子可到達的最下方 Y 座標
+  hookRestY: 950,            // 鉤子沒有操作時，靜止回到的預設高度（Y 座標，越小鉤子平時越靠上）
+  hookXSpring: 0.0005,       // 釣線拖動鉤子的彈簧力道（越小，鉤子越不會馬上跟著角色跑）
+  hookXDamp: 0.93,           // 鉤子水平速度的阻尼（越小，晃動停得越快，越不容易被快速晃動甩動）
+  hookLandingBehindOffset: 11, // 甩竿落地時，鉤子偏移到角色背後的距離
+  hookLoopHeight: 55,        // 迴圈甩竿動畫：迴圈中心點比起點/終點連線再往上偏移多少，值越大迴圈鼓起得越高
+  hookLoopTurns: 0,          // 迴圈甩竿動畫：從起點繞到終點的途中，額外多繞幾整圈（1＝多繞一圈）
+  hookLoopDirection: -1,     // 迴圈甩竿動畫：繞圈方向，1＝順時針、-1＝逆時針
+  hookLoopXScale: 0.3,       // 迴圈甩竿動畫：迴圈的水平（X）縮放比例，1＝正圓，越小迴圈越窄、越像橢圓（起點/終點位置不受影響）
+  hookLoopTiltFactor: 1,     // 迴圈甩竿動畫：橢圓迴圈跟著「魚線甩出角度」傾斜的程度，0＝迴圈永遠正對垂直方向、1＝傾斜角度等同魚線角度、大於1＝魚線越斜、迴圈歪得更誇張（起點/終點位置不受影響）
+  hookSettleDownSpeed: 8,    // 收竿後鉤子回到定位的下沉速度
+  lineCollisionDist: 38,     // 魚/垃圾/魷魚判定「碰到釣線本體」的統一距離
+  hookCatchPadScaleX: 1.1,   // 魚/垃圾判定「直接被鉤子勾到」的水平寬鬆倍率（基準＝該圖片實際寬度，1＝剛好貼合圖片，>1 稍微寬鬆一點）
+  hookCatchPadScaleY: 1.1,   // 魚/垃圾判定「直接被鉤子勾到」的垂直寬鬆倍率（基準＝該圖片實際高度）
+  hookCatchPadScaleXSpecial: 1.15, // 特殊海洋生物（魷魚/章魚/海參）判定範圍的水平寬鬆倍率（基準＝該圖片實際寬度）
+  hookCatchPadScaleYSpecial: 1.15, // 特殊海洋生物判定範圍的垂直寬鬆倍率（基準＝該圖片實際高度）
+  lineStartImgX: 73,         // 站姿貼圖（catImg）上，線起點的 X 座標（貼圖左上角為原點）
+  lineStartImgY: 20,         // 站姿貼圖（catImg）上，線起點的 Y 座標
+  lineStartImg2X: 58,        // 拉竿姿勢貼圖（catImg2）上，線起點的 X 座標
+  lineStartImg2Y: 2,         // 拉竿姿勢貼圖（catImg2）上，線起點的 Y 座標
+  hookThrowSkyY: 0,          // 甩竿動畫終點的天空高度（Y 座標，越小鉤子甩得越高）
+  lineDrawWidth: 2,          // 釣線繪製的線寬
+  lineDashLength: 6,         // 虛線每一段實線的長度
+  lineDashGap: 8,            // 虛線每一段間隔的長度
+  hookDotRadius: 6,          // 鉤子圓點的繪製半徑
+
+  // --- 新增：拉竿物理（初始衝力 + 重力自由落下）---
+  hookCastImpulse: 0.02,     // 按下空白鍵當下，給鉤子的初始迴圈衝力（沿迴圈路徑前進的初速，越大甩得越猛、衝得越高）
+  hookCastAngDamp: 0.995,    // 衝力每幀的衰減率（模擬重力/阻力把衝力慢慢吃掉，衝到頂端附近會明顯變慢）
+  hookCastMinAngVel: 0.01,   // 衝力衰減後的下限，避免衰減到趨近 0 導致甩竿卡住甩不完，用來銜接「後甩」收尾
+  hookFallGravity: 1.6,      // 迴圈甩完、鉤子落下階段的真實重力加速度
+  hookFallVelXDamp: 0.9,     // 落下階段水平速度的阻尼（模擬空氣阻力，讓落下路徑不會一直往同方向飄）
+  hookFallMaxVelY: 22,       // 落下階段垂直速度上限，避免重力累積過久造成穿模式的過快下墜
+  hookLoopForceCompleteMs: 2000, // 新增：迴圈甩竿最長允許時間（毫秒）；不論角色跑到哪裡、參數怎麼調，超過這個時間一定強制把迴圈補完，保證每次都會確實甩過去，不會卡在半路直接下墜
+  hookAutoSinkGravity: 0.5,   // 新增：拉竿結束、碰到水面後，玩家還沒操作前，鉤子自動下沉到海底的重力加速度
+  hookAutoSinkMaxVelY: 10,    // 新增：自動下沉時的垂直速度上限
+  hookAutoSinkVelXDamp: 0.85, // 新增：自動下沉時水平速度的阻尼（水阻力，讓下沉時左右漂移很快停下）
+
+  // --- 新增：海平面／海浪相關參數 ---
+  seaSurfaceY: 270,          // 海平面基準高度（Y 座標，越小海平面越靠上、水域範圍越大）
+  waveAmplitudeMain: 12,     // 主波浪的起伏幅度（越大波浪越明顯）
+  waveAmplitudeSecondary: 4, // 次波浪的起伏幅度（疊加在主波浪上的細碎波紋）
+  waveDisturbAmplitude: 10,  // 主角移動時，擾動水面的強度
+
+  // --- 新增：碗與水面之間的相差高度（可調） ---
+  bowlWaterOffsetY: -36      // 碗相對於「貼齊水面」位置的額外上下偏移量：負值＝碗浮得比水面高，正值＝碗沉得比水面低（0＝碗中心貼齊水面）
 };
-
+// 保留一份原始預設值，供調參面板的「還原預設值」使用
 const LINE_PARAMS_DEFAULTS = JSON.parse(JSON.stringify(LINE_PARAMS));
-
+// 面板用的參數說明表：[顯示名稱, 參數鍵, 最小值, 最大值, 每格間距]
 const LINE_PARAMS_META = [
   ["線-阻尼 lineDamp", "lineDamp", 0.5, 0.99, 0.01],
   ["線-重力 lineGravity", "lineGravity", 0, 2, 0.01],
@@ -665,22 +757,64 @@ const LINE_PARAMS_META = [
   ["碗-與水面相差高度 bowlWaterOffsetY", "bowlWaterOffsetY", -150, 150, 1]
 ];
 
+// 調參面板分類設定：先分「線」「鉤」兩大類，各大類底下再依功能細分小分類，
+// 面板會依此順序把 LINE_PARAMS_META 的每個參數分組顯示。
 const PARAM_CATEGORIES = [
-  { kind: "line", title: "🧵 線　基本物理", keys: ["lineDamp", "lineGravity", "lineSpringBase", "lineSpringRange", "lineCollisionDist"] },
-  { kind: "hook", title: "🪝 鉤　移動與速度", keys: ["hookAccel", "hookMaxVel", "hookVelDamp", "hookReturnUpRate", "hookReturnDownRate", "hookXSpring", "hookXDamp", "hookSettleDownSpeed"] },
-  { kind: "hook", title: "🪝 鉤　垂直位置範圍", keys: ["hookMinY", "hookMaxY", "hookRestY"] },
-  { kind: "hook", title: "🪝 鉤　拋竿／甩竿動畫", keys: ["hookThrowSkyY", "hookLoopHeight", "hookLoopTurns", "hookLoopDirection", "hookLoopXScale", "hookLoopTiltFactor", "hookLandingBehindOffset", "hookCastImpulse", "hookCastAngDamp", "hookCastMinAngVel", "hookLoopForceCompleteMs", "hookFallGravity", "hookFallVelXDamp", "hookFallMaxVelY", "hookAutoSinkGravity", "hookAutoSinkMaxVelY", "hookAutoSinkVelXDamp"] },
-  { kind: "hook", title: "🪝 鉤　勾中判定範圍", keys: ["hookCatchPadScaleX", "hookCatchPadScaleY", "hookCatchPadScaleXSpecial", "hookCatchPadScaleYSpecial"] },
-  { kind: "line", title: "🧵 線　起點座標（貼圖像素）", keys: ["lineStartImgX", "lineStartImgY", "lineStartImg2X", "lineStartImg2Y"] },
-  { kind: "line", title: "🧵 線　外觀樣式", keys: ["lineDrawWidth", "lineDashLength", "lineDashGap", "hookDotRadius"] },
-  { kind: "sea", title: "🌊 海　海平面與波浪", keys: ["seaSurfaceY", "waveAmplitudeMain", "waveAmplitudeSecondary", "waveDisturbAmplitude"] },
-  { kind: "bowl", title: "🍲 碗　與水面的相對位置", keys: ["bowlWaterOffsetY"] }
+  {
+    kind: "line",
+    title: "🧵 線　基本物理",
+    keys: ["lineDamp", "lineGravity", "lineSpringBase", "lineSpringRange", "lineCollisionDist"]
+  },
+  {
+    kind: "hook",
+    title: "🪝 鉤　移動與速度",
+    keys: ["hookAccel", "hookMaxVel", "hookVelDamp", "hookReturnUpRate", "hookReturnDownRate", "hookXSpring", "hookXDamp", "hookSettleDownSpeed"]
+  },
+  {
+    kind: "hook",
+    title: "🪝 鉤　垂直位置範圍",
+    keys: ["hookMinY", "hookMaxY", "hookRestY"]
+  },
+  {
+    kind: "hook",
+    title: "🪝 鉤　拋竿／甩竿動畫",
+    keys: ["hookThrowSkyY", "hookLoopHeight", "hookLoopTurns", "hookLoopDirection", "hookLoopXScale", "hookLoopTiltFactor", "hookLandingBehindOffset", "hookCastImpulse", "hookCastAngDamp", "hookCastMinAngVel", "hookLoopForceCompleteMs", "hookFallGravity", "hookFallVelXDamp", "hookFallMaxVelY", "hookAutoSinkGravity", "hookAutoSinkMaxVelY", "hookAutoSinkVelXDamp"]
+  },
+  {
+    kind: "hook",
+    title: "🪝 鉤　勾中判定範圍",
+    keys: ["hookCatchPadScaleX", "hookCatchPadScaleY", "hookCatchPadScaleXSpecial", "hookCatchPadScaleYSpecial"]
+  },
+  {
+    kind: "line",
+    title: "🧵 線　起點座標（貼圖像素）",
+    keys: ["lineStartImgX", "lineStartImgY", "lineStartImg2X", "lineStartImg2Y"]
+  },
+  {
+    kind: "line",
+    title: "🧵 線　外觀樣式",
+    keys: ["lineDrawWidth", "lineDashLength", "lineDashGap", "hookDotRadius"]
+  },
+  {
+    kind: "sea",
+    title: "🌊 海　海平面與波浪",
+    keys: ["seaSurfaceY", "waveAmplitudeMain", "waveAmplitudeSecondary", "waveDisturbAmplitude"]
+  },
+  {
+    kind: "bowl",
+    title: "🍲 碗　與水面的相對位置",
+    keys: ["bowlWaterOffsetY"]
+  }
 ];
 
+// 檢查魚線碰撞的函數
 function checkLineCollision() {
+  // 每次檢查前先重設碰撞標記
   lineCollisions = Array(LINE_POINTS - 1).fill(false);
+  // 檢查魚碰撞
   for (let fish of fishes) {
     if (fish.lifting || fish.caught) continue;
+    // 先判斷鉤子直接碰到（距離放寬）
     const fishHalf = getCatchHalfSize(fish.color === 'gold' ? 'yellowFish' : 'purpleFish', LINE_PARAMS.hookCatchPadScaleX, LINE_PARAMS.hookCatchPadScaleY);
     const fishSizeScale = (typeof fish.sizeScale === 'number') ? fish.sizeScale : 1;
     const fishCatchHW = fishHalf.hw * fishSizeScale;
@@ -689,13 +823,17 @@ function checkLineCollision() {
       fish.lifting = true;
       fish.flying = false;
       fish.flyT = 0;
-      fish.liftAnimTime = 0;
-      fish.flyOffsetX = (Math.random() - 0.5) * 30;
+      fish.liftAnimTime = 0; // 新增：重置吊起動畫時間
+      fish.flyOffsetX = (Math.random() - 0.5) * 30; // 新增：甩竿落點與貓咪位置的隨機偏移
+      // 新增：記錄是被魚鉤本身勾到的（線的最末端），甩竿時才會跟著鉤子超出畫面
       fish.hookLineIndex = LINE_POINTS - 1;
       fish.hookLineT = 0;
-      fish.prevLiftY = fish.y;
+      fish.prevLiftY = fish.y; // 重置方向判斷用的前一幀 Y 座標
+      // 播放釣到東西音效（隨機）
+      playRandomCatchSound();
       continue;
     }
+    // 再判斷是否在線上（距離放寬）
     for (let i = 0; i < linePoints.length - 1; i++) {
       let x1 = linePoints[i].x, y1 = linePoints[i].y;
       let x2 = linePoints[i+1].x, y2 = linePoints[i+1].y;
@@ -705,21 +843,25 @@ function checkLineCollision() {
       t = Math.max(0, Math.min(1, t));
       let px = x1 + t * dx, py = y1 + t * dy;
       let dist = Math.hypot(fish.x - px, fish.y - py);
-      if (dist < LINE_PARAMS.lineCollisionDist) {
+      if (dist < LINE_PARAMS.lineCollisionDist) { // 統一判斷距離
         fish.lifting = true;
         fish.flying = false;
         fish.flyT = 0;
-        fish.liftAnimTime = 0;
-        fish.flyOffsetX = (Math.random() - 0.5) * 30;
+        fish.liftAnimTime = 0; // 新增：重置吊起動畫時間
+        fish.flyOffsetX = (Math.random() - 0.5) * 30; // 新增：甩竿落點與貓咪位置的隨機偏移
+        // 新增：記錄是被釣線的哪一段勾到，甩竿時跟著該段釣線移動，不會超出畫面
         fish.hookLineIndex = i;
         fish.hookLineT = t;
-        fish.prevLiftY = fish.y;
+        fish.prevLiftY = fish.y; // 重置方向判斷用的前一幀 Y 座標
         lineCollisions[i] = true;
+        // 播放釣到東西音效（隨機）
+        playRandomCatchSound();
         break;
       }
     }
   }
   
+  // 檢查垃圾碰撞
   for (let trash of trashes) {
     if (trash.lifting || trash.hit) continue;
     const trashHalf = getCatchHalfSize(trash.type, LINE_PARAMS.hookCatchPadScaleX, LINE_PARAMS.hookCatchPadScaleY);
@@ -727,12 +869,16 @@ function checkLineCollision() {
       trash.lifting = true;
       trash.flying = false;
       trash.flyT = 0;
-      trash.flyOffsetX = (Math.random() - 0.5) * 30;
+      trash.flyOffsetX = (Math.random() - 0.5) * 30; // 新增：甩竿落點與貓咪位置的隨機偏移
+      // 新增：記錄是被魚鉤本身勾到的（線的最末端），甩竿時才會跟著鉤子超出畫面
       trash.hookLineIndex = LINE_POINTS - 1;
       trash.hookLineT = 0;
-      trash.prevLiftY = trash.y;
+      trash.prevLiftY = trash.y; // 新增：重置方向判斷用的前一幀 Y 座標
+      // 播放釣到東西音效（隨機）
+      playRandomCatchSound();
       continue;
     }
+    // 線段碰撞（距離放寬）
     for (let i = 0; i < linePoints.length - 1; i++) {
       let x1 = linePoints[i].x, y1 = linePoints[i].y;
       let x2 = linePoints[i+1].x, y2 = linePoints[i+1].y;
@@ -742,31 +888,39 @@ function checkLineCollision() {
       t = Math.max(0, Math.min(1, t));
       let px = x1 + t * dx, py = y1 + t * dy;
       let dist = Math.hypot(trash.x - px, trash.y - py);
-      if (dist < LINE_PARAMS.lineCollisionDist) {
+      if (dist < LINE_PARAMS.lineCollisionDist) { // 統一判斷距離
         trash.lifting = true;
         trash.flying = false;
         trash.flyT = 0;
-        trash.flyOffsetX = (Math.random() - 0.5) * 30;
+        trash.flyOffsetX = (Math.random() - 0.5) * 30; // 新增：甩竿落點與貓咪位置的隨機偏移
+        // 新增：記錄是被釣線的哪一段勾到，甩竿時跟著該段釣線移動，不會超出畫面
         trash.hookLineIndex = i;
         trash.hookLineT = t;
-        trash.prevLiftY = trash.y;
+        trash.prevLiftY = trash.y; // 新增：重置方向判斷用的前一幀 Y 座標
+        // 播放釣到東西音效（隨機）
+        playRandomCatchSound();
         lineCollisions[i] = true;
         break;
       }
     }
   }
-  
+  // 檢查魷魚碰撞
   if (specialSeaCreature && !specialSeaCreature.lifting && !specialSeaCreature.caught) {
+    // 先判斷鉤子直接碰到（距離放寬）
     const specialHalf = getCatchHalfSize(specialSeaCreature.type, LINE_PARAMS.hookCatchPadScaleXSpecial, LINE_PARAMS.hookCatchPadScaleYSpecial);
     if (Math.abs(specialSeaCreature.x - bigFish.x) < specialHalf.hw && Math.abs(specialSeaCreature.y - hookY) < specialHalf.hh) {
       specialSeaCreature.lifting = true;
       specialSeaCreature.flying = false;
       specialSeaCreature.flyT = 0;
-      specialSeaCreature.flyOffsetX = (Math.random() - 0.5) * 30;
+      specialSeaCreature.flyOffsetX = (Math.random() - 0.5) * 30; // 新增：甩竿落點與貓咪位置的隨機偏移
+      // 新增：記錄是被魚鉤本身勾到的（線的最末端），甩竿時才會跟著鉤子超出畫面
       specialSeaCreature.hookLineIndex = LINE_POINTS - 1;
       specialSeaCreature.hookLineT = 0;
-      specialSeaCreature.prevLiftY = specialSeaCreature.y;
+      specialSeaCreature.prevLiftY = specialSeaCreature.y; // 新增：重置方向判斷用的前一幀 Y 座標
+      // 播放釣到東西音效（隨機）
+      playRandomCatchSound();
     } else {
+      // 線段碰撞（距離放寬）
       for (let i = 0; i < linePoints.length - 1; i++) {
         let x1 = linePoints[i].x, y1 = linePoints[i].y;
         let x2 = linePoints[i+1].x, y2 = linePoints[i+1].y;
@@ -776,15 +930,18 @@ function checkLineCollision() {
         t = Math.max(0, Math.min(1, t));
         let px = x1 + t * dx, py = y1 + t * dy;
         let dist = Math.hypot(specialSeaCreature.x - px, specialSeaCreature.y - py);
-        if (dist < LINE_PARAMS.lineCollisionDist) {
+        if (dist < LINE_PARAMS.lineCollisionDist) { // 統一判斷距離
           specialSeaCreature.lifting = true;
           specialSeaCreature.flying = false;
           specialSeaCreature.flyT = 0;
-          specialSeaCreature.flyOffsetX = (Math.random() - 0.5) * 30;
+          specialSeaCreature.flyOffsetX = (Math.random() - 0.5) * 30; // 新增：甩竿落點與貓咪位置的隨機偏移
+          // 新增：記錄是被釣線的哪一段勾到，甩竿時跟著該段釣線移動，不會超出畫面
           specialSeaCreature.hookLineIndex = i;
           specialSeaCreature.hookLineT = t;
-          specialSeaCreature.prevLiftY = specialSeaCreature.y;
+          specialSeaCreature.prevLiftY = specialSeaCreature.y; // 新增：重置方向判斷用的前一幀 Y 座標
           lineCollisions[i] = true;
+          // 播放釣到東西音效（隨機）
+          playRandomCatchSound();
           break;
         }
       }
@@ -792,30 +949,57 @@ function checkLineCollision() {
   }
 }
 
+// 新增：統一的「拉竿甩竿」觸發函數，滑鼠、空白鍵、上下鍵、觸控按鈕都呼叫這一個函數，
+// 避免同一段邏輯散落在好幾個地方、之後修改時漏改。
+// 呼叫的前提（!fishing && !hookThrowing）交給呼叫端各自的事件判斷式檢查，
+// 這裡只負責「真的要甩竿了」之後，設定好初始物理狀態。
 function startHookCast() {
-  checkLineCollision();
+  checkLineCollision(); // 檢查碰撞
   fishing = true;
   hookThrowing = true;
-  hookAutoSinking = false;
-  hookThrowPhase = 'loop';
+  hookAutoSinking = false; // 玩家又拉竿了，取消上一輪的自動下沉狀態
+  hookThrowPhase = 'loop'; // 先進入「迴圈甩竿」階段，之後甩完會自動切到 'fall' 自由落下階段
   hookThrowT = 0;
   hookThrowStartY = hookY;
-  hookThrowEndY = LINE_PARAMS.hookThrowSkyY;
+  hookThrowEndY = LINE_PARAMS.hookThrowSkyY; // 天空高度
+  // 起始 X 座標要用鉤子「目前實際的繪製位置」hookDrawX，而不是角色的 bigFish.x。
+  // 因為未拉竿時鉤子是靠彈簧物理跟著釣線被拖著走的（見下方 else 分支），
+  // hookDrawX 很可能跟角色位置有一段水平落差，這段落差就是「精靈與魚鉤之間目前的傾斜角度」。
+  // 如果這裡誤用 bigFish.x（等同於直接假設鉤子永遠在角色正下方），
+  // 甩竿時算出來的 throwTiltAngle 就會被歸零、只剩下面 hookLandingBehindOffset 那一點點固定偏移，
+  // 導致不管拉竿前鉤子偏得多斜，甩出去永遠都幾乎是垂直向上。
   hookThrowStartX = hookDrawX;
-  hookThrowPlayerDir = playerDir;
-  hookThrowEndX = bigFish.x - LINE_PARAMS.hookLandingBehindOffset * hookThrowPlayerDir;
+  hookThrowPlayerDir = playerDir; // 凍結拉竿當下的角色面向，之後整個迴圈甩竿過程都用這個值，不再讀取即時 playerDir
+  hookThrowEndX = bigFish.x - LINE_PARAMS.hookLandingBehindOffset * hookThrowPlayerDir; // 甩竿當下先算一次初始落點；之後在 loop / fall 階段每一幀都會依照角色目前位置重新計算（見 gameLoop）
+
+  // 凍結「精靈（釣線起點）與魚鉤目前實際位置」之間的傾斜角度，整個迴圈橢圓（含衝破水面那一瞬間）
+  // 都要直接沿用這個角度，而不是用起點到終點（終點是天空高度 hookThrowSkyY，垂直距離非常大）
+  // 重新算一次角度——那樣算出來的角度會被巨大的垂直距離稀釋成幾乎是 0，導致迴圈看起來還是快垂直。
+  // 算法：取「魚鉤 -> 釣線起點」這條向量（也就是魚鉤往上衝向角色嘴巴的方向），
+  // 用跟原本 throwTiltAngle 一樣的 atan2(dx, -dy) 慣例換算成「離正上方多少角度」。
   const preCastAnchor = getLineStartPoint();
   const preCastDX = preCastAnchor.x - hookThrowStartX;
-  const preCastDY = preCastAnchor.y - hookThrowStartY;
+  const preCastDY = preCastAnchor.y - hookThrowStartY; // 錨點在魚鉤上方，這裡通常是負值
   hookThrowTiltAngle = Math.atan2(preCastDX, -preCastDY);
+  // 拉竿的初始動力：給鉤子一股迴圈角速度衝力，讓它「往前往上衝」，
+  // 之後這股衝力會在 gameLoop 裡隨時間自然衰減（模擬重力/甩竿阻力），
+  // 使鉤子衝到接近頂端時明顯變慢，呈現「衝到頂端再後甩」的物理手感。
   hookThrowAngVel = LINE_PARAMS.hookCastImpulse;
-  hookThrowLoopElapsedMs = 0;
+  hookThrowLoopElapsedMs = 0; // 重置強制完成保險機制的計時
   hookFallVelX = 0;
   hookFallVelY = 0;
+  // 播放拉竿音效
+  if (typeof rodPullSound !== 'undefined' && rodPullSound) { rodPullSound.currentTime = 0; rodPullSound.play(); }
 }
 
+// 抽出單一魚生成函數
+// 統一的「畫面外生成／消失」緩衝距離：
+// 目前最寬的圖片是魷魚（132px，半寬 66px），這裡抓一個足夠大的邊界，
+// 確保任何魚、垃圾、特殊海洋生物都是「整隻完全在畫面外」才會被生成或判定消失，
+// 這樣視覺上就一定是「從左邊或右邊游進來 / 游出去」，不會有一出生就已經半個身體在畫面內的「憑空出現」感。
 const SPAWN_MARGIN = 90;
 function createFish() {
+  // 參考原版：主要是固定權重的魚種與較小的分數級距，不做後期瘋狂加速
   const roll = Math.random();
   let color = "gold";
   let rewardScore = MID_FISH_SCORE;
@@ -832,21 +1016,43 @@ function createFish() {
     fishTier = 'small';
   }
   const face = Math.random() < 0.5 ? 'smile' : 'dot';
+  // 隨機決定從左還是右進來
   const fromLeft = Math.random() < 0.5;
-  const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
+  const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN; // 畫面外
   const dir = fromLeft ? 1 : -1;
+  // 速度降低 30%（原速度 * 0.7）
   let speed = 0.98 + Math.random() * 0.84;
   if (fishTier === 'mid') speed = 1.4 + Math.random() * 0.91;
   if (fishTier === 'bad') speed = 0.84 + Math.random() * 0.63;
   const baseY = Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY();
   return {
-    x, y: baseY, baseY, bobPhase: Math.random() * Math.PI * 2, bobSpeed: 0.5 + Math.random() * 0.9,
-    bobAmplitude: 12 + Math.random() * 20, bobTime: 0, speed, dir, caught: false, lifting: false,
-    flying: false, color, fishTier, rewardScore, rewardEnergy, face, fadeOut: false, alpha: 1,
-    fadeElapsed: 0, animTime: 0, animSpeed: 4, liftAnimTime: 0
+    x,
+    y: baseY,
+    baseY, // 新增：上下游動的基準高度
+    bobPhase: Math.random() * Math.PI * 2, // 新增：隨機起始相位，讓每條魚上下游動節奏不同步
+    bobSpeed: 0.5 + Math.random() * 0.9,   // 新增：上下游動的速度（隨機）
+    bobAmplitude: 12 + Math.random() * 20, // 新增：上下游動的幅度（隨機）
+    bobTime: 0, // 新增：上下游動經過的時間
+    speed,
+    dir,
+    caught: false,
+    lifting: false,
+    flying: false, // 新增：是否已經進入「飛向碗」動畫階段（脫離線段路徑）
+    color,
+    fishTier,
+    rewardScore,
+    rewardEnergy,
+    face,
+    fadeOut: false, // 新增：漸層消失動畫
+    alpha: 1, // 新增：漸層消失動畫
+    fadeElapsed: 0, // 新增：淡出動畫已經過的時間（毫秒），用來做「先停留、再淡出」
+    // 新增：動畫相關屬性（僅黃魚）
+    animTime: 0, // 動畫時間
+    animSpeed: 4, // 動畫速度（0.25秒切換一次）
+    liftAnimTime: 0 // 新增：被吊起時的動畫時間（0.5秒切換一次）
   };
 }
-
+// 修改 spawnFish 使用 createFish
 function spawnFish() {
   fishes = [];
   for (let i = 0; i < FISH_COUNT; i++) {
@@ -854,30 +1060,53 @@ function spawnFish() {
   }
 }
 
-const FISH_SCHOOL_INTERVAL = 35000;
-const FISH_SCHOOL_BATCH_SIZE = 30;
-const FISH_SCHOOL_BATCH_INTERVAL = 500;
-const FISH_SCHOOL_BATCH_COUNT = 10;
-const FISH_SCHOOL_SIZE_SCALE = 0.5;
-let fishSchoolTimer = null;
-let fishSchoolBatchTimer = null;
+// --- 新增：小黃魚群（週期性大量小魚）相關設定 ---
+const FISH_SCHOOL_INTERVAL = 35000;       // 每隔幾毫秒觸發一次小黃魚群（35 秒）
+const FISH_SCHOOL_BATCH_SIZE = 30;        // 每一批生成幾隻小黃魚
+const FISH_SCHOOL_BATCH_INTERVAL = 500;   // 每批之間間隔幾毫秒（0.5 秒生成一批）
+const FISH_SCHOOL_BATCH_COUNT = 10;       // 一輪總共生成幾批（10 批 x 30 隻 = 共 300 隻）
+const FISH_SCHOOL_SIZE_SCALE = 0.5;       // 小黃魚體型＝正常黃魚的一半
+let fishSchoolTimer = null;      // 35 秒倒數計時器
+let fishSchoolBatchTimer = null; // 每批之間 0.5 秒的計時器
 
+// 建立小黃魚群裡的一隻魚：固定從左邊或右邊進場（不像一般魚是隨機挑邊），
+// 速度是「大黃魚」（也就是一般黃魚 mid 等級）的兩倍，體型縮小成一半。
 function createSchoolFish(fromLeft) {
-  const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
+  const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN; // 畫面外
   const dir = fromLeft ? 1 : -1;
+  // 「大黃魚」＝一般黃魚 mid 等級的速度公式（1.4 ~ 2.31），這裡直接取同樣公式再乘以 2 倍
   const bigFishSpeed = 1.4 + Math.random() * 0.91;
   const speed = bigFishSpeed * 2;
   const baseY = Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY();
   return {
-    x, y: baseY, baseY, bobPhase: Math.random() * Math.PI * 2, bobSpeed: 0.5 + Math.random() * 0.9,
-    bobAmplitude: 12 + Math.random() * 20, bobTime: 0, speed, dir, caught: false, lifting: false,
-    flying: false, color: "gold", fishTier: "school", rewardScore: SMALL_FISH_SCORE,
-    rewardEnergy: SMALL_FISH_ENERGY, face: Math.random() < 0.5 ? 'smile' : 'dot',
-    fadeOut: false, alpha: 1, fadeElapsed: 0, animTime: 0, animSpeed: 4, liftAnimTime: 0,
-    sizeScale: FISH_SCHOOL_SIZE_SCALE
+    x,
+    y: baseY,
+    baseY,
+    bobPhase: Math.random() * Math.PI * 2,
+    bobSpeed: 0.5 + Math.random() * 0.9,
+    bobAmplitude: 12 + Math.random() * 20,
+    bobTime: 0,
+    speed,
+    dir,
+    caught: false,
+    lifting: false,
+    flying: false,
+    color: "gold",           // 沿用一般黃魚的圖片與動畫
+    fishTier: "school",      // 獨立的等級標籤，不影響原本 small/mid/bad 的判斷
+    rewardScore: SMALL_FISH_SCORE,
+    rewardEnergy: SMALL_FISH_ENERGY,
+    face: Math.random() < 0.5 ? 'smile' : 'dot',
+    fadeOut: false,
+    alpha: 1,
+    fadeElapsed: 0,
+    animTime: 0,
+    animSpeed: 4,
+    liftAnimTime: 0,
+    sizeScale: FISH_SCHOOL_SIZE_SCALE // 繪製時的縮放比例；一般魚沒有這個屬性時預設當作 1
   };
 }
 
+// 產生「一批」小黃魚：前一半從左邊出現、後一半從右邊出現
 function spawnFishSchoolBatch() {
   const half = Math.floor(FISH_SCHOOL_BATCH_SIZE / 2);
   for (let i = 0; i < FISH_SCHOOL_BATCH_SIZE; i++) {
@@ -885,22 +1114,29 @@ function spawnFishSchoolBatch() {
   }
 }
 
+// 連續生成 FISH_SCHOOL_BATCH_COUNT 批小黃魚，每批間隔 FISH_SCHOOL_BATCH_INTERVAL 毫秒
+// （每 0.5 秒生成 30 隻，共生成 10 次、總共 300 隻），
+// 全部批次生成完之後，才重新開始下一輪 35 秒倒數（scheduleFishSchool）。
 function runFishSchoolBatches() {
   let batchesSpawned = 0;
   if (fishSchoolBatchTimer) clearInterval(fishSchoolBatchTimer);
   fishSchoolBatchTimer = setInterval(() => {
-    if (!gameOver && !bowlSinking) {
+    if (!gameOver && !bowlSinking && !paramPanelOpen) {
       spawnFishSchoolBatch();
     }
     batchesSpawned++;
     if (batchesSpawned >= FISH_SCHOOL_BATCH_COUNT) {
       clearInterval(fishSchoolBatchTimer);
       fishSchoolBatchTimer = null;
-      scheduleFishSchool();
+      scheduleFishSchool(); // 這一輪批次全部跑完，重新開始下一次 35 秒倒數
     }
   }, FISH_SCHOOL_BATCH_INTERVAL);
 }
 
+// 排程：每隔 FISH_SCHOOL_INTERVAL（35 秒）觸發一次小黃魚群事件；
+// 觸發後不是一次生成完，而是交給 runFishSchoolBatches 每 0.5 秒生成一批（共 10 批），
+// 全部批次跑完後才會再重新呼叫這個函式、重新開始下一次 35 秒倒數。
+// （遊戲結束/碗下沉/面板開啟時暫停生成，但排程本身照常繼續倒數）
 function scheduleFishSchool() {
   if (fishSchoolTimer) clearTimeout(fishSchoolTimer);
   fishSchoolTimer = setTimeout(() => {
@@ -908,72 +1144,137 @@ function scheduleFishSchool() {
   }, FISH_SCHOOL_INTERVAL);
 }
 
+// --- 垃圾相關 ---
 const TRASH_COUNT = 1;
 let trashes = [];
-
+// 新增：預載雨鞋圖片
 const bgImg = new Image();
 bgImg.src = 'img/bg.jpg';
+
 const bootImg = new Image();
 bootImg.src = 'img/boots.png';
+// 新增：預載罐頭圖片
 const canImg = new Image();
 canImg.src = 'img/can.png';
+// 新增：預載黃色魚圖片
 const yellowFishImg = new Image();
 yellowFishImg.src = 'img/yellow_fish.png';
+// 新增：預載黃色魚圖片2
 const yellowFishImg2 = new Image();
 yellowFishImg2.src = 'img/yellow_fish2.png';
+// 新增：預載黃色魚圖片3
 const yellowFishImg3 = new Image();
 yellowFishImg3.src = 'img/yellow_fish3.png';
+// 新增：預載黃色魚被吊起圖片4、5（吊起動畫，0.5秒切換一張）
 const yellowFishImg4 = new Image();
 yellowFishImg4.src = 'img/yellow_fish4.png';
 const yellowFishImg5 = new Image();
 yellowFishImg5.src = 'img/yellow_fish5.png';
+// 新增：預載紫色魚圖片
 const purpleFishImg = new Image();
 purpleFishImg.src = 'img/purple_fish.png';
+// 新增：預載紫色魚圖片2
 const purpleFishImg2 = new Image();
 purpleFishImg2.src = 'img/purple_fish2.png';
+// 新增：預載紫色魚圖片3
 const purpleFishImg3 = new Image();
 purpleFishImg3.src = 'img/purple_fish3.png';
+// 新增：預載紫色魚被吊起圖片4、5（吊起動畫，0.2秒切換一張）
 const purpleFishImg4 = new Image();
 purpleFishImg4.src = 'img/purple_fish4.png';
 const purpleFishImg5 = new Image();
 purpleFishImg5.src = 'img/purple_fish5.png';
+// 新增：預載主角貓咪圖片
 const catImg = new Image();
 catImg.src = 'img/cat.png';
+// 新增：預載「拉竿／釣起東西」姿勢的貓咪圖片（按下釣魚鍵、拉竿甩線時顯示這張）
 const catImg2 = new Image();
 catImg2.src = 'img/cat2.png';
 
+// 新增：預載精靈移動動畫用的四張圖片（左右移動時依序輪播，停下來就凍結在目前這張）
 const catMoveImgs = [1, 2, 3, 4].map(function(i) {
   const img = new Image();
   img.src = 'img/cat_' + i + '.png';
   return img;
 });
 
+// 新增：預載火鍋（鍋身，開蓋狀態）圖片
 const hotpotImg = new Image();
 hotpotImg.src = 'img/hotpot.png';
+
+// 新增：預載火鍋蓋圖片（遊戲結束時蓋上，與鍋身組合成完整的鍋）
 const hotpotCupImg = new Image();
 hotpotCupImg.src = 'img/hotpot_cup.png';
+
+// 新增：預載魷魚圖片
 const squidImg = new Image();
 squidImg.src = 'img/squid.png';
+
+// 新增：預載海膽圖片
 const seaUrchinImg = new Image();
 seaUrchinImg.src = 'img/seaurchin.png';
+
+// 新增：預載章魚圖片
 const octopusImg = new Image();
 octopusImg.src = 'img/octopus.png';
-const seaCucumberImg = new Image();
-seaCucumberImg.src = 'img/seacucumber.png';
-const seaCucumberImg2 = new Image();
-seaCucumberImg2.src = 'img/seacucumber2.png';
 
-const REAL_IMG_SIZE = {
-  boot: { w: 54, h: 60 },
-  can: { w: 45, h: 66 },
-  seaurchin: { w: 66, h: 60 },
-  squid: { w: 132, h: 66 },
-  octopus: { w: 70, h: 41 },
-  seacucumber: { w: 42, h: 13 },
-  yellowFish: { w: 65, h: 32 },
-  purpleFish: { w: 65, h: 32 }
+// 新增：預載海參圖片
+const seaCucumberImg = new Image();
+seaCucumberImg.src = 'img/seacucumber.png'; // 對應實際檔名 seacucumber.png（先前這裡混進了看不見的零寬空白字元，導致實際請求的檔名跟真正的檔案對不上，已清除）
+// 添加圖片載入錯誤處理
+seaCucumberImg.onerror = function() {
+  console.error('海參圖片載入失敗:', seaCucumberImg.src);
+};
+seaCucumberImg.onload = function() {
+  console.log('海參圖片載入成功');
 };
 
+// 新增：預載海參圖片2
+const seaCucumberImg2 = new Image();
+seaCucumberImg2.src = 'img/seacucumber2.png'; // 對應實際檔名 seacucumber2.png（無底線）
+// 添加圖片載入錯誤處理
+seaCucumberImg2.onerror = function() {
+  console.error('海參圖片2載入失敗:', seaCucumberImg2.src);
+};
+seaCucumberImg2.onload = function() {
+  console.log('海參圖片2載入成功');
+};
+
+// 新增：元氣量表填色用的圖片（はらへり條紋圖，取代原本的紅橘漸層）
+const energyGaugeImg = new Image();
+energyGaugeImg.src = 'img/energy.png';
+
+// 新增：分數數字用的圖片（0~9，取代原本用文字畫的分數數字）
+const scoreDigitImgs = [];
+for (let d = 0; d <= 9; d++) {
+  const img = new Image();
+  img.src = 'img/digit_' + d + '.png';
+  scoreDigitImgs.push(img);
+}
+
+
+const scoreLabelImg = new Image();
+scoreLabelImg.src = 'img/ui_1.png';
+const energyLabelImg = new Image();
+energyLabelImg.src = 'img/ui_2.png';
+
+// --- 新增：各素材的實際圖片尺寸（px），圖片還沒載入完成、或載入失敗時，
+// 佔位圖形與碰撞判定範圍都會改用這裡的尺寸，確保跟正式圖片大小一致 ---
+const REAL_IMG_SIZE = {
+  boot: { w: 54, h: 60 },        // img/boots.png（雨鞋）
+  can: { w: 45, h: 66 },         // img/can.png（罐頭）
+  seaurchin: { w: 66, h: 60 },   // img/seaurchin.png（海膽）
+  squid: { w: 132, h: 66 },      // img/squid.png（魷魚）
+  octopus: { w: 70, h: 41 },     // img/octopus.png（章魚）
+  seacucumber: { w: 42, h: 13 }, // img/sea​​cucumber.png（海參，較窄的那張）
+  yellowFish: { w: 65, h: 32 },  // img/yellow_fish.png（黃魚）
+  purpleFish: { w: 65, h: 32 }   // img/purple_fish.png（紫魚）
+};
+
+// 依「圖片是否已經成功載入」取得目前應該使用的寬高：
+// 圖片載入成功 -> 用圖片本身的 naturalWidth/naturalHeight（最準確）
+// 圖片還沒載好或載入失敗 -> 用上面 REAL_IMG_SIZE 記錄的實際圖片尺寸當備援，
+// 這樣即使圖片一時沒顯示出來，判定範圍跟佔位圖形也不會跟正式圖片對不上。
 function getImgDrawSize(img, fallbackKey) {
   if (img && img.complete && img.naturalWidth > 0) {
     return { w: img.naturalWidth, h: img.naturalHeight };
@@ -982,6 +1283,8 @@ function getImgDrawSize(img, fallbackKey) {
   return fb ? { w: fb.w, h: fb.h } : { w: 32, h: 32 };
 }
 
+// 取得某個垃圾／特殊海洋生物／魚「被鉤子直接勾到」判定範圍的半寬、半高，
+// 基準為該類型實際圖片的大小，再乘上寬鬆倍率（padScaleX/padScaleY，來自 LINE_PARAMS，可在調參面板調整）
 function getCatchHalfSize(kind, padScaleX, padScaleY) {
   padScaleX = (typeof padScaleX === 'number') ? padScaleX : 1.1;
   padScaleY = (typeof padScaleY === 'number') ? padScaleY : 1.1;
@@ -1000,32 +1303,88 @@ function getCatchHalfSize(kind, padScaleX, padScaleY) {
   return { hw: (size.w / 2) * padScaleX, hh: (size.h / 2) * padScaleY };
 }
 
+// 除錯用：把各個物件目前的「碰撞判定框」畫成虛線框，方便對照調參面板裡的數值來調整。
+// 只有在調參面板開啟時才會顯示，平常玩遊戲不會看到這些框，不影響正常畫面。
 function drawDebugHitboxes() {
-  // Removed for simplicity
+  if (!paramPanelOpen) return;
+  ctx.save();
+  ctx.setLineDash([6, 4]);
+  ctx.lineWidth = 2;
+  ctx.font = '11px Arial';
+  ctx.textBaseline = 'bottom';
+
+  function strokeBox(cx, cy, hw, hh, color, label) {
+    ctx.strokeStyle = color;
+    ctx.strokeRect(cx - hw, cy - hh, hw * 2, hh * 2);
+    if (label) {
+      ctx.fillStyle = color;
+      ctx.fillText(label, cx - hw, cy - hh - 2);
+    }
+  }
+
+  // 碗：實際判定「東西掉進碗裡」用的矩形範圍
+  strokeBox(bowlX + pot.w / 2, bowlY + pot.h / 2, pot.w / 2, pot.h / 2, 'rgba(255,40,40,0.9)', '碗');
+
+  // 魚：被鉤子直接勾到的判定範圍（框跟著魚移動，鉤子進到框裡就算勾到）
+  for (let fish of fishes) {
+    if (fish.caught || fish.lifting) continue;
+    const half = getCatchHalfSize(fish.color === 'gold' ? 'yellowFish' : 'purpleFish', LINE_PARAMS.hookCatchPadScaleX, LINE_PARAMS.hookCatchPadScaleY);
+    const scale = (typeof fish.sizeScale === 'number') ? fish.sizeScale : 1;
+    strokeBox(fish.x, fish.y, half.hw * scale, half.hh * scale, 'rgba(0,200,255,0.9)', '魚');
+  }
+
+  // 垃圾：被鉤子直接勾到的判定範圍
+  for (let trash of trashes) {
+    if (trash.hit || trash.lifting) continue;
+    const half = getCatchHalfSize(trash.type, LINE_PARAMS.hookCatchPadScaleX, LINE_PARAMS.hookCatchPadScaleY);
+    strokeBox(trash.x, trash.y, half.hw, half.hh, 'rgba(255,170,0,0.9)', '垃圾');
+  }
+
+  // 特殊海洋生物：被鉤子直接勾到的判定範圍
+  if (specialSeaCreature && !specialSeaCreature.caught && !specialSeaCreature.lifting) {
+    const half = getCatchHalfSize(specialSeaCreature.type, LINE_PARAMS.hookCatchPadScaleXSpecial, LINE_PARAMS.hookCatchPadScaleYSpecial);
+    strokeBox(specialSeaCreature.x, specialSeaCreature.y, half.hw, half.hh, 'rgba(200,60,220,0.9)', '生物');
+  }
+
+  ctx.restore();
 }
 
+// 修正「一次釣很多條魚時，明明對到碗裡卻從碗下方掉出去」的問題：
+// 當同時有大量魚／物件在被拉起（例如魚群批次一次出現很多條魚），
+// 畫面每一幀要處理的東西變多，單幀花費的時間變長、幀與幀之間的時間差
+// （deltaTime）容易變大，使得魚在「這一幀」和「下一幀」之間，
+// 一口氣從碗的上方跳到碗的下方，中間完全沒有任何一幀的座標真正落在
+// 碗的高度範圍內（也就是「穿透」/tunneling）。
+// 原本的判斷只檢查「這一幀當下的座標」是否落在碗裡，
+// 所以碰到這種情況就會判定成沒接住、魚從碗底掉出去。
+// 這裡改成檢查「上一幀到這一幀之間，魚實際掃過的整段路徑」
+// 有沒有經過碗的高度範圍，只要有掃到就算數，避免因為單幀跳太快而漏接。
 function isEnteringPotFromAbove(x, y, prevY, boxX, boxY, boxW, boxH) {
+  // 水平方向：用目前位置是否落在碗的寬度範圍內即可（碗左右移動速度較慢）
   if (x <= boxX || x >= boxX + boxW) return false;
+  // 必須是往下移動，避免從碗下方往上經過也被誤判成釣到
   if (!(y > prevY + 0.01)) return false;
   const potTop = boxY;
   const potBottom = boxY + boxH;
+  // 掃描上一幀到這一幀之間的整段垂直路徑，只要跟碗的高度範圍有重疊就算「有經過碗裡」
   const segTop = Math.min(prevY, y);
   const segBottom = Math.max(prevY, y);
   return segTop < potBottom && segBottom > potTop;
 }
 
-let specialSeaCreature = null;
+// --- 魷魚/章魚/海參相關 ---
+let specialSeaCreature = null; // 取代 squid
 let specialSeaCreatureTimer = null;
-const SPECIAL_CREATURE_INTERVAL = 8000;
-
+const SPECIAL_CREATURE_INTERVAL = 8000; // 原版節奏比較稀疏，降低特殊目標頻率
 function createSpecialSeaCreature() {
+  // 隨機生成魷魚、章魚或海參
   const types = ['squid', 'octopus', 'seacucumber'];
   const type = types[Math.floor(Math.random() * types.length)];
   const fromLeft = Math.random() < 0.5;
   const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
   const dir = fromLeft ? 1 : -1;
   let speed = 2.2 + Math.random() * 1.5;
-  let animSpeed = 2;
+  let animSpeed = 2; // 預設動畫速度
   if (type === 'squid') {
     speed += 0.5;
     animSpeed = 2.5;
@@ -1033,23 +1392,33 @@ function createSpecialSeaCreature() {
     speed += 0.2;
     animSpeed = 2;
   } else if (type === 'seacucumber') {
-    speed = 1.5 + Math.random() * 1.0;
-    animSpeed = 2;
+    speed = 1.5 + Math.random() * 1.0; // 海參速度較慢
+    animSpeed = 2; // 海參動畫速度
   }
   return {
-    type, x, y: Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY(),
-    speed, dir, caught: false, lifting: false, flying: false, flyT: 0,
-    fadeOut: false, alpha: 1, fadeElapsed: 0, animTime: 0, animSpeed
+    type,
+    x,
+    y: Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY(),
+    speed,
+    dir,
+    caught: false,
+    lifting: false,
+    flying: false, // 新增：是否已經進入「飛向碗」動畫階段
+    flyT: 0,
+    fadeOut: false,
+    alpha: 1,
+    fadeElapsed: 0,
+    animTime: 0,
+    animSpeed
   };
 }
-
 function spawnSpecialSeaCreature() {
   specialSeaCreature = createSpecialSeaCreature();
 }
-
 function scheduleSpecialSeaCreature() {
   if (specialSeaCreatureTimer) clearTimeout(specialSeaCreatureTimer);
   specialSeaCreatureTimer = setTimeout(() => {
+    // 只有當畫面上沒有海參時才生成
     if (!specialSeaCreature || specialSeaCreature.caught || (specialSeaCreature.x < -SPAWN_MARGIN || specialSeaCreature.x > canvas.width + SPAWN_MARGIN)) {
       spawnSpecialSeaCreature();
     }
@@ -1057,856 +1426,25 @@ function scheduleSpecialSeaCreature() {
   }, SPECIAL_CREATURE_INTERVAL);
 }
 
-function createTrash() {
-  const types = ['can', 'bottle', 'seaurchin'];
-  const type = types[Math.floor(Math.random() * types.length)];
-  const fromLeft = Math.random() < 0.5;
-  const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
-  const dir = fromLeft ? 1 : -1;
-  const baseY = Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY();
-  return {
-    x, y: baseY, baseY, bobPhase: Math.random() * Math.PI * 2, bobSpeed: 0.5 + Math.random() * 0.9,
-    bobAmplitude: 12 + Math.random() * 20, bobTime: 0, speed: 0.7 + Math.random() * 1.05,
-    dir, type, hit: false, lifting: false, flying: false, flyT: 0, fadeOut: false, alpha: 1, fadeElapsed: 0
+// 測試函數：立即生成海參
+function spawnTestSeaCucumber() {
+  specialSeaCreature = {
+    type: 'seacucumber',
+    x: 400,
+    y: 300,
+    speed: 2,
+    dir: 1,
+    caught: false,
+    lifting: false,
+    flyT: 0,
+    fadeOut: false,
+    alpha: 1,
+    fadeElapsed: 0,
+    // 新增：動畫相關屬性
+    animTime: 0, // 動畫時間
+    animSpeed: 2 // 動畫速度（0.5秒切換一次）
   };
 }
-
-function spawnTrash() {
-  trashes = [];
-  for (let i = 0; i < TRASH_COUNT; i++) {
-    trashes.push(createTrash());
-  }
-}
-
-function getFishTopY() {
-  return LINE_PARAMS.seaSurfaceY + 20;
-}
-
-const GAME_CANVAS_HEIGHT = 960;
-
-function getFishBottomY() {
-  return GAME_CANVAS_HEIGHT - 70;
-}
-
-let wavePhase = 0;
-function getWaveY(x, t) {
-  let y = LINE_PARAMS.seaSurfaceY + Math.sin((x/120) + t) * LINE_PARAMS.waveAmplitudeMain + Math.sin((x/40) - t*1.7) * LINE_PARAMS.waveAmplitudeSecondary;
-  let dx = x - waveDisturb.x;
-  let disturb = waveDisturb.v * Math.exp(-dx*dx/900) * Math.sin(t*2 + dx/30);
-  y += disturb * LINE_PARAMS.waveDisturbAmplitude;
-  return y;
-}
-
-function drawScoreAndEnergyHUD() {
-  ctx.save();
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-
-  const scoreLabelX = 20, scoreLabelY = 42;
-  ctx.font = "bold 30px Arial";
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = "#1a6dff";
-  ctx.fillStyle = "#fff";
-  ctx.strokeText("分數", scoreLabelX, scoreLabelY);
-  ctx.fillText("分數", scoreLabelX, scoreLabelY);
-
-  const scoreText = String(score);
-  const scoreNumX = scoreLabelX + 110;
-  ctx.font = "bold 30px Arial";
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = "#2ecc40";
-  ctx.fillStyle = "#fff";
-  ctx.strokeText(scoreText, scoreNumX, scoreLabelY);
-  ctx.fillText(scoreText, scoreNumX, scoreLabelY);
-
-  const gaugeLabelX = 20, gaugeLabelY = 88;
-  ctx.font = "bold 26px Arial";
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = "#ff8c1a";
-  ctx.fillStyle = "#fff";
-  ctx.strokeText("元氣", gaugeLabelX, gaugeLabelY);
-  ctx.fillText("元氣", gaugeLabelX, gaugeLabelY);
-
-  const barX = gaugeLabelX + 110, barY = 68;
-  const barW = 280;
-  const barH = 22;
-  ctx.fillStyle = '#7a2b12';
-  ctx.fillRect(barX, barY, barW, barH);
-  let percent = Math.max(0, Math.min(1, displayTimeLeft / GAME_TIME));
-  let fillW = Math.max(0, barW * percent);
-  let grad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
-  grad.addColorStop(0, '#f00');
-  grad.addColorStop(0.25, '#ff8000');
-  grad.addColorStop(0.6, '#ffe600');
-  grad.addColorStop(1, '#ffe600');
-  ctx.fillStyle = grad;
-  ctx.fillRect(barX, barY, fillW, barH);
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(barX, barY, barW, barH);
-
-  ctx.font = "bold 16px Arial";
-  ctx.textAlign = 'right';
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillStyle = "#fff";
-  const energyText = String(Math.ceil(timeLeft));
-  ctx.strokeText(energyText, barX + barW - 10, barY + barH - 7);
-  ctx.fillText(energyText, barX + barW - 10, barY + barH - 7);
-
-  ctx.restore();
-}
-
-function gameLoop(currentTime) {
-  try {
-    if (!lastTime) lastTime = currentTime;
-    deltaTime = currentTime - lastTime;
-    if (deltaTime < frameTime) {
-      requestAnimationFrame(gameLoop);
-      return;
-    }
-    const timeScale = deltaTime / frameTime;
-    lastTime = currentTime;
-
-    if (!Array.isArray(fishes)) fishes = [];
-    if (!Array.isArray(trashes)) trashes = [];
-    
-    if (!gameOver && !bowlSinking) {
-      elapsedGameTime += deltaTime / 1000;
-      const passiveDrain = Math.min(PASSIVE_DRAIN_MAX, PASSIVE_DRAIN_BASE + elapsedGameTime * PASSIVE_DRAIN_ACCEL_PER_SEC);
-      timeLeft = Math.max(0, timeLeft - passiveDrain * (deltaTime / 1000));
-    }
-
-    wavePhase += 0.035 * timeScale;
-    let prevX = waveDisturb.x;
-    waveDisturb.x = bowlX + pot.w/2;
-    waveDisturb.v = (waveDisturb.x - prevX);
-    waveDisturb.v *= 0.92;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (bgImg.complete && bgImg.naturalWidth > 0) {
-      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-    } else {
-      let seaY = LINE_PARAMS.seaSurfaceY;
-      let skyGradient = ctx.createLinearGradient(0, 0, 0, seaY);
-      skyGradient.addColorStop(0, '#b3e0ff');
-      skyGradient.addColorStop(0.3, '#e6f6ff');
-      skyGradient.addColorStop(0.7, '#a4c8e1');
-      skyGradient.addColorStop(1, '#7bbbe6');
-      ctx.fillStyle = skyGradient;
-      ctx.fillRect(0, 0, canvas.width, seaY);
-      let seaGradient = ctx.createLinearGradient(0, seaY, 0, canvas.height);
-      seaGradient.addColorStop(0, '#7bbbe6');
-      seaGradient.addColorStop(0.15, '#3a8cc1');
-      seaGradient.addColorStop(0.4, '#206090');
-      seaGradient.addColorStop(0.7, '#133a5c');
-      seaGradient.addColorStop(1, '#0a1a2f');
-      ctx.fillStyle = seaGradient;
-      ctx.fillRect(0, seaY, canvas.width, canvas.height - seaY);
-    }
-
-    ctx.save();
-    ctx.beginPath();
-    for (let x = 0; x <= canvas.width; x += 4) {
-      let y = getWaveY(x, wavePhase);
-      if (x === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.lineTo(canvas.width, 0);
-    ctx.lineTo(0, 0);
-    ctx.closePath();
-    ctx.fillStyle = '#b3e0ff';
-    ctx.globalAlpha = 0.18;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.restore();
-
-    ctx.save();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let x = 0; x <= canvas.width; x += 2) {
-      let y = getWaveY(x, wavePhase);
-      if (x === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-    ctx.restore();
-
-    if (keyState.left) {
-      bigFish.x -= 6 * timeScale;
-      playerDir = -1;
-    }
-    if (keyState.right) {
-      bigFish.x += 6 * timeScale;
-      playerDir = 1;
-    }
-    if (bigFish.x < bigFish.w/2) bigFish.x = bigFish.w/2;
-    if (bigFish.x > canvas.width - bigFish.w/2) bigFish.x = canvas.width - bigFish.w/2;
-
-    const catIsMoving = keyState.left || keyState.right;
-    if (catIsMoving) {
-      if (!catWasMoving) {
-        catAnimFrame = (catAnimFrame + 1) % catMoveImgs.length;
-        catAnimTimer = 0;
-      } else {
-        catAnimTimer += deltaTime;
-        if (catAnimTimer >= CAT_ANIM_FRAME_MS) {
-          catAnimTimer -= CAT_ANIM_FRAME_MS;
-          catAnimFrame = (catAnimFrame + 1) % catMoveImgs.length;
-        }
-      }
-    } else {
-      catAnimTimer = 0;
-    }
-    catWasMoving = catIsMoving;
-    bigFish.y = LINE_PARAMS.seaSurfaceY + 20;
-
-    if (!fishing && !hookThrowing) {
-      const HOOK_ACCEL = LINE_PARAMS.hookAccel;
-      const HOOK_MAX_VEL = LINE_PARAMS.hookMaxVel;
-
-      if (keyState.up || keyState.down) {
-        hookAutoSinking = false;
-      }
-
-      if (hookAutoSinking) {
-        hookVelY += LINE_PARAMS.hookAutoSinkGravity * timeScale;
-        if (hookVelY > LINE_PARAMS.hookAutoSinkMaxVelY) hookVelY = LINE_PARAMS.hookAutoSinkMaxVelY;
-        hookVelX *= Math.pow(LINE_PARAMS.hookAutoSinkVelXDamp, timeScale);
-        hookY += hookVelY * timeScale;
-        if (hookY >= LINE_PARAMS.hookMaxY) {
-          hookY = LINE_PARAMS.hookMaxY;
-          hookVelY = 0;
-          hookAutoSinking = false;
-        }
-      } else if (keyState.up) {
-        hookVelY -= HOOK_ACCEL * timeScale;
-      } else if (keyState.down) {
-        hookVelY += HOOK_ACCEL * timeScale;
-      } else {
-        let diff = LINE_PARAMS.hookRestY - hookY;
-        if (diff > 0) {
-          hookVelY += diff * LINE_PARAMS.hookReturnUpRate * timeScale;
-        } else {
-          hookVelY += diff * LINE_PARAMS.hookReturnDownRate * timeScale;
-        }
-      }
-
-      if (!hookAutoSinking) {
-        hookVelY *= Math.pow(LINE_PARAMS.hookVelDamp, timeScale);
-        hookVelY = Math.max(-HOOK_MAX_VEL, Math.min(HOOK_MAX_VEL, hookVelY));
-        hookY += hookVelY * timeScale;
-      }
-      if (hookY < LINE_PARAMS.hookMinY) {
-        hookY = LINE_PARAMS.hookMinY;
-        hookVelY = 0;
-      }
-      if (hookY > LINE_PARAMS.hookMaxY) {
-        hookY = LINE_PARAMS.hookMaxY;
-        hookVelY = 0;
-      }
-    }
-
-    if (hookThrowing) {
-      if (hookThrowPhase === 'loop') {
-        hookThrowEndX = bigFish.x - LINE_PARAMS.hookLandingBehindOffset * hookThrowPlayerDir;
-        const loopCenterX = (hookThrowStartX + hookThrowEndX) / 2;
-        const loopCenterY = (hookThrowStartY + hookThrowEndY) / 2 - LINE_PARAMS.hookLoopHeight;
-        const loopTiltAngle = hookThrowTiltAngle * LINE_PARAMS.hookLoopTiltFactor;
-        const cosTilt = Math.cos(loopTiltAngle), sinTilt = Math.sin(loopTiltAngle);
-        function toLoopLocal(px, py) {
-          const dx = px - loopCenterX, dy = py - loopCenterY;
-          return { x: dx * cosTilt + dy * sinTilt, y: -dx * sinTilt + dy * cosTilt };
-        }
-        function toLoopWorld(lx, ly) {
-          return { x: loopCenterX + lx * cosTilt - ly * sinTilt, y: loopCenterY + lx * sinTilt + ly * cosTilt };
-        }
-        const xScale = Math.max(0.05, LINE_PARAMS.hookLoopXScale);
-        const startLocal = toLoopLocal(hookThrowStartX, hookThrowStartY);
-        const endLocal = toLoopLocal(hookThrowEndX, hookThrowEndY);
-        const startDX = startLocal.x / xScale, startDY = startLocal.y;
-        const endDX = endLocal.x / xScale, endDY = endLocal.y;
-        const startAngle = Math.atan2(startDY, startDX);
-        const endAngle = Math.atan2(endDY, endDX);
-        const startRadius = Math.hypot(startDX, startDY);
-        const endRadius = Math.hypot(endDX, endDY);
-        const dir = (LINE_PARAMS.hookLoopDirection >= 0 ? 1 : -1) * (hookThrowPlayerDir >= 0 ? 1 : -1);
-        let angleDiff = endAngle - startAngle;
-        while (dir > 0 && angleDiff < 0) angleDiff += Math.PI * 2;
-        while (dir < 0 && angleDiff > 0) angleDiff -= Math.PI * 2;
-        const totalAngle = angleDiff + dir * LINE_PARAMS.hookLoopTurns * Math.PI * 2;
-        hookThrowAngVel *= Math.pow(LINE_PARAMS.hookCastAngDamp, timeScale);
-        if (hookThrowAngVel < LINE_PARAMS.hookCastMinAngVel) hookThrowAngVel = LINE_PARAMS.hookCastMinAngVel;
-        hookThrowT += hookThrowAngVel * timeScale;
-        hookThrowLoopElapsedMs += deltaTime;
-        if (hookThrowLoopElapsedMs >= LINE_PARAMS.hookLoopForceCompleteMs) {
-          hookThrowT = 1;
-        }
-        if (hookThrowT > 1) hookThrowT = 1;
-        const t = hookThrowT;
-        const angle = startAngle + totalAngle * t;
-        const radius = startRadius + (endRadius - startRadius) * t;
-        const loopLocalX = Math.cos(angle) * radius * xScale;
-        const loopLocalY = Math.sin(angle) * radius;
-        const loopWorldPt = toLoopWorld(loopLocalX, loopLocalY);
-        hookDrawX = loopWorldPt.x;
-        hookY     = loopWorldPt.y;
-        if (hookThrowT >= 1) {
-          hookThrowPhase = 'fall';
-          const angVelNow = totalAngle * hookThrowAngVel;
-          const radVelNow = (endRadius - startRadius) * hookThrowAngVel;
-          const localVelX = (-Math.sin(angle) * angVelNow * radius + Math.cos(angle) * radVelNow) * xScale;
-          const localVelY =  Math.cos(angle) * angVelNow * radius + Math.sin(angle) * radVelNow;
-          hookFallVelX = localVelX * cosTilt - localVelY * sinTilt;
-          hookFallVelY = localVelX * sinTilt + localVelY * cosTilt;
-        }
-      } else if (hookThrowPhase === 'fall') {
-        hookFallVelY += LINE_PARAMS.hookFallGravity * timeScale;
-        if (hookFallVelY > LINE_PARAMS.hookFallMaxVelY) hookFallVelY = LINE_PARAMS.hookFallMaxVelY;
-        hookFallVelX *= Math.pow(LINE_PARAMS.hookFallVelXDamp, timeScale);
-        const fallTargetX = bigFish.x - LINE_PARAMS.hookLandingBehindOffset * hookThrowPlayerDir;
-        hookFallVelX += (fallTargetX - hookDrawX) * LINE_PARAMS.hookXSpring * timeScale;
-        hookDrawX += hookFallVelX * timeScale;
-        hookY += hookFallVelY * timeScale;
-        const waterYHere = getWaveY(hookDrawX, wavePhase);
-        if (hookY >= waterYHere) {
-          hookY = waterYHere;
-          hookThrowing = false;
-          fishing = false;
-          hookThrowPhase = 'loop';
-          hookVelY = hookFallVelY;
-          hookVelX = hookFallVelX * 0.3;
-          hookAutoSinking = true;
-        }
-      }
-    } else {
-      const anchor = getLineStartPoint();
-      const dx = anchor.x - hookDrawX;
-      const springAccel = dx * LINE_PARAMS.hookXSpring;
-      hookVelX += springAccel * timeScale;
-      hookVelX *= Math.pow(LINE_PARAMS.hookXDamp, timeScale);
-      hookDrawX += hookVelX * timeScale;
-    }
-
-    if (!bowlSinking && !lidDropping) {
-      let bowlTargetY = getWaveY(bowlX + pot.w/2, wavePhase) - pot.h/2 + LINE_PARAMS.bowlWaterOffsetY;
-      let spring = 0.18, damp = 0.72;
-      if (typeof bowlY !== 'number') bowlY = pot.y;
-      bowlY_vel += (bowlTargetY - bowlY) * spring;
-      bowlY_vel += bowlImpulseY;
-      bowlImpulseY *= 0.85;
-      bowlY_vel *= damp;
-      bowlY += bowlY_vel;
-      if (typeof bowlX !== 'number') bowlX = pot.x;
-      bowlX += bowlXDir * bowlXSpeed * timeScale;
-      if (bowlX > bowlXMax) {
-        bowlX = bowlXMax;
-        bowlXDir = -1;
-      } else if (bowlX < bowlXMin) {
-        bowlX = bowlXMin;
-        bowlXDir = 1;
-      }
-    }
-
-    if (lidDropping) {
-      lidDropOffset += LID_DROP_SPEED * timeScale;
-      if (lidDropOffset >= 0) {
-        lidDropOffset = 0;
-        lidDropping = false;
-        bowlSinking = true;
-        bowlSinkTargetY = null;
-      }
-    }
-
-    drawPlayer();
-    updateLinePhysics();
-    updateLineCollisions();
-    drawRod();
-
-    for (let fish of fishes) {
-      if (!fish.caught) {
-        fish.x += fish.speed * fish.dir * timeScale;
-        if (!fish.lifting && !fish.falling) {
-          fish.bobTime = (fish.bobTime || 0) + deltaTime / 1000;
-          fish.y = fish.baseY + Math.sin(fish.bobTime * fish.bobSpeed + fish.bobPhase) * fish.bobAmplitude;
-        }
-        if ((fish.dir === 1 && fish.x > canvas.width + SPAWN_MARGIN) || (fish.dir === -1 && fish.x < -SPAWN_MARGIN)) {
-          if (fish.fishTier === 'school') {
-            fish.removeMe = true;
-            continue;
-          }
-          Object.assign(fish, createFish());
-        }
-      } else if (fish.fadeOut) {
-        fish.x = bowlX + (fish.caughtOffsetX || 0);
-        fish.y = bowlY + (fish.caughtOffsetY || 0);
-      }
-      drawFish(fish);
-    }
-    if (fishes.some(f => f.removeMe)) {
-      fishes = fishes.filter(f => !f.removeMe);
-    }
-
-    for (let trash of trashes) {
-      if (!trash.lifting && !trash.hit) {
-        trash.x += trash.speed * trash.dir * timeScale;
-        if (!trash.falling) {
-          trash.bobTime = (trash.bobTime || 0) + deltaTime / 1000;
-          trash.y = trash.baseY + Math.sin(trash.bobTime * trash.bobSpeed + trash.bobPhase) * trash.bobAmplitude;
-        }
-        if ((trash.dir === 1 && trash.x > canvas.width + SPAWN_MARGIN) || (trash.dir === -1 && trash.x < -SPAWN_MARGIN)) {
-          Object.assign(trash, createTrash());
-        }
-      } else if (trash.hit && trash.fadeOut) {
-        trash.x = bowlX + (trash.caughtOffsetX || 0);
-        trash.y = bowlY + (trash.caughtOffsetY || 0);
-      }
-      drawTrash(trash);
-      if (trash.hit && trash.fadeOut && trash.alpha <= 0) {
-        Object.assign(trash, createTrash());
-      }
-    }
-
-    for (let trash of trashes) {
-      if (trash.lifting && !trash.hit) {
-        let isHookCatch = (typeof trash.hookLineIndex !== 'number') || trash.hookLineIndex >= LINE_POINTS - 1;
-        if (isHookCatch) {
-          trash.x = hookDrawX;
-          trash.y = hookY;
-        } else {
-          let idx = trash.hookLineIndex;
-          let tt = typeof trash.hookLineT === 'number' ? trash.hookLineT : 0;
-          let p1 = linePoints[idx];
-          let p2 = linePoints[idx + 1] || p1;
-          trash.x = p1.x + (p2.x - p1.x) * tt;
-          trash.y = p1.y + (p2.y - p1.y) * tt;
-        }
-        let waterY = getWaveY(trash.x, wavePhase);
-        let aboveWater = trash.y <= waterY;
-        let prevLiftY = (typeof trash.prevLiftY === 'number') ? trash.prevLiftY : trash.y;
-        if (aboveWater) {
-          trash.everAboveWater = true;
-          let inPot = isEnteringPotFromAbove(trash.x, trash.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
-          if (inPot) {
-            trash.hit = true;
-            trash.fadeOut = true;
-            trash.alpha = 1;
-            trash.fadeElapsed = 0;
-            trash.caughtOffsetX = trash.x - bowlX;
-            trash.caughtOffsetY = trash.y - bowlY;
-            if (timeLeft > 0 && !gameOver) {
-              timeLeft = Math.max(0, timeLeft - TRASH_PENALTY);
-            }
-            trash.lifting = false;
-            trash.everAboveWater = false;
-          }
-        } else {
-          if (trash.everAboveWater) {
-            trash.falling = true;
-            trash.fallT = 0;
-            trash.fallStartY = trash.y;
-            trash.fallEndY = 530 + Math.random() * 40;
-            trash.lifting = false;
-            trash.everAboveWater = false;
-          } else if (!fishing && !hookThrowing) {
-            trash.baseY = trash.y;
-            trash.lifting = false;
-            trash.hookLineIndex = null;
-            trash.hookLineT = 0;
-          }
-        }
-        trash.prevLiftY = trash.y;
-      }
-      if (trash.falling) {
-        let fallSpeed = trash.speed * 0.8;
-        if (trash.y < trash.fallEndY) {
-          trash.y += fallSpeed * timeScale;
-          if (trash.y > trash.fallEndY) trash.y = trash.fallEndY;
-        } else {
-          trash.y -= fallSpeed * timeScale;
-          if (trash.y < trash.fallEndY) trash.y = trash.fallEndY;
-        }
-        if (Math.abs(trash.y - trash.fallEndY) < 1) {
-          trash.y = trash.fallEndY;
-          trash.baseY = trash.y;
-          trash.falling = false;
-        }
-      }
-    }
-
-    if (specialSeaCreature) {
-      if (!specialSeaCreature.caught && !specialSeaCreature.lifting) {
-        specialSeaCreature.x += specialSeaCreature.speed * specialSeaCreature.dir * timeScale;
-        if ((specialSeaCreature.dir === 1 && specialSeaCreature.x > canvas.width + SPAWN_MARGIN) || (specialSeaCreature.dir === -1 && specialSeaCreature.x < -SPAWN_MARGIN)) {
-          specialSeaCreature = null;
-        }
-      } else if (specialSeaCreature.caught && specialSeaCreature.fadeOut) {
-        specialSeaCreature.x = bowlX + (specialSeaCreature.caughtOffsetX || 0);
-        specialSeaCreature.y = bowlY + (specialSeaCreature.caughtOffsetY || 0);
-      }
-      if (specialSeaCreature) {
-        drawSpecialSeaCreature(specialSeaCreature);
-      }
-    }
-
-    if (specialSeaCreature && specialSeaCreature.lifting && !specialSeaCreature.caught) {
-      let isHookCatch = (typeof specialSeaCreature.hookLineIndex !== 'number') || specialSeaCreature.hookLineIndex >= LINE_POINTS - 1;
-      if (isHookCatch) {
-        specialSeaCreature.x = hookDrawX;
-        specialSeaCreature.y = hookY;
-      } else {
-        let idx = specialSeaCreature.hookLineIndex;
-        let tt = typeof specialSeaCreature.hookLineT === 'number' ? specialSeaCreature.hookLineT : 0;
-        let p1 = linePoints[idx];
-        let p2 = linePoints[idx + 1] || p1;
-        specialSeaCreature.x = p1.x + (p2.x - p1.x) * tt;
-        specialSeaCreature.y = p1.y + (p2.y - p1.y) * tt;
-      }
-      let waterY = getWaveY(specialSeaCreature.x, wavePhase);
-      let aboveWater = specialSeaCreature.y <= waterY;
-      let prevLiftY = (typeof specialSeaCreature.prevLiftY === 'number') ? specialSeaCreature.prevLiftY : specialSeaCreature.y;
-      if (aboveWater) {
-        specialSeaCreature.everAboveWater = true;
-        let inPot = isEnteringPotFromAbove(specialSeaCreature.x, specialSeaCreature.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
-        if (inPot && timeLeft > 0 && !gameOver) {
-          specialSeaCreature.caught = true;
-          specialSeaCreature.caughtOffsetX = specialSeaCreature.x - bowlX;
-          specialSeaCreature.caughtOffsetY = specialSeaCreature.y - bowlY;
-          if (specialSeaCreature.type === 'squid' || specialSeaCreature.type === 'octopus') {
-            score += BIG_FISH_SCORE;
-            timeLeft = Math.min(GAME_TIME, timeLeft + BIG_FISH_ENERGY);
-          } else if (specialSeaCreature.type === 'seacucumber') {
-            score += SEA_CUCUMBER_SCORE;
-            timeLeft = Math.min(GAME_TIME, timeLeft + SEA_CUCUMBER_ENERGY);
-          }
-          specialSeaCreature.fadeOut = true;
-          specialSeaCreature.alpha = 1;
-          specialSeaCreature.fadeElapsed = 0;
-          scheduleSpecialSeaCreature();
-          setTimeout(() => { specialSeaCreature = null; }, CATCH_FADE_HOLD_MS + CATCH_FADE_DURATION_MS);
-          specialSeaCreature.lifting = false;
-          specialSeaCreature.everAboveWater = false;
-        }
-      } else {
-        if (specialSeaCreature.everAboveWater) {
-          specialSeaCreature.falling = true;
-          specialSeaCreature.fallT = 0;
-          specialSeaCreature.fallStartY = specialSeaCreature.y;
-          specialSeaCreature.fallEndY = 530 + Math.random() * 40;
-          specialSeaCreature.lifting = false;
-          specialSeaCreature.everAboveWater = false;
-        } else if (!fishing && !hookThrowing) {
-          specialSeaCreature.lifting = false;
-          specialSeaCreature.hookLineIndex = null;
-          specialSeaCreature.hookLineT = 0;
-        }
-      }
-      specialSeaCreature.prevLiftY = specialSeaCreature.y;
-    }
-    if (specialSeaCreature && specialSeaCreature.falling) {
-      let fallSpeed = specialSeaCreature.speed * 0.8;
-      if (specialSeaCreature.y < specialSeaCreature.fallEndY) {
-        specialSeaCreature.y += fallSpeed * timeScale;
-        if (specialSeaCreature.y > specialSeaCreature.fallEndY) specialSeaCreature.y = specialSeaCreature.fallEndY;
-      } else {
-        specialSeaCreature.y -= fallSpeed * timeScale;
-        if (specialSeaCreature.y < specialSeaCreature.fallEndY) specialSeaCreature.y = specialSeaCreature.fallEndY;
-      }
-      if (Math.abs(specialSeaCreature.y - specialSeaCreature.fallEndY) < 1) {
-        specialSeaCreature.y = specialSeaCreature.fallEndY;
-        specialSeaCreature.falling = false;
-      }
-    }
-
-    const lerpSpeed = 0.18;
-    displayTimeLeft += (timeLeft - displayTimeLeft) * lerpSpeed;
-    if (Math.abs(displayTimeLeft - timeLeft) < 0.1) displayTimeLeft = timeLeft;
-    drawScoreAndEnergyHUD();
-
-    for (let fish of fishes) {
-      if (fish.lifting && !fish.caught) {
-        let prevLiftY = (typeof fish.prevLiftY === 'number') ? fish.prevLiftY : fish.y;
-        let isHookCatch = (typeof fish.hookLineIndex !== 'number') || fish.hookLineIndex >= LINE_POINTS - 1;
-        if (isHookCatch) {
-          fish.x = hookDrawX;
-          fish.y = hookY;
-        } else {
-          let idx = fish.hookLineIndex;
-          let tt = typeof fish.hookLineT === 'number' ? fish.hookLineT : 0;
-          let p1 = linePoints[idx];
-          let p2 = linePoints[idx + 1] || p1;
-          fish.x = p1.x + (p2.x - p1.x) * tt;
-          fish.y = p1.y + (p2.y - p1.y) * tt;
-        }
-        let waterY = getWaveY(fish.x, wavePhase);
-        let aboveWater = fish.y <= waterY;
-        let inPot = isEnteringPotFromAbove(fish.x, fish.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
-        if (aboveWater) {
-          fish.everAboveWater = true;
-          if (inPot && timeLeft > 0 && !gameOver) {
-            fish.caught = true;
-            fish.caughtOffsetX = fish.x - bowlX;
-            fish.caughtOffsetY = fish.y - bowlY;
-            bowlImpulseY = 8;
-            if (fish.color === "gold") {
-              score += fish.rewardScore;
-              timeLeft = Math.min(GAME_TIME, timeLeft + fish.rewardEnergy);
-            } else if (fish.color === "#fcf") {
-              timeLeft = Math.max(0, timeLeft + fish.rewardEnergy);
-            }
-            if (fish.fishTier !== 'school') {
-              fishes.push(createFish());
-            }
-            fish.fadeOut = true;
-            fish.alpha = 1;
-            fish.fadeElapsed = 0;
-            fish.lifting = false;
-            fish.everAboveWater = false;
-          } else if (inPot) {
-            fish.falling = true;
-            fish.fallT = 0;
-            fish.fallStartY = fish.y;
-            fish.fallEndY = 530 + Math.random() * 40;
-            fish.lifting = false;
-            fish.everAboveWater = false;
-          }
-        } else {
-          if (fish.everAboveWater) {
-            fish.falling = true;
-            fish.fallT = 0;
-            fish.fallStartY = fish.y;
-            fish.fallEndY = 530 + Math.random() * 40;
-            fish.lifting = false;
-            fish.everAboveWater = false;
-          } else if (!fishing && !hookThrowing) {
-            fish.baseY = fish.y;
-            fish.lifting = false;
-            fish.hookLineIndex = null;
-            fish.hookLineT = 0;
-          }
-        }
-        fish.prevLiftY = fish.y;
-      }
-      if (fish.falling) {
-        let fallSpeed = fish.speed * 0.8;
-        if (fish.y < fish.fallEndY) {
-          fish.y += fallSpeed * timeScale;
-          if (fish.y > fish.fallEndY) fish.y = fish.fallEndY;
-        } else {
-          fish.y -= fallSpeed * timeScale;
-          if (fish.y < fish.fallEndY) fish.y = fish.fallEndY;
-        }
-        if (Math.abs(fish.y - fish.fallEndY) < 1) {
-          fish.y = fish.fallEndY;
-          fish.baseY = fish.y;
-          fish.falling = false;
-        }
-      }
-    }
-
-    if (hookY < hookTargetY && !hookThrowing) {
-      hookY += LINE_PARAMS.hookSettleDownSpeed * timeScale;
-      if (hookY > hookTargetY) hookY = hookTargetY;
-    }
-
-    if (bowlSinking) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (bgImg.complete && bgImg.naturalWidth > 0) {
-        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-      } else {
-        // fallback background
-      }
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(0, LINE_PARAMS.seaSurfaceY);
-      ctx.lineTo(canvas.width, LINE_PARAMS.seaSurfaceY);
-      ctx.stroke();
-      if (bowlSinkTargetY === null) {
-        bowlSinkTargetY = canvas.height - pot.h - 20;
-      }
-      if (bowlY < bowlSinkTargetY) {
-        bowlY += bowlSinkSpeed * timeScale;
-        if (bowlY > bowlSinkTargetY) bowlY = bowlSinkTargetY;
-      }
-      drawPlayer();
-      drawScoreAndEnergyHUD();
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 48px Arial";
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "rgba(0,0,0,0.55)";
-      ctx.strokeText("遊戲結束", 150, 400);
-      ctx.fillText("遊戲結束", 150, 400);
-      ctx.font = "36px Arial";
-      ctx.fillStyle = "#0c0";
-      ctx.fillText("分數: " + score, 170, 460);
-      if (bowlY >= bowlSinkTargetY) {
-        bowlY = bowlSinkTargetY;
-        setTimeout(() => {
-          let arr = addRank(score);
-          showRankModal(score);
-        }, 400);
-        return;
-      }
-      requestAnimationFrame(gameLoop);
-      return;
-    }
-
-    let trashAnimating = trashes.some(trash => trash.lifting);
-    if (timeLeft <= 0 && !gameOver && !trashAnimating && !pendingGameOver) {
-      gameOver = true;
-      displayTimeLeft = 0;
-      lidDropping = true;
-      lidDropOffset = LID_DROP_START_OFFSET;
-      requestAnimationFrame(gameLoop);
-      return;
-    }
-    requestAnimationFrame(gameLoop);
-  } catch (e) {
-    console.error('gameLoop error:', e);
-    requestAnimationFrame(gameLoop);
-  }
-}
-
-function updateLinePhysics() {
-  const lineStart = getLineStartPoint();
-  linePoints[0].x = lineStart.x;
-  linePoints[0].y = lineStart.y;
-  linePoints[LINE_POINTS - 1].x = hookDrawX;
-  linePoints[LINE_POINTS - 1].y = hookY;
-  const damp = LINE_PARAMS.lineDamp;
-  const gravity = LINE_PARAMS.lineGravity;
-  for (let i = 1; i < LINE_POINTS - 1; i++) {
-    let prev = linePoints[i - 1];
-    let next = linePoints[i + 1];
-    let self = linePoints[i];
-    const segT = i / (LINE_POINTS - 1);
-    const spring = LINE_PARAMS.lineSpringBase - LINE_PARAMS.lineSpringRange * segT;
-    let vx = (prev.x + next.x) / 2 - self.x;
-    let vy = (prev.y + next.y) / 2 - self.y;
-    lineVels[i].x = (lineVels[i].x + vx * spring) * damp;
-    lineVels[i].y = (lineVels[i].y + vy * spring + gravity * segT) * damp;
-    self.x += lineVels[i].x;
-    self.y += lineVels[i].y;
-  }
-}
-
-function updateLineCollisions() {
-  lineCollisions = Array(LINE_POINTS - 1).fill(false);
-  // Simplified - full logic omitted for brevity but kept functional
-}
-
-function drawPlayer() {
-  ctx.save();
-  let drawPotY = (typeof bowlY === 'number') ? bowlY : pot.y;
-  let drawPotX = (typeof bowlX === 'number') ? bowlX : pot.x;
-  if (hotpotImg.complete && hotpotImg.naturalWidth > 0) {
-    const potScale = pot.w / hotpotImg.naturalWidth;
-    const potDrawW = pot.w;
-    const potDrawH = hotpotImg.naturalHeight * potScale;
-    ctx.drawImage(hotpotImg, drawPotX, drawPotY, potDrawW, potDrawH);
-    if (gameOver && hotpotCupImg.complete && hotpotCupImg.naturalWidth > 0) {
-      const lidDrawW = hotpotCupImg.naturalWidth;
-      const lidDrawH = hotpotCupImg.naturalHeight;
-      const lidX = drawPotX + 13;
-      const lidY = drawPotY - 31 + lidDropOffset;
-      ctx.drawImage(hotpotCupImg, lidX, lidY, lidDrawW, lidDrawH);
-    }
-  } else {
-    ctx.fillStyle = "#bbb";
-    ctx.beginPath();
-    ctx.ellipse(drawPotX + pot.w/2, drawPotY + pot.h/2, pot.w/2, pot.h/2, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(bigFish.x, bigFish.y - 40);
-  ctx.scale(playerDir, 1);
-  const pulling = fishing || hookThrowing;
-  let activeCatImg;
-  if (pulling && catImg2.complete && catImg2.naturalWidth > 0) {
-    activeCatImg = catImg2;
-  } else {
-    const moveImg = catMoveImgs[catAnimFrame];
-    activeCatImg = (moveImg && moveImg.complete && moveImg.naturalWidth > 0) ? moveImg : catImg;
-  }
-  if (activeCatImg.complete && activeCatImg.naturalWidth > 0) {
-    ctx.drawImage(activeCatImg, -activeCatImg.naturalWidth / 2, -activeCatImg.naturalHeight / 2);
-  } else {
-    ctx.fillStyle = "#e11";
-    ctx.beginPath();
-    ctx.arc(0, 0, 22, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function drawRod() {
-  updateLinePhysics();
-  updateLineCollisions();
-  for (let i = 0; i < linePoints.length - 1; i++) {
-    ctx.save();
-    ctx.strokeStyle = (lineCollisions[i]) ? '#f00' : '#fff';
-    ctx.lineWidth = LINE_PARAMS.lineDrawWidth;
-    ctx.setLineDash([LINE_PARAMS.lineDashLength, LINE_PARAMS.lineDashGap]);
-    ctx.beginPath();
-    ctx.moveTo(linePoints[i].x, linePoints[i].y);
-    ctx.lineTo(linePoints[i+1].x, linePoints[i+1].y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-  }
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(hookDrawX, hookY, LINE_PARAMS.hookDotRadius, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawFish(fish) {
-  ctx.save();
-  ctx.translate(fish.x, fish.y);
-  const sizeScale = (typeof fish.sizeScale === 'number') ? fish.sizeScale : 1;
-  ctx.scale(fish.dir * sizeScale, sizeScale);
-  if (fish.fadeOut) {
-    fish.fadeElapsed = (fish.fadeElapsed || 0) + deltaTime;
-    if (fish.fadeElapsed < CATCH_FADE_HOLD_MS) {
-      fish.alpha = 1;
-    } else {
-      const progress = (fish.fadeElapsed - CATCH_FADE_HOLD_MS) / CATCH_FADE_DURATION_MS;
-      fish.alpha = Math.max(0, 1 - progress);
-    }
-    ctx.globalAlpha = fish.alpha;
-  }
-  // Simplified drawing logic (full image logic preserved in original but abbreviated here for response)
-  ctx.fillStyle = fish.color === 'gold' ? '#ff0' : '#f0f';
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawTrash(trash) {
-  ctx.save();
-  ctx.translate(trash.x, trash.y);
-  ctx.scale(trash.dir, 1);
-  if (trash.fadeOut) {
-    trash.fadeElapsed = (trash.fadeElapsed || 0) + deltaTime;
-    if (trash.fadeElapsed < CATCH_FADE_HOLD_MS) {
-      trash.alpha = 1;
-    } else {
-      const progress = (trash.fadeElapsed - CATCH_FADE_HOLD_MS) / CATCH_FADE_DURATION_MS;
-      trash.alpha = Math.max(0, 1 - progress);
-    }
-    ctx.globalAlpha = trash.alpha;
-  }
-  // Simplified placeholder
-  ctx.fillStyle = '#888';
-  ctx.fillRect(-20, -25, 40, 50);
-  ctx.restore();
-}
-
 function drawSpecialSeaCreature(creature) {
   ctx.save();
   ctx.translate(creature.x, creature.y);
@@ -1921,18 +1459,244 @@ function drawSpecialSeaCreature(creature) {
     }
     ctx.globalAlpha = creature.alpha;
   }
-  ctx.fillStyle = '#666';
-  ctx.fillRect(-30, -20, 60, 40);
+  // 更新動畫時間
+  if (!creature.lifting && !creature.caught) {
+    creature.animTime += deltaTime / 1000; // 轉換為秒
+  }
+  let currentImg;
+  if (creature.type === 'squid') {
+    currentImg = squidImg;
+  } else if (creature.type === 'octopus') {
+    currentImg = octopusImg;
+  } else {
+    // 預設 sea cucumber 動畫
+    const useSecondImage = Math.floor(creature.animTime * creature.animSpeed) % 2 === 1;
+    currentImg = useSecondImage ? seaCucumberImg2 : seaCucumberImg;
+  }
+  if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
+    ctx.drawImage(
+      currentImg,
+      -currentImg.naturalWidth / 2,
+      -currentImg.naturalHeight / 2
+    );
+  } else if (creature.type === 'squid') {
+    // 佔位圖形：對應 squid.png（132x66，橢圓身體＋左側一叢細長觸手）
+    const hw = REAL_IMG_SIZE.squid.w / 2, hh = REAL_IMG_SIZE.squid.h / 2;
+    ctx.fillStyle = '#c9cdd3';
+    ctx.beginPath();
+    ctx.ellipse(hw * 0.15, 0, hw * 0.55, hh * 0.85, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#c9cdd3';
+    ctx.lineWidth = 3;
+    for (let t = -3; t <= 3; t++) {
+      ctx.beginPath();
+      ctx.moveTo(-hw * 0.35, t * (hh * 0.18));
+      ctx.quadraticCurveTo(-hw * 0.75, t * (hh * 0.3), -hw, t * (hh * 0.42));
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(hw * 0.4, -hh * 0.15, 3, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (creature.type === 'octopus') {
+    // 佔位圖形：對應 octopus.png（70x41，圓頭＋下方波浪狀觸手）
+    const hw = REAL_IMG_SIZE.octopus.w / 2, hh = REAL_IMG_SIZE.octopus.h / 2;
+    ctx.fillStyle = '#b7bec7';
+    ctx.beginPath();
+    ctx.ellipse(0, -hh * 0.25, hw * 0.7, hh * 0.65, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#b7bec7';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    for (let i = -2; i <= 2; i++) {
+      const tx = i * (hw * 0.28);
+      ctx.beginPath();
+      ctx.moveTo(tx, hh * 0.1);
+      ctx.quadraticCurveTo(tx + (i >= 0 ? 4 : -4), hh * 0.7, tx * 0.6, hh * 0.95);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(hw * 0.3, -hh * 0.35, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // 佔位圖形：對應海參圖片（sea​​cucumber.png 系列，細長膠囊狀身體）
+    const key = (currentImg === seaCucumberImg2) ? 'seacucumber2' : 'seacucumber';
+    const w = (key === 'seacucumber2') ? 39 : REAL_IMG_SIZE.seacucumber.w;
+    const h = (key === 'seacucumber2') ? 19 : REAL_IMG_SIZE.seacucumber.h;
+    const hw = w / 2, hh = h / 2;
+    ctx.fillStyle = '#8d8a7c';
+    ctx.beginPath();
+    ctx.moveTo(-hw, 0);
+    ctx.quadraticCurveTo(-hw, -hh, 0, -hh);
+    ctx.quadraticCurveTo(hw, -hh, hw, 0);
+    ctx.quadraticCurveTo(hw, hh, 0, hh);
+    ctx.quadraticCurveTo(-hw, hh, -hw, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.arc(i * hw * 0.5, 0, hh * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   ctx.restore();
 }
+function createTrash() {
+  // 加入海膽類型
+  const types = ['can', 'bottle', 'seaurchin'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const fromLeft = Math.random() < 0.5;
+  const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
+  const dir = fromLeft ? 1 : -1;
+  const baseY = Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY();
+  return {
+    x,
+    y: baseY,
+    baseY, // 新增：上下游動的基準高度
+    bobPhase: Math.random() * Math.PI * 2, // 新增：隨機起始相位
+    bobSpeed: 0.5 + Math.random() * 0.9,   // 新增：上下游動速度（隨機）
+    bobAmplitude: 12 + Math.random() * 20, // 新增：上下游動幅度（隨機）
+    bobTime: 0,
+    // 速度降低 30%（原速度 * 0.7）
+    speed: 0.7 + Math.random() * 1.05,
+    dir,
+    type,
+    hit: false,
+    lifting: false,
+    flying: false, // 新增：是否已經進入「飛向碗」動畫階段
+    flyT: 0,
+    fadeOut: false, // 新增：釣到垃圾後也要有淡出動畫，不能瞬間消失
+    alpha: 1,
+    fadeElapsed: 0
+  };
+}
+function spawnTrash() {
+  trashes = [];
+  for (let i = 0; i < TRASH_COUNT; i++) {
+    trashes.push(createTrash());
+  }
+}
+function drawTrash(trash) {
+  ctx.save();
+  ctx.translate(trash.x, trash.y);
+  ctx.scale(trash.dir, 1);
+  ctx.lineWidth = 2.2;
+  // 新增：釣到垃圾後也要先完全顯示一段時間，再花時間慢慢淡出
+  if (trash.fadeOut) {
+    trash.fadeElapsed = (trash.fadeElapsed || 0) + deltaTime;
+    if (trash.fadeElapsed < CATCH_FADE_HOLD_MS) {
+      trash.alpha = 1;
+    } else {
+      const progress = (trash.fadeElapsed - CATCH_FADE_HOLD_MS) / CATCH_FADE_DURATION_MS;
+      trash.alpha = Math.max(0, 1 - progress);
+    }
+    ctx.globalAlpha = trash.alpha;
+  }
+  if (trash.type === 'can') {
+    // 改為顯示罐頭圖片（原尺寸，置中）
+    if (canImg.complete && canImg.naturalWidth > 0) {
+      ctx.drawImage(
+        canImg,
+        -canImg.naturalWidth / 2,
+        -canImg.naturalHeight / 2
+      );
+    } else {
+      // 圖片尚未載入時，顯示貼近 can.png（45x66）外形的佔位圖形：灰色罐身＋紅色罐口
+      const hw = REAL_IMG_SIZE.can.w / 2, hh = REAL_IMG_SIZE.can.h / 2;
+      ctx.fillStyle = '#9aa0a6';
+      ctx.fillRect(-hw, -hh + 6, hw * 2, hh * 2 - 6);
+      ctx.fillStyle = '#c0392b';
+      ctx.fillRect(-hw, -hh, hw * 2, 8);
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-hw, -hh + 6, hw * 2, hh * 2 - 6);
+    }
+  } else if (trash.type === 'bottle') {
+    // 改為顯示雨鞋圖片（原尺寸，置中）
+    if (bootImg.complete && bootImg.naturalWidth > 0) {
+      ctx.drawImage(
+        bootImg,
+        -bootImg.naturalWidth / 2,
+        -bootImg.naturalHeight / 2
+      );
+    } else {
+      // 圖片尚未載入時，顯示貼近 boots.png（54x60）外形的佔位圖形：灰色雨鞋剪影（L形靴筒＋靴底）
+      const hw = REAL_IMG_SIZE.boot.w / 2, hh = REAL_IMG_SIZE.boot.h / 2;
+      ctx.fillStyle = '#a9a9a9';
+      ctx.beginPath();
+      ctx.moveTo(-hw * 0.5, -hh);
+      ctx.lineTo(hw * 0.3, -hh);
+      ctx.lineTo(hw * 0.3, hh * 0.35);
+      ctx.lineTo(hw, hh * 0.35);
+      ctx.lineTo(hw, hh);
+      ctx.lineTo(-hw * 0.5, hh);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  } else if (trash.type === 'seaurchin') {
+    // 顯示海膽圖片
+    if (seaUrchinImg.complete && seaUrchinImg.naturalWidth > 0) {
+      ctx.drawImage(
+        seaUrchinImg,
+        -seaUrchinImg.naturalWidth / 2,
+        -seaUrchinImg.naturalHeight / 2
+      );
+    } else {
+      // 圖片尚未載入時，顯示貼近 seaurchin.png（66x60）外形的佔位圖形：深灰圓球＋放射狀尖刺
+      const hw = REAL_IMG_SIZE.seaurchin.w / 2, hh = REAL_IMG_SIZE.seaurchin.h / 2;
+      const r = Math.min(hw, hh) * 0.55;
+      ctx.strokeStyle = '#3a3a3a';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 16; i++) {
+        const ang = (Math.PI * 2 / 16) * i;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(ang) * r * 0.6, Math.sin(ang) * r * 0.6);
+        ctx.lineTo(Math.cos(ang) * Math.max(hw, hh), Math.sin(ang) * Math.max(hw, hh));
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#222';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r, r * 0.85, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+// --- 修改初始化 ---
+// 在 spawnFish 之後呼叫 spawnTrash
 
+// 新增：魚線起點在角色貼圖上的座標（以貼圖左上角為原點，未翻轉前）
+// 這幾個座標已經移到 LINE_PARAMS（lineStartImgX/Y、lineStartImg2X/Y），可在調參面板即時調整
+
+// 判斷目前是否要用「拉竿姿勢」貼圖：按下釣魚鍵、鉤子正在往上甩／已經釣到東西收線時都算
+function isPullingPose() {
+  return fishing || hookThrowing;
+}
+
+// 計算魚線起點的世界座標（會隨 playerDir 左右翻轉而反向）
 function getLineStartPoint() {
-  const pulling = fishing || hookThrowing;
-  const activeImg = pulling ? catImg2 : catImg;
-  // Simplified
+  const pulling = isPullingPose();
+  const activeImg = (pulling && catImg2.complete && catImg2.naturalWidth > 0) ? catImg2 : catImg;
+  if (activeImg.complete && activeImg.naturalWidth > 0) {
+    const imgX = (activeImg === catImg2) ? LINE_PARAMS.lineStartImg2X : LINE_PARAMS.lineStartImgX;
+    const imgY = (activeImg === catImg2) ? LINE_PARAMS.lineStartImg2Y : LINE_PARAMS.lineStartImgY;
+    const offsetX = imgX - activeImg.naturalWidth / 2;
+    const offsetY = imgY - activeImg.naturalHeight / 2;
+    return {
+      x: bigFish.x + playerDir * offsetX,
+      y: (bigFish.y - 40) + offsetY
+    };
+  }
+  // 圖片尚未載入時的備用座標
   return { x: bigFish.x, y: bigFish.y - 10 };
 }
 
+// 初始化釣魚線點
 function initLinePoints() {
   linePoints = [];
   lineVels = [];
@@ -1946,11 +1710,369 @@ function initLinePoints() {
   }
 }
 
-// Rank functions (simplified)
+// 每幀更新魚線物理
+function updateLinePhysics() {
+  // 頂端跟隨角色嘴巴座標（會隨 playerDir 左右反向）
+  const lineStart = getLineStartPoint();
+  linePoints[0].x = lineStart.x;
+  linePoints[0].y = lineStart.y;
+  // 底端跟隨鉤子
+  linePoints[LINE_POINTS - 1].x = hookDrawX;
+  linePoints[LINE_POINTS - 1].y = hookY;
+
+  // 已移除「甩竿時線保持剛性直線」的邏輯，改成無論哪個階段都用下面統一的彈簧物理，
+  // 這樣線的表現在任何時候（迴圈上衝、自由落下、水下操作）都是一致的彈簧甩動效果。
+
+  // 物理參數：整條線不再用單一彈性係數，改成由竿頭到鉤端漸變，
+  // 靠近竿頭較硬（回彈快、不太晃），靠近鉤端較軟（甩動幅度大），加上重力讓線自然垂墜，
+  // 整體看起來才會像有重量、有鞭梢感的線，而不是均勻軟趴趴的橡皮筋
+  const damp = LINE_PARAMS.lineDamp;
+  const gravity = LINE_PARAMS.lineGravity;
+  for (let i = 1; i < LINE_POINTS - 1; i++) {
+    let prev = linePoints[i - 1];
+    let next = linePoints[i + 1];
+    let self = linePoints[i];
+    const segT = i / (LINE_POINTS - 1); // 0 = 竿頭端，1 = 鉤子端
+    const spring = LINE_PARAMS.lineSpringBase - LINE_PARAMS.lineSpringRange * segT; // 竿頭附近較硬，鉤子附近較軟
+    let vx = (prev.x + next.x) / 2 - self.x;
+    let vy = (prev.y + next.y) / 2 - self.y;
+    lineVels[i].x = (lineVels[i].x + vx * spring) * damp;
+    lineVels[i].y = (lineVels[i].y + vy * spring + gravity * segT) * damp;
+    self.x += lineVels[i].x;
+    self.y += lineVels[i].y;
+  }
+}
+
+// 新增：動態標記目前有碰撞的線段
+function updateLineCollisions() {
+  lineCollisions = Array(LINE_POINTS - 1).fill(false);
+  // 檢查所有魚
+  for (let fish of fishes) {
+    if (fish.lifting || fish.caught) continue;
+    for (let i = 0; i < linePoints.length - 1; i++) {
+      let x1 = linePoints[i].x, y1 = linePoints[i].y;
+      let x2 = linePoints[i+1].x, y2 = linePoints[i+1].y;
+      let dx = x2 - x1, dy = y2 - y1;
+      let len2 = dx*dx + dy*dy;
+      let t = ((fish.x - x1) * dx + (fish.y - y1) * dy) / len2;
+      t = Math.max(0, Math.min(1, t));
+      let px = x1 + t * dx, py = y1 + t * dy;
+      let dist = Math.hypot(fish.x - px, fish.y - py);
+      if (dist < LINE_PARAMS.lineCollisionDist) {
+        lineCollisions[i] = true;
+      }
+    }
+  }
+  // 檢查所有垃圾
+  for (let trash of trashes) {
+    if (trash.lifting || trash.hit) continue;
+    for (let i = 0; i < linePoints.length - 1; i++) {
+      let x1 = linePoints[i].x, y1 = linePoints[i].y;
+      let x2 = linePoints[i+1].x, y2 = linePoints[i+1].y;
+      let dx = x2 - x1, dy = y2 - y1;
+      let len2 = dx*dx + dy*dy;
+      let t = ((trash.x - x1) * dx + (trash.y - y1) * dy) / len2;
+      t = Math.max(0, Math.min(1, t));
+      let px = x1 + t * dx, py = y1 + t * dy;
+      let dist = Math.hypot(trash.x - px, trash.y - py);
+      if (dist < LINE_PARAMS.lineCollisionDist) {
+        lineCollisions[i] = true;
+      }
+    }
+  }
+  // 檢查特殊海洋生物
+  if (specialSeaCreature && !specialSeaCreature.lifting && !specialSeaCreature.caught) {
+    for (let i = 0; i < linePoints.length - 1; i++) {
+      let x1 = linePoints[i].x, y1 = linePoints[i].y;
+      let x2 = linePoints[i+1].x, y2 = linePoints[i+1].y;
+      let dx = x2 - x1, dy = y2 - y1;
+      let len2 = dx*dx + dy*dy;
+      let t = ((specialSeaCreature.x - x1) * dx + (specialSeaCreature.y - y1) * dy) / len2;
+      t = Math.max(0, Math.min(1, t));
+      let px = x1 + t * dx, py = y1 + t * dy;
+      let dist = Math.hypot(specialSeaCreature.x - px, specialSeaCreature.y - py);
+      if (dist < LINE_PARAMS.lineCollisionDist) {
+        lineCollisions[i] = true;
+      }
+    }
+  }
+}
+
+// 畫主角與大鍋和大魚
+function drawPlayer() {
+  // 大鍋
+  ctx.save();
+  // --- 修改：y 改用 bowlY，x 改用 bowlX ---
+  let drawPotY = (typeof bowlY === 'number') ? bowlY : pot.y;
+  let drawPotX = (typeof bowlX === 'number') ? bowlX : pot.x;
+  if (hotpotImg.complete && hotpotImg.naturalWidth > 0) {
+    // 用 hotpot.png（開蓋鍋身）素材繪製，寬度對齊 pot.w，並依原圖比例縮放高度
+    const potScale = pot.w / hotpotImg.naturalWidth;
+    const potDrawW = pot.w;
+    const potDrawH = hotpotImg.naturalHeight * potScale;
+    ctx.drawImage(hotpotImg, drawPotX, drawPotY, potDrawW, potDrawH);
+    // 遊戲結束時，把 hotpot_cup.png（鍋蓋）疊在鍋身「上面」，組合成完整鍋子的樣子
+    // 鍋蓋直接用原始尺寸繪製（不隨鍋身縮放）；偏移量已依實際素材尺寸（131x78）等比例校正過
+    if (gameOver && hotpotCupImg.complete && hotpotCupImg.naturalWidth > 0) {
+      const lidDrawW = hotpotCupImg.naturalWidth;
+      const lidDrawH = hotpotCupImg.naturalHeight;
+      const lidX = drawPotX + 13;
+      const lidY = drawPotY - 31 + lidDropOffset;
+      ctx.drawImage(hotpotCupImg, lidX, lidY, lidDrawW, lidDrawH);
+    }
+  } else {
+    // 圖片尚未載入完成時，顯示原本的向量鍋子作為佔位
+    ctx.fillStyle = "#bbb";
+    ctx.beginPath();
+    ctx.ellipse(drawPotX + pot.w/2, drawPotY + pot.h/2, pot.w/2, pot.h/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#888";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    // 鍋邊
+    ctx.beginPath();
+    ctx.ellipse(drawPotX + pot.w/2, drawPotY + 20, pot.w/2, 20, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "#eee";
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+  // 已移除大魚繪製
+  // 主角（貓咪圖片）：按下釣魚鍵、拉竿甩線時換成 cat2.png（拉竿姿勢）；
+  // 其餘時間改用 cat_1~cat_4.png 依移動動畫輪播，停下來就凍結在目前這張
+  ctx.save();
+  ctx.translate(bigFish.x, bigFish.y - 40);
+  ctx.scale(playerDir, 1);
+  const pulling = isPullingPose();
+  let activeCatImg;
+  if (pulling && catImg2.complete && catImg2.naturalWidth > 0) {
+    activeCatImg = catImg2;
+  } else {
+    const moveImg = catMoveImgs[catAnimFrame];
+    activeCatImg = (moveImg && moveImg.complete && moveImg.naturalWidth > 0) ? moveImg : catImg;
+  }
+  if (activeCatImg.complete && activeCatImg.naturalWidth > 0) {
+    ctx.drawImage(
+      activeCatImg,
+      -activeCatImg.naturalWidth / 2,
+      -activeCatImg.naturalHeight / 2
+    );
+  } else {
+    // 尚未載入時，顯示紅色圓形作為佔位
+    ctx.fillStyle = "#e11";
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// 畫釣竿和虛線釣魚線與小圓點鉤子
+function drawRod() {
+  updateLinePhysics();
+  updateLineCollisions();
+  // 畫每段線，根據碰撞狀態決定顏色
+  for (let i = 0; i < linePoints.length - 1; i++) {
+    ctx.save();
+    ctx.strokeStyle = (lineCollisions[i]) ? '#f00' : '#fff';
+    ctx.lineWidth = LINE_PARAMS.lineDrawWidth;
+    ctx.setLineDash([LINE_PARAMS.lineDashLength, LINE_PARAMS.lineDashGap]);
+    ctx.beginPath();
+    ctx.moveTo(linePoints[i].x, linePoints[i].y);
+    ctx.lineTo(linePoints[i+1].x, linePoints[i+1].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+  // 小圓點鉤子
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(hookDrawX, hookY, LINE_PARAMS.hookDotRadius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// 畫魚
+function drawFish(fish) {
+  ctx.save();
+  ctx.translate(fish.x, fish.y);
+  // 體型縮放比例：一般魚沒有 sizeScale 屬性時預設為 1（不影響原本大小）
+  const sizeScale = (typeof fish.sizeScale === 'number') ? fish.sizeScale : 1;
+  ctx.scale(fish.dir * sizeScale, sizeScale);
+  // 新增：漸層消失（先完全顯示一段時間讓玩家看清楚，再花時間慢慢淡出）
+  if (fish.fadeOut) {
+    fish.fadeElapsed = (fish.fadeElapsed || 0) + deltaTime;
+    if (fish.fadeElapsed < CATCH_FADE_HOLD_MS) {
+      fish.alpha = 1;
+    } else {
+      const progress = (fish.fadeElapsed - CATCH_FADE_HOLD_MS) / CATCH_FADE_DURATION_MS;
+      fish.alpha = Math.max(0, 1 - progress);
+    }
+    ctx.globalAlpha = fish.alpha;
+  }
+  if (fish.color === 'gold') {
+    let currentImg;
+    if (fish.lifting || fish.caught) {
+      // 被吊起、以及被吊入碗裡的瞬間都維持這個動畫（yellow_fish4 / yellow_fish5，0.2秒切換一張），不要跳回游泳圖
+      if (typeof fish.liftAnimTime !== 'number') fish.liftAnimTime = 0;
+      fish.liftAnimTime += deltaTime / 1000; // 轉換為秒
+      const liftFrame = Math.floor(fish.liftAnimTime * 5) % 2; // 0.2秒切換一次，2張圖循環
+      currentImg = (liftFrame === 0) ? yellowFishImg4 : yellowFishImg5;
+    } else {
+      // 更新動畫時間（僅黃魚游動時）
+      if (!fish.caught) {
+        fish.animTime += deltaTime / 1000; // 轉換為秒
+      }
+      // 根據動畫時間決定使用哪張圖片（0.25秒切換一次）
+      const animFrame = Math.floor(fish.animTime * fish.animSpeed) % 3; // 3張圖片循環
+      if (animFrame === 0) currentImg = yellowFishImg;
+      else if (animFrame === 1) currentImg = yellowFishImg2;
+      else currentImg = yellowFishImg3;
+    }
+
+    // 用黃色魚圖片（原尺寸，置中）
+    if (currentImg.complete && currentImg.naturalWidth > 0) {
+      ctx.drawImage(
+        currentImg,
+        -currentImg.naturalWidth / 2,
+        -currentImg.naturalHeight / 2
+      );
+    } else {
+      // 尚未載入時，顯示貼近 yellow_fish.png（65x32）尺寸比例的黃色魚形佔位圖
+      const hw = REAL_IMG_SIZE.yellowFish.w / 2, hh = REAL_IMG_SIZE.yellowFish.h / 2;
+      ctx.fillStyle = 'gold';
+      ctx.beginPath();
+      ctx.ellipse(hw * 0.15, 0, hw * 0.75, hh, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-hw * 0.55, 0);
+      ctx.lineTo(-hw, -hh * 0.6);
+      ctx.lineTo(-hw, hh * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.arc(hw * 0.55, -hh * 0.2, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (fish.color === "#fcf") {
+    let currentImg;
+    if (fish.lifting || fish.caught) {
+      // 被吊起、以及被吊入碗裡的瞬間都維持這個動畫（purple_fish4 / purple_fish5，0.2秒切換一張），不要跳回游泳圖
+      if (typeof fish.liftAnimTime !== 'number') fish.liftAnimTime = 0;
+      fish.liftAnimTime += deltaTime / 1000; // 轉換為秒
+      const liftFrame = Math.floor(fish.liftAnimTime * 5) % 2; // 0.2秒切換一次，2張drawTrash圖循環
+      currentImg = (liftFrame === 0) ? purpleFishImg4 : purpleFishImg5;
+    } else {
+      // 新增：紫色魚動畫（0.25秒一張，三張循環）
+      if (!fish.caught) {
+        fish.animTime += deltaTime / 1000;
+      }
+      const animFrame = Math.floor(fish.animTime * 4) % 3; // 0.25秒一張
+      if (animFrame === 0) currentImg = purpleFishImg;
+      else if (animFrame === 1) currentImg = purpleFishImg2;
+      else currentImg = purpleFishImg3;
+    }
+    if (currentImg.complete && currentImg.naturalWidth > 0) {
+      ctx.drawImage(
+        currentImg,
+        -currentImg.naturalWidth / 2,
+        -currentImg.naturalHeight / 2
+      );
+    } else {
+      // 尚未載入時，顯示貼近 purple_fish.png（65x32）尺寸比例、帶粉紫斑點的魚形佔位圖
+      const hw = REAL_IMG_SIZE.purpleFish.w / 2, hh = REAL_IMG_SIZE.purpleFish.h / 2;
+      ctx.fillStyle = '#fcf';
+      ctx.beginPath();
+      ctx.ellipse(hw * 0.15, 0, hw * 0.75, hh, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-hw * 0.55, 0);
+      ctx.lineTo(-hw, -hh * 0.6);
+      ctx.lineTo(-hw, hh * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#a020a0';
+      [[-hw*0.1,-hh*0.3],[hw*0.3,0],[-hw*0.15,hh*0.35]].forEach(function(p) {
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.arc(hw * 0.55, -hh * 0.2, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    // 黃色魚維持原樣
+    ctx.fillStyle = fish.caught ? "#aaa" : fish.color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 魚尾
+    ctx.beginPath();
+    ctx.moveTo(-22, 0);
+    ctx.lineTo(-32, -8);
+    ctx.lineTo(-32, 8);
+    ctx.closePath();
+    ctx.fillStyle = fish.caught ? "#888" : "#f90";
+    ctx.fill();
+    // 眼睛
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(10, -4, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.arc(11, -4, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    // 表情
+    ctx.save();
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    if (fish.face === 'smile') {
+      ctx.beginPath();
+      ctx.arc(10, 2, 3, 0, Math.PI, false);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(10, 2, 1, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// 魚被釣上來的狀態
+for (let fish of fishes) fish.lifting = false;
+
+// 新增：分數條與飢餓條更新
+function updateScoreBar(score) {
+  const scoreCircles = document.getElementById('scoreCircles');
+  scoreCircles.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    scoreCircles.innerHTML += `<span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:${i<score/100?'#0f0':'#fff'};border:2px solid #00f;margin-right:2px;"></span>`;
+  }
+}
+function updateHungerBar(hunger) {
+  const hungerMeter = document.getElementById('hungerMeter');
+  hungerMeter.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    hungerMeter.innerHTML += `<span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:${i<hunger?'orange':'#fff'};border:2px solid orange;margin-right:2px;"></span>`;
+  }
+}
+
+// --- 新增 ---
+let animationId = null;
+let countdownTimer = null;
+
+// --- 排行榜相關 ---
 const RANK_KEY = 'fishing_ranks';
 function getRanks() {
   let arr = [];
-  try { arr = JSON.parse(localStorage.getItem(RANK_KEY)) || []; } catch(e) {}
+  try {
+    arr = JSON.parse(localStorage.getItem(RANK_KEY)) || [];
+  } catch(e) {}
   return Array.isArray(arr) ? arr : [];
 }
 function saveRanks(arr) {
@@ -1972,39 +2094,1134 @@ function showRankModal(thisScore) {
   const rankList = document.getElementById('rankList');
   let arr = getRanks();
   let html = '<table class="rank-table"><thead><tr><th>名次</th><th>分數</th></tr></thead><tbody>';
+  let selfIdx = -1;
   arr.forEach((r, i) => {
-    let isSelf = r.score === thisScore;
-    html += `<tr${isSelf ? ' class="self-score"' : ''}><td>${i+1}</td><td>${r.score}</td></tr>`;
+    let isSelf = (selfIdx === -1 && r.score === thisScore && r.time === arr.find(x => x.score === thisScore && x.time === r.time).time);
+    if (isSelf) selfIdx = i;
+    html += `<tr${isSelf ? ' class="self-score"' : ''}><td${isSelf ? ' style="color:#e11;font-weight:bold;"' : ''}>${i+1}</td><td${isSelf ? ' style="color:#e11;font-weight:bold;"' : ''}>${r.score}</td></tr>`;
   });
   html += '</tbody></table>';
-  rankList.innerHTML = html || '<div>目前沒有紀錄</div>';
+  if (arr.length === 0) html = '<div style="text-align:center;color:#888;">目前沒有紀錄</div>';
+  rankList.innerHTML = html;
   rankModal.style.display = 'flex';
 }
+document.getElementById('closeRankModal').onclick = function() {
+  document.getElementById('rankModal').style.display = 'none';
+};
+document.getElementById('rankModal').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+document.getElementById('clearRankBtn').onclick = function() {
+  clearRanks();
+  showRankModal(-1);
+};
+window.addEventListener('keydown', function(e) {
+  if (document.getElementById('rankModal').style.display === 'flex' && (e.key === 'Escape' || e.key === 'Esc')) {
+    document.getElementById('rankModal').style.display = 'none';
+  }
+});
 
-// Event listeners
+// 魚／垃圾／特殊海洋生物出生時的「最高路徑」高度，跟著海平面高度參數走
+// （海平面調高，這條線跟著往下；海平面調低，這條線跟著往上，魚群活動範圍隨之整體平移）
+function getFishTopY() {
+  return LINE_PARAMS.seaSurfaceY + 20;
+}
+
+// 遊戲內部畫布的高度（對應 resizeGameCanvas 裡的 GAME_HEIGHT，固定 600）。
+// 這裡獨立寫死一份常數，是因為 spawnFish() 等生成函式在遊戲一開始執行時，
+// canvas.height 可能還沒被 resizeGameCanvas() 設定成正式尺寸，用 canvas.height 算會不準。
+const GAME_CANVAS_HEIGHT = 960;
+
+// 魚／垃圾／特殊海洋生物出生時的「最低路徑」高度上限：
+// 扣掉上下漂動的最大幅度（bobAmplitude 最高約 32）與圖片本身的高度，
+// 抓一個安全邊界，確保生成出來的最低路徑，整隻圖片都還在畫面裡，不會有一部分掉到畫面下緣看不到。
+function getFishBottomY() {
+  return GAME_CANVAS_HEIGHT - 70;
+}
+
+// --- 新增：海浪波動 ---
+let wavePhase = 0;
+function getWaveY(x, t) {
+  // 主波浪 + 次波浪疊加
+  let y = LINE_PARAMS.seaSurfaceY + Math.sin((x/120) + t) * LINE_PARAMS.waveAmplitudeMain + Math.sin((x/40) - t*1.7) * LINE_PARAMS.waveAmplitudeSecondary;
+  // --- 疊加主角擾動波 ---
+  let dx = x - waveDisturb.x;
+  let disturb = waveDisturb.v * Math.exp(-dx*dx/900) * Math.sin(t*2 + dx/30);
+  y += disturb * LINE_PARAMS.waveDisturbAmplitude; // 擾動強度
+  return y;
+}
+
+// 新增：緊張背景音效
+const tensionSound = new Audio('sound/Data_4.wav');
+let lastTensionSoundTime = 0;
+let tensionSoundInterval = 2000; // 初始2秒
+
+// --- 分數／元氣 HUD，樣式參考原版（藍框白字「分數」＋徽章數字／橘框白字「元氣」＋紅橘漸層量表），
+//           分數在上、元氣量表在下，兩排都是「粗體字＋外框」，取代原本分散在畫面各處的小字 ---
+function drawScoreAndEnergyHUD() {
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+
+  // 第一排：分數（改用 ui_1.png 圖片標籤，取代原本的文字＋外框畫法）
+  const scoreLabelX = 20, scoreLabelY = 42;
+  const scoreLabelW = scoreLabelImg.naturalWidth || 98;
+  const scoreLabelH = scoreLabelImg.naturalHeight || 28;
+  const scoreLabelImgY = scoreLabelY - scoreLabelH + 4;
+  if (scoreLabelImg.complete && scoreLabelImg.naturalWidth > 0) {
+    ctx.drawImage(scoreLabelImg, scoreLabelX, scoreLabelImgY, scoreLabelW, scoreLabelH);
+  } else {
+    // 圖片還沒載入完成時的備用畫法（白字＋藍色文字外框）
+    ctx.font = "bold 30px Arial";
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#1a6dff";
+    ctx.fillStyle = "#fff";
+    ctx.strokeText("分數", scoreLabelX, scoreLabelY);
+    ctx.fillText("分數", scoreLabelX, scoreLabelY);
+  }
+
+  // 分數數字：改用 0~9 數字圖片依序拼接繪製，取代原本的文字＋外框畫法
+  const scoreText = String(score);
+  const scoreNumX = scoreLabelX + scoreLabelW + 10;
+  const allDigitsLoaded = scoreDigitImgs.every(function(img) { return img.complete && img.naturalWidth > 0; });
+  if (allDigitsLoaded) {
+    const digitH = 33;
+    const digitY = scoreLabelY - digitH + 4;
+    let dx = scoreNumX;
+    for (let i = 0; i < scoreText.length; i++) {
+      const d = parseInt(scoreText[i], 10);
+      const img = scoreDigitImgs[d];
+      const dw = img.naturalWidth;
+      ctx.drawImage(img, dx, digitY, dw, digitH);
+      dx += dw + 1; // 數字間留 1px 小間距
+    }
+  } else {
+    // 圖片還沒載入完成時的備用畫法（白字＋綠色文字外框）
+    ctx.font = "bold 30px Arial";
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#2ecc40";
+    ctx.fillStyle = "#fff";
+    ctx.strokeText(scoreText, scoreNumX, scoreLabelY);
+    ctx.fillText(scoreText, scoreNumX, scoreLabelY);
+  }
+
+  // 第二排：元氣（改用 ui_2.png 圖片標籤，取代原本的文字＋外框畫法）
+  const gaugeLabelX = 20, gaugeLabelY = 88;
+  const gaugeLabelW = energyLabelImg.naturalWidth || 217;
+  const gaugeLabelH = energyLabelImg.naturalHeight || 26;
+  const gaugeLabelImgY = gaugeLabelY - gaugeLabelH + 4;
+  if (energyLabelImg.complete && energyLabelImg.naturalWidth > 0) {
+    ctx.drawImage(energyLabelImg, gaugeLabelX, gaugeLabelImgY, gaugeLabelW, gaugeLabelH);
+  } else {
+    // 圖片還沒載入完成時的備用畫法（白字＋橘色文字外框）
+    ctx.font = "bold 26px Arial";
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#ff8c1a";
+    ctx.fillStyle = "#fff";
+    ctx.strokeText("元氣", gaugeLabelX, gaugeLabelY);
+    ctx.fillText("元氣", gaugeLabelX, gaugeLabelY);
+  }
+
+  const barX = gaugeLabelX + gaugeLabelW + 10, barY = 68;
+  // 量表大小直接採用圖片本身的原始尺寸，不做拉伸變形（圖片還沒載入完成時先用預設 398x22 頂著）
+  const barW = energyGaugeImg.naturalWidth || 398;
+  const barH = energyGaugeImg.naturalHeight || 22;
+  // 底色（量表沒有量的部分，深紅棕色，貼近原版量表底色）
+  ctx.fillStyle = '#7a2b12';
+  ctx.fillRect(barX, barY, barW, barH);
+  // 進度（改用 energy.png 圖片鋪滿量表，跟隨 displayTimeLeft 補間動畫）
+  let percent = Math.max(0, Math.min(1, displayTimeLeft / GAME_TIME));
+  let fillW = Math.max(0, barW * percent);
+  if (fillW > 0 && energyGaugeImg.complete && energyGaugeImg.naturalWidth > 0) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(barX, barY, fillW, barH);
+    ctx.clip();
+    // 圖片以原始大小繪製，不拉伸不變形，只用裁切露出目前元氣比例的寬度
+    ctx.drawImage(energyGaugeImg, barX, barY, barW, barH);
+    ctx.restore();
+  } else {
+    // 圖片還沒載入完成時的備用畫法（紅-橙-黃漸層）
+    let grad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
+    grad.addColorStop(0, '#f00');
+    grad.addColorStop(0.25, '#ff8000');
+    grad.addColorStop(0.6, '#ffe600');
+    grad.addColorStop(1, '#ffe600');
+    ctx.fillStyle = grad;
+    ctx.fillRect(barX, barY, fillW, barH);
+  }
+  // 外框（改細一點，不要太粗）
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(barX, barY, barW, barH);
+  // 目前數值疊在量表右側，方便玩家看到精確數字
+  ctx.font = "bold 16px Arial";
+  ctx.textAlign = 'right';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillStyle = "#fff";
+  const energyText = String(Math.ceil(timeLeft));
+  ctx.strokeText(energyText, barX + barW - 10, barY + barH - 7);
+  ctx.fillText(energyText, barX + barW - 10, barY + barH - 7);
+
+  ctx.restore();
+}
+
+// 遊戲主迴圈
+function gameLoop(currentTime) {
+  try {
+    // 時間控制：確保遊戲速度一致
+    if (!lastTime) lastTime = currentTime;
+    deltaTime = currentTime - lastTime;
+    
+    // 如果幀率太快，跳過這一幀
+    if (deltaTime < frameTime) {
+      animationId = requestAnimationFrame(gameLoop);
+      return;
+    }
+    
+    // 計算時間縮放因子
+    const timeScale = deltaTime / frameTime;
+    lastTime = currentTime;
+    
+    // 防呆：確保 fishes、trashes 一定是陣列
+    if (!Array.isArray(fishes)) fishes = [];
+    if (!Array.isArray(trashes)) trashes = [];
+    
+    if (!gameOver && !bowlSinking && !paramPanelOpen) {
+      elapsedGameTime += deltaTime / 1000; // 累計這一局已經進行的時間
+      const passiveDrain = Math.min(
+        PASSIVE_DRAIN_MAX,
+        PASSIVE_DRAIN_BASE + elapsedGameTime * PASSIVE_DRAIN_ACCEL_PER_SEC
+      );
+      timeLeft = Math.max(0, timeLeft - passiveDrain * (deltaTime / 1000));
+    }
+
+    // 注意：這裡不再呼叫 updateLinePhysics()。
+    // 之前這裡跟 drawRod() 內部各呼叫一次，等於同一幀內用「移動前」跟「移動後」的
+    // 座標各跑一次物理鬆弛，鉤子/釣線的擺動會被拉直、看不出明顯晃動效果。
+    // 現在改成只在 drawRod()（所有位置都更新完之後）呼叫一次，讓晃動效果能確實呈現。
+    wavePhase += 0.035 * timeScale; // 波浪推進（根據時間縮放）
+    // --- 主角移動速度影響波浪 ---
+    let prevX = waveDisturb.x;
+    waveDisturb.x = bowlX + pot.w/2;
+    waveDisturb.v = (waveDisturb.x - prevX);
+    // 可加一點阻尼讓波動慢慢消失
+    waveDisturb.v *= 0.92;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 畫背景圖（天空+海洋）
+    if (bgImg.complete && bgImg.naturalWidth > 0) {
+      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    } else {
+      // 圖片尚未載入完成時的備用漸層
+      let seaY = LINE_PARAMS.seaSurfaceY;
+      let skyGradient = ctx.createLinearGradient(0, 0, 0, seaY);
+      skyGradient.addColorStop(0, '#b3e0ff');
+      skyGradient.addColorStop(0.3, '#e6f6ff');
+      skyGradient.addColorStop(0.7, '#a4c8e1');
+      skyGradient.addColorStop(1, '#7bbbe6');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, seaY);
+      let seaGradient = ctx.createLinearGradient(0, seaY, 0, canvas.height);
+      seaGradient.addColorStop(0, '#7bbbe6');
+      seaGradient.addColorStop(0.15, '#3a8cc1');
+      seaGradient.addColorStop(0.4, '#206090');
+      seaGradient.addColorStop(0.7, '#133a5c');
+      seaGradient.addColorStop(1, '#0a1a2f');
+      ctx.fillStyle = seaGradient;
+      ctx.fillRect(0, seaY, canvas.width, canvas.height - seaY);
+    }
+
+    // --- 畫波浪海平面 ---
+    ctx.save();
+    ctx.beginPath();
+    for (let x = 0; x <= canvas.width; x += 4) {
+      let y = getWaveY(x, wavePhase);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(canvas.width, 0);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#b3e0ff';
+    ctx.globalAlpha = 0.18;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    // --- 畫波浪線 ---
+    ctx.save();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = 0; x <= canvas.width; x += 2) {
+      let y = getWaveY(x, wavePhase);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 控制主角與大魚左右移動
+    if (keyState.left) {
+      bigFish.x -= 6 * timeScale;
+      playerDir = -1;
+    }
+    if (keyState.right) {
+      bigFish.x += 6 * timeScale;
+      playerDir = 1;
+    }
+    if (bigFish.x < bigFish.w/2) bigFish.x = bigFish.w/2;
+    if (bigFish.x > canvas.width - bigFish.w/2) bigFish.x = canvas.width - bigFish.w/2;
+    // 精靈移動動畫：左右鍵（或搖桿）持續按著移動時才會一直換圖，放開/停下來就凍結在目前影格
+    const catIsMoving = keyState.left || keyState.right;
+    if (catIsMoving) {
+      if (!catWasMoving) {
+        // 剛開始移動的第一幀就立刻換下一張圖，不用等滿一個間隔才反應，這樣輕點一下也看得出換圖
+        catAnimFrame = (catAnimFrame + 1) % catMoveImgs.length;
+        catAnimTimer = 0;
+      } else {
+        catAnimTimer += deltaTime;
+        if (catAnimTimer >= CAT_ANIM_FRAME_MS) {
+          catAnimTimer -= CAT_ANIM_FRAME_MS;
+          catAnimFrame = (catAnimFrame + 1) % catMoveImgs.length;
+        }
+      }
+    } else {
+      catAnimTimer = 0; // 停下來時重置計時，下次移動時動畫節奏能重新從整數間隔算起
+    }
+    catWasMoving = catIsMoving;
+    // 精靈（角色）的高度跟著海平面高度參數走，海平面調高/調低時，角色也會跟著往下/往上移動
+    bigFish.y = LINE_PARAMS.seaSurfaceY + 20;
+    // 釣魚線起點、鉤子都跟著 bigFish.x
+
+    // 控制魚鉤上下移動（慣性/拉力）
+    if (!fishing && !hookThrowing) {
+      const HOOK_ACCEL = LINE_PARAMS.hookAccel; // 按下上下鍵時的加速度
+      const HOOK_MAX_VEL = LINE_PARAMS.hookMaxVel; // 速度上限，避免無限加速造成飄浮感
+
+      // 玩家一按上／下鍵操作鉤子，就取消「碰水後自動下沉」，改成完全由玩家控制
+      if (keyState.up || keyState.down) {
+        hookAutoSinking = false;
+      }
+
+      if (hookAutoSinking) {
+        // 拉竿結束、鉤子碰到水面後，如果玩家還沒有操作，鉤子要靠慣性繼續往下沉，
+        // 一路沉到海底（hookMaxY）才會解除這個狀態，之後才會自動慢慢浮回待機高度。
+        hookVelY += LINE_PARAMS.hookAutoSinkGravity * timeScale;
+        if (hookVelY > LINE_PARAMS.hookAutoSinkMaxVelY) hookVelY = LINE_PARAMS.hookAutoSinkMaxVelY;
+        hookVelX *= Math.pow(LINE_PARAMS.hookAutoSinkVelXDamp, timeScale); // 只加強阻尼模擬水阻力，水平位移仍交給下方彈簧物理區塊統一處理，避免重複位移
+        hookY += hookVelY * timeScale;
+        if (hookY >= LINE_PARAMS.hookMaxY) {
+          hookY = LINE_PARAMS.hookMaxY;
+          hookVelY = 0;
+          hookAutoSinking = false; // 碰底了，解除自動下沉，接下來恢復一般行為（會自動慢慢浮回 hookRestY）
+        }
+      } else if (keyState.up) {
+        hookVelY -= HOOK_ACCEL * timeScale; // 向上拉
+      } else if (keyState.down) {
+        hookVelY += HOOK_ACCEL * timeScale; // 向下拉
+      } else {
+        // 沒有按上下時，回到中間的速度也拉快一些，減少「鬆手後還在飄」的感覺
+        let diff = LINE_PARAMS.hookRestY - hookY;
+        if (diff > 0) {
+          hookVelY += diff * LINE_PARAMS.hookReturnUpRate * timeScale; // 上浮速度
+        } else {
+          hookVelY += diff * LINE_PARAMS.hookReturnDownRate * timeScale; // 下沉稍慢，但比原本更緊繃
+        }
+      }
+
+      if (!hookAutoSinking) {
+        // 阻尼：放手瞬間更快煞停，操作起來更「跟手」
+        hookVelY *= Math.pow(LINE_PARAMS.hookVelDamp, timeScale);
+        hookVelY = Math.max(-HOOK_MAX_VEL, Math.min(HOOK_MAX_VEL, hookVelY));
+        hookY += hookVelY * timeScale;
+      }
+      if (hookY < LINE_PARAMS.hookMinY) {
+        hookY = LINE_PARAMS.hookMinY;
+        hookVelY = 0;
+      }
+      if (hookY > LINE_PARAMS.hookMaxY) {
+        hookY = LINE_PARAMS.hookMaxY;
+        hookVelY = 0;
+      }
+    }
+    // --- 鉤子拉竿動畫：真正的物理（初始衝力 + 重力），取代原本固定速度的動畫內插 ---
+    // 分成兩個階段：
+    //   'loop'：拉竿當下給鉤子一股迴圈衝力，讓它沿著迴圈路徑往前往上衝；
+    //           這股衝力會隨時間自然衰減（模擬重力/甩竿阻力），所以衝到接近頂端時會明顯變慢，
+    //           呈現「衝到頂端再後甩」的手感，而不是等速播放的動畫。
+    //   'fall'：迴圈甩完之後，不再是內插動畫，而是真正用重力加速度讓鉤子自由落下，
+    //           一直到鉤子確實碰到水面（或沒入水面以下）才會結束這次拉竿；
+    //           在這整個過程中 fishing / hookThrowing 都維持 true，
+    //           所以無論是迴圈上衝階段還是掉落階段，重複按空白鍵都完全無效，
+    //           一定要等鉤子真的碰到水面才能按空白鍵拉第二次竿。
+    if (hookThrowing) {
+      if (hookThrowPhase === 'loop') {
+        // 修正：落點 X 不再只在甩竿開始那一刻凍結一次，而是每一幀都重新讀取角色目前的 x，
+        // 這樣鉤子迴圈甩出去、準備落下的目標位置，會即時跟著角色的左右移動而改變，
+        // 不會出現「角色明明移動了，鉤子卻還是往舊位置甩」的錯位感。
+        // （hookThrowPlayerDir 仍維持凍結，只用來決定偏移量的方向，避免迴圈甩到一半突然變向）
+        hookThrowEndX = bigFish.x - LINE_PARAMS.hookLandingBehindOffset * hookThrowPlayerDir;
+        // 迴圈中心點：落在起點與終點連線的中點，並往上偏移 hookLoopHeight，
+        // 讓整個迴圈鼓起在連線上方（對應參考圖：鉤子往上繞一圈再落到角色身邊）。
+        // 迴圈本身的幾何形狀維持原本設計，改變的只有「沿著迴圈前進的速度」。
+        const loopCenterX = (hookThrowStartX + hookThrowEndX) / 2;
+        const loopCenterY = (hookThrowStartY + hookThrowEndY) / 2 - LINE_PARAMS.hookLoopHeight;
+
+        // 整個橢圓迴圈要跟著「拉竿當下，精靈與魚鉤之間的傾斜角度」一起歪——這個角度已經在
+        // startHookCast() 裡凍結成 hookThrowTiltAngle，衝破水面那一瞬間就是沿著這個方向衝出去，
+        // 不是每一幀重新用「起點到終點」（終點是很遠的天空高度 hookThrowSkyY）算一次角度。
+        // 如果重新用起點到終點算，垂直距離會遠大於水平落差，算出來的角度會被稀釋到接近 0，
+        // 導致不管拉竿前魚鉤偏得多斜，整個迴圈看起來還是幾乎垂直。hookLoopTiltFactor 用來加強/減弱
+        // 這個效果（1＝傾斜角度完全比照精靈與魚鉤的角度，>1＝更誇張，0＝關閉、迴圈永遠正對垂直方向）。
+        const loopTiltAngle = hookThrowTiltAngle * LINE_PARAMS.hookLoopTiltFactor;
+        const cosTilt = Math.cos(loopTiltAngle), sinTilt = Math.sin(loopTiltAngle);
+        // 世界座標 -> 迴圈本地座標：把整個世界「轉回」讓迴圈主軸朝正上方的角度，
+        // 這樣底下橢圓壓縮的算法完全不用變，繼續假設自己是「正對垂直方向」在算。
+        function toLoopLocal(px, py) {
+          const dx = px - loopCenterX, dy = py - loopCenterY;
+          return { x: dx * cosTilt + dy * sinTilt, y: -dx * sinTilt + dy * cosTilt };
+        }
+        // 迴圈本地座標 -> 世界座標：算完路徑後，再把結果「轉回」疊上魚線的傾斜角度。
+        // 因為起點/終點都是先轉進再轉出（互為反向旋轉），所以起點/終點在世界座標系的位置
+        // 完全不受影響，只有中間鼓起繞圈的部分會跟著整體歪斜。
+        function toLoopWorld(lx, ly) {
+          return { x: loopCenterX + lx * cosTilt - ly * sinTilt, y: loopCenterY + lx * sinTilt + ly * cosTilt };
+        }
+
+        // 讓迴圈變橢圓的技巧：先把水平座標「壓縮」進一個圓形空間裡算角度／半徑（跟原本算法一樣是圓），
+        // 最後畫出來的瞬間再把 X 座標「放大」回真實空間，整條路徑就會變成水平方向被壓扁的橢圓；
+        // 因為起點/終點在壓縮再放大之後會精確還原成原始座標，所以起點和終點的位置完全不受影響，
+        // 只有中間鼓起繞圈的部分會變窄。hookLoopXScale 越小，迴圈越扁越像橢圓；1 則維持原本正圓。
+        const xScale = Math.max(0.05, LINE_PARAMS.hookLoopXScale);
+        const startLocal = toLoopLocal(hookThrowStartX, hookThrowStartY);
+        const endLocal = toLoopLocal(hookThrowEndX, hookThrowEndY);
+        const startDX = startLocal.x / xScale, startDY = startLocal.y;
+        const endDX = endLocal.x / xScale, endDY = endLocal.y;
+        const startAngle = Math.atan2(startDY, startDX);
+        const endAngle = Math.atan2(endDY, endDX);
+        const startRadius = Math.hypot(startDX, startDY);
+        const endRadius = Math.hypot(endDX, endDY);
+
+        // hookLoopDirection：基準繞圈方向（1＝順時針、-1＝逆時針），再乘上拉竿當下凍結的角色面向
+        // （hookThrowPlayerDir，而不是即時 playerDir），讓迴圈朝角色「甩竿那一刻」面向的那一側繞，
+        // 之後就算角色在半空中甩竿時又按了左右鍵轉向，也不會讓迴圈中途變向、動力學被打亂。
+        const dir = (LINE_PARAMS.hookLoopDirection >= 0 ? 1 : -1) * (hookThrowPlayerDir >= 0 ? 1 : -1);
+        let angleDiff = endAngle - startAngle;
+        while (dir > 0 && angleDiff < 0) angleDiff += Math.PI * 2;
+        while (dir < 0 && angleDiff > 0) angleDiff -= Math.PI * 2;
+        const totalAngle = angleDiff + dir * LINE_PARAMS.hookLoopTurns * Math.PI * 2;
+
+        // 拉竿給的初始衝力（hookThrowAngVel）會隨時間自然衰減，模擬重力/甩竿阻力
+        // 把力氣慢慢吃掉；但保留一個下限（hookCastMinAngVel），避免衰減到趨近 0
+        // 導致迴圈卡在半路甩不完，這個下限剛好用來銜接「後甩」收尾的等速甩出動作。
+        hookThrowAngVel *= Math.pow(LINE_PARAMS.hookCastAngDamp, timeScale);
+        if (hookThrowAngVel < LINE_PARAMS.hookCastMinAngVel) hookThrowAngVel = LINE_PARAMS.hookCastMinAngVel;
+
+        hookThrowT += hookThrowAngVel * timeScale;
+
+        // --- 強制完成保險機制 ---
+        // 用「真實經過的毫秒數」（deltaTime，不受 timeScale/幀率影響）累計這次迴圈甩竿已經跑了多久；
+        // 不管角色跑到畫面的哪個位置、不管上面的物理參數怎麼調（甚至面板貼上奇怪的 JSON），
+        // 只要超過 hookLoopForceCompleteMs 這個時間上限，就直接強制把 t 設成 1，
+        // 保證每一次拉竿最終都會確實把整個迴圈甩完，絕不會卡在半路、力量不夠就直接掉下去。
+        hookThrowLoopElapsedMs += deltaTime;
+        if (hookThrowLoopElapsedMs >= LINE_PARAMS.hookLoopForceCompleteMs) {
+          hookThrowT = 1;
+        }
+
+        if (hookThrowT > 1) hookThrowT = 1;
+        const t = hookThrowT;
+
+        const angle = startAngle + totalAngle * t;
+        const radius = startRadius + (endRadius - startRadius) * t;
+
+        // 先在「迴圈本地座標」（永遠正對垂直方向）算出橢圓上的點，最後才轉回世界座標、
+        // 疊上魚線甩出的傾斜角度，讓整個迴圈跟著歪斜。
+        const loopLocalX = Math.cos(angle) * radius * xScale;
+        const loopLocalY = Math.sin(angle) * radius;
+        const loopWorldPt = toLoopWorld(loopLocalX, loopLocalY);
+        hookDrawX = loopWorldPt.x;
+        hookY     = loopWorldPt.y;
+
+        if (hookThrowT >= 1) {
+          // 迴圈甩完，交給真正的重力自由落下階段——此時鉤子通常還在半空中（角色背後上方），
+          // 還沒有碰到水面，所以維持 fishing/hookThrowing = true，空白鍵繼續無效。
+          hookThrowPhase = 'fall';
+          // 用迴圈甩到最後瞬間的速度（角速度 × 半徑變化）換算出真實的切線速度，
+          // 讓自由落下的初始動量延續甩竿最後的力道，銜接得自然，不會憑空歸零卡一下。
+          // 水平分量一樣要乘上 xScale 放大回真實空間，跟畫面座標算法保持一致；
+          // 這股速度是「本地座標」算出來的方向量，最後也要用同一個傾斜角度轉回世界座標
+          // （方向量只需要旋轉，不需要再加上 loopCenter 的位移）。
+          const angVelNow = totalAngle * hookThrowAngVel;
+          const radVelNow = (endRadius - startRadius) * hookThrowAngVel;
+          const localVelX = (-Math.sin(angle) * angVelNow * radius + Math.cos(angle) * radVelNow) * xScale;
+          const localVelY =  Math.cos(angle) * angVelNow * radius + Math.sin(angle) * radVelNow;
+          hookFallVelX = localVelX * cosTilt - localVelY * sinTilt;
+          hookFallVelY = localVelX * sinTilt + localVelY * cosTilt;
+        }
+      } else if (hookThrowPhase === 'fall') {
+        // 'fall' 階段：鉤子還在空中，真正的重力物理，不再是內插動畫。
+        hookFallVelY += LINE_PARAMS.hookFallGravity * timeScale;
+        if (hookFallVelY > LINE_PARAMS.hookFallMaxVelY) hookFallVelY = LINE_PARAMS.hookFallMaxVelY;
+        hookFallVelX *= Math.pow(LINE_PARAMS.hookFallVelXDamp, timeScale);
+        // 修正：自由落下時也持續往「角色目前位置對應的落點」方向做一點點牽引，
+        // 讓玩家在鉤子還沒落水前繼續左右移動時，最終落水點依然會跟著微調，
+        // 而不是完全交給甩竿那一瞬間就已經固定死的動量決定。
+        const fallTargetX = bigFish.x - LINE_PARAMS.hookLandingBehindOffset * hookThrowPlayerDir;
+        hookFallVelX += (fallTargetX - hookDrawX) * LINE_PARAMS.hookXSpring * timeScale;
+        hookDrawX += hookFallVelX * timeScale;
+        hookY += hookFallVelY * timeScale;
+
+        // 鉤子碰到水面，這次拉竿就算結束，玩家可以馬上再按一次空白鍵甩下一竿；
+        // 但如果玩家沒有馬上再拉竿、也沒按上下鍵，鉤子要繼續靠慣性自動下沉到海底，
+        // 碰底之後才會自動浮回待機高度（見下方 hookAutoSinking 的處理）。
+        const waterYHere = getWaveY(hookDrawX, wavePhase);
+        if (hookY >= waterYHere) {
+          hookY = waterYHere;
+          hookThrowing = false;
+          fishing = false;
+          hookThrowPhase = 'loop'; // 重置，準備下一次甩竿
+          hookVelY = hookFallVelY; // 保留碰水當下的下沉動量，讓鉤子自然接著往下沉，而不是瞬間停住
+          hookVelX = hookFallVelX * 0.3;
+          hookAutoSinking = true; // 進入「自動下沉到海底」狀態，直到碰底或玩家操作為止
+        }
+      }
+    } else {
+      // 未在甩竿時，鉤子水平位置改用「彈簧＋慣性（質量）」的物理模擬：
+      // 左右鍵只控制角色移動，鉤子本身不會直接被設定到角色下方，
+      // 而是像被釣線拖著走的重物一樣，靠釣線的拉力（彈簧力）慢慢把它拖過去。
+      // 因為鉤子有慣性，角色快速左右晃動時，方向不斷切換的拉力會互相抵銷，
+      // 鉤子幾乎不太會晃動；只有角色朝同一個方向持續移動，鉤子才會被慢慢拖著走。
+      const anchor = getLineStartPoint();
+      const dx = anchor.x - hookDrawX;
+      const springAccel = dx * LINE_PARAMS.hookXSpring; // 釣線拉力（位移越大，拉力越大）
+      hookVelX += springAccel * timeScale;
+      hookVelX *= Math.pow(LINE_PARAMS.hookXDamp, timeScale); // 阻尼，避免無止盡晃動
+      hookDrawX += hookVelX * timeScale;
+    }
+
+    // --- 鍋子隨波浪浮動 ---
+    // 鍋蓋正在蓋下來，或已經開始下沉時，鍋子都要停止移動
+    if (!bowlSinking && !lidDropping) {
+      let bowlTargetY = getWaveY(bowlX + pot.w/2, wavePhase) - pot.h/2 + LINE_PARAMS.bowlWaterOffsetY;
+      let spring = 0.18, damp = 0.72;
+      if (typeof bowlY !== 'number') bowlY = pot.y;
+      // 新增：碗下沉彈跳
+      bowlY_vel += (bowlTargetY - bowlY) * spring;
+      bowlY_vel += bowlImpulseY;
+      bowlImpulseY *= 0.85; // 衰減
+      bowlY_vel *= damp;
+      bowlY += bowlY_vel;
+      // --- 新增：碗慢慢向右移動，到最右邊後再慢慢向左移動，來回反覆 ---
+      if (typeof bowlX !== 'number') bowlX = pot.x;
+      bowlX += bowlXDir * bowlXSpeed * timeScale;
+      if (bowlX > bowlXMax) {
+        bowlX = bowlXMax;
+        bowlXDir = -1;
+      } else if (bowlX < bowlXMin) {
+        bowlX = bowlXMin;
+        bowlXDir = 1;
+      }
+    }
+
+    // --- 新增：鍋蓋往下蓋的動畫，蓋緊後才開始鍋子下沉 ---
+    if (lidDropping) {
+      lidDropOffset += LID_DROP_SPEED * timeScale;
+      if (lidDropOffset >= 0) {
+        lidDropOffset = 0;
+        lidDropping = false;
+        // 鍋蓋蓋緊了，換成鍋子整個往下沉的動畫（從目前所在高度開始沉，而不是跳回原位）
+        bowlSinking = true;
+        bowlSinkTargetY = null;
+        if (typeof bowlY !== 'number') bowlY = pot.y;
+      }
+    }
+
+    // 畫主角和釣竿
+    drawPlayer();
+    drawRod();
+
+    // 畫魚
+    for (let fish of fishes) {
+      if (!fish.caught) {
+        fish.x += fish.speed * fish.dir * timeScale;
+        // 新增：讓魚一邊游一邊隨機上下浮動（被釣起／正在下沉回海裡的魚不套用，
+        // 不然這裡改掉的 y 會蓋掉「跟著釣線／鉤子移動」或「下沉動畫」用的座標，導致魚吊不起來）
+        if (!fish.lifting && !fish.falling) {
+          fish.bobTime = (fish.bobTime || 0) + deltaTime / 1000;
+          fish.y = fish.baseY + Math.sin(fish.bobTime * fish.bobSpeed + fish.bobPhase) * fish.bobAmplitude;
+        }
+        // 如果游出畫面：
+        // - 一般魚：直接原地重生成一條新魚（維持畫面上魚的總數固定）
+        // - 小黃魚群的魚：游出畫面就直接消失、不再補新的，
+        //   這樣一群魚游完之後就會恢復成只有一般魚，並乾淨地等待下一次 35 秒倒數
+        if ((fish.dir === 1 && fish.x > canvas.width + SPAWN_MARGIN) || (fish.dir === -1 && fish.x < -SPAWN_MARGIN)) {
+          if (fish.fishTier === 'school') {
+            fish.removeMe = true;
+            continue; // 不畫也不補新魚，直接跳過
+          }
+          Object.assign(fish, createFish());
+        }
+      } else if (fish.fadeOut) {
+        // 已經被釣中、正在淡出：跟著碗一起移動，不要卡死在畫面固定座標上
+        fish.x = bowlX + (fish.caughtOffsetX || 0);
+        fish.y = bowlY + (fish.caughtOffsetY || 0);
+      }
+      drawFish(fish);
+    }
+    // 把游出畫面的小黃魚群成員從陣列中移除，避免牠們一直留在 fishes 裡佔用數量
+    if (fishes.some(f => f.removeMe)) {
+      fishes = fishes.filter(f => !f.removeMe);
+    }
+
+    // 畫垃圾
+    for (let trash of trashes) {
+      if (!trash.lifting && !trash.hit) {
+        trash.x += trash.speed * trash.dir * timeScale;
+        // 新增：讓垃圾一邊漂一邊隨機上下浮動（正在被釣起或掉回海裡的垃圾不套用，
+        // 避免蓋掉「跟著釣線／鉤子移動」或「掉回海裡」動畫用的座標）
+        if (!trash.falling) {
+          trash.bobTime = (trash.bobTime || 0) + deltaTime / 1000;
+          trash.y = trash.baseY + Math.sin(trash.bobTime * trash.bobSpeed + trash.bobPhase) * trash.bobAmplitude;
+        }
+        if ((trash.dir === 1 && trash.x > canvas.width + SPAWN_MARGIN) || (trash.dir === -1 && trash.x < -SPAWN_MARGIN)) {
+          // 重新生成
+          Object.assign(trash, createTrash());
+        }
+      } else if (trash.hit && trash.fadeOut) {
+        // 已經釣中、正在淡出：跟著碗一起移動，不要卡死在畫面固定座標上
+        trash.x = bowlX + (trash.caughtOffsetX || 0);
+        trash.y = bowlY + (trash.caughtOffsetY || 0);
+      }
+      drawTrash(trash);
+      // 淡出動畫播完才真正重置產生新的垃圾，讓玩家先看清楚淡出過程
+      if (trash.hit && trash.fadeOut && trash.alpha <= 0) {
+        Object.assign(trash, createTrash());
+      }
+    }
+
+    // 垃圾被釣起來動畫：全程緊貼釣線／鉤子，沒有自己獨立的物理運動
+    for (let trash of trashes) {
+      if (trash.lifting && !trash.hit) {
+        let isHookCatch = (typeof trash.hookLineIndex !== 'number') || trash.hookLineIndex >= LINE_POINTS - 1;
+        // 每一幀都直接把垃圾的位置設成鉤子或釣線上那一點的當下位置
+        if (isHookCatch) {
+          trash.x = hookDrawX;
+          trash.y = hookY;
+        } else {
+          let idx = trash.hookLineIndex;
+          let tt = typeof trash.hookLineT === 'number' ? trash.hookLineT : 0;
+          let p1 = linePoints[idx];
+          let p2 = linePoints[idx + 1] || p1;
+          trash.x = p1.x + (p2.x - p1.x) * tt;
+          trash.y = p1.y + (p2.y - p1.y) * tt;
+        }
+
+        let waterY = getWaveY(trash.x, wavePhase);
+        let aboveWater = trash.y <= waterY;
+        // 記錄前一幀的 Y 座標，用來判斷這一幀是「往下」還是「往上」經過碗
+        let prevLiftY = (typeof trash.prevLiftY === 'number') ? trash.prevLiftY : trash.y;
+        // 只有從碗的上方往下經過才算數；從下面往上經過碗不算
+        let movingDownIntoPot = trash.y > prevLiftY + 0.01;
+
+        if (aboveWater) {
+          trash.everAboveWater = true;
+          let inPot = isEnteringPotFromAbove(trash.x, trash.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
+          if (inPot) {
+            // 只有真的掉進碗裡才會扣元氣
+            trash.hit = true;
+            // 新增：進入漸層消失動畫（不要立刻消失，讓玩家先看清楚真的釣到了）
+            trash.fadeOut = true;
+            trash.alpha = 1;
+            trash.fadeElapsed = 0;
+            // 新增：記錄相對於碗的偏移量，讓垃圾在淡出期間跟著碗一起移動
+            trash.caughtOffsetX = trash.x - bowlX;
+            trash.caughtOffsetY = trash.y - bowlY;
+            // 新增：垃圾進入碗 fadeOut 時播放扣元氣音效（延遲 1 秒）
+            penaltySound.currentTime = 0;
+            setTimeout(() => penaltySound.play(), 1000); // 延遲1秒播放
+            if (timeLeft > 0 && !gameOver) {
+              timeLeft = Math.max(0, timeLeft - TRASH_PENALTY);
+            }
+            trash.lifting = false;
+            trash.everAboveWater = false;
+          }
+          // 還沒對到碗：繼續黏著鉤子/線等待玩家移動貓咪對準
+        } else {
+          if (trash.everAboveWater) {
+            // 曾經被拉出水面過，但沒對準碗、鉤子又沉回海裡：脫鉤沉回海底，之後繼續正常漂浮
+            trash.falling = true;
+            trash.fallT = 0;
+            trash.fallStartY = trash.y;
+            trash.fallEndY = 530 + Math.random() * 40;
+            trash.lifting = false;
+            trash.everAboveWater = false;
+          } else if (!fishing && !hookThrowing) {
+            // 修正：把 baseY 同步成目前實際位置，避免下一幀用舊的 baseY 計算位置，
+            // 造成垃圾瞬間「消失、瞬移回海裡」的跳動感
+            trash.baseY = trash.y;
+            trash.lifting = false;
+            trash.hookLineIndex = null;
+            trash.hookLineT = 0;
+          }
+        }
+        // 記錄這一幀的 Y 座標，供下一幀判斷方向使用
+        trash.prevLiftY = trash.y;
+      }
+      // 沒接住的垃圾：沉回海底後繼續往前漂（下沉速度跟漂動速度差不多）
+      if (trash.falling) {
+        let fallSpeed = trash.speed * 0.8;
+        if (trash.y < trash.fallEndY) {
+          trash.y += fallSpeed * timeScale;
+          if (trash.y > trash.fallEndY) trash.y = trash.fallEndY;
+        } else {
+          trash.y -= fallSpeed * timeScale;
+          if (trash.y < trash.fallEndY) trash.y = trash.fallEndY;
+        }
+        if (Math.abs(trash.y - trash.fallEndY) < 1) {
+          trash.y = trash.fallEndY;
+          // 修正：下沉動畫結束時同步 baseY，避免恢復自由漂動那一幀又跳回舊的 baseY
+          trash.baseY = trash.y;
+          trash.falling = false;
+        }
+      }
+    }
+
+    // 畫特殊海洋生物（魷魚/章魚）
+    if (specialSeaCreature) {
+      if (!specialSeaCreature.caught && !specialSeaCreature.lifting) {
+        specialSeaCreature.x += specialSeaCreature.speed * specialSeaCreature.dir * timeScale;
+        if ((specialSeaCreature.dir === 1 && specialSeaCreature.x > canvas.width + SPAWN_MARGIN) || (specialSeaCreature.dir === -1 && specialSeaCreature.x < -SPAWN_MARGIN)) {
+          specialSeaCreature = null; // 游出畫面消失
+        }
+      } else if (specialSeaCreature.caught && specialSeaCreature.fadeOut) {
+        // 已經釣中、正在淡出：跟著碗一起移動，不要卡死在畫面固定座標上
+        specialSeaCreature.x = bowlX + (specialSeaCreature.caughtOffsetX || 0);
+        specialSeaCreature.y = bowlY + (specialSeaCreature.caughtOffsetY || 0);
+      }
+      // 即使已經 caught，也要繼續畫，直到淡出動畫播完為止，跟黃魚一致
+      if (specialSeaCreature) {
+        drawSpecialSeaCreature(specialSeaCreature);
+      }
+    }
+    // 特殊生物被釣上來動畫：全程緊貼釣線／鉤子，沒有自己獨立的物理運動
+    if (specialSeaCreature && specialSeaCreature.lifting && !specialSeaCreature.caught) {
+      let isHookCatch = (typeof specialSeaCreature.hookLineIndex !== 'number') || specialSeaCreature.hookLineIndex >= LINE_POINTS - 1;
+      if (isHookCatch) {
+        specialSeaCreature.x = hookDrawX;
+        specialSeaCreature.y = hookY;
+      } else {
+        let idx = specialSeaCreature.hookLineIndex;
+        let tt = typeof specialSeaCreature.hookLineT === 'number' ? specialSeaCreature.hookLineT : 0;
+        let p1 = linePoints[idx];
+        let p2 = linePoints[idx + 1] || p1;
+        specialSeaCreature.x = p1.x + (p2.x - p1.x) * tt;
+        specialSeaCreature.y = p1.y + (p2.y - p1.y) * tt;
+      }
+
+      let waterY = getWaveY(specialSeaCreature.x, wavePhase);
+      let aboveWater = specialSeaCreature.y <= waterY;
+      // 記錄前一幀的 Y 座標，用來判斷這一幀是「往下」還是「往上」經過碗
+      let prevLiftY = (typeof specialSeaCreature.prevLiftY === 'number') ? specialSeaCreature.prevLiftY : specialSeaCreature.y;
+      // 只有從碗的上方往下經過才算數；從下面往上經過碗不算
+      let movingDownIntoPot = specialSeaCreature.y > prevLiftY + 0.01;
+
+      if (aboveWater) {
+        specialSeaCreature.everAboveWater = true;
+        let inPot = isEnteringPotFromAbove(specialSeaCreature.x, specialSeaCreature.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
+        if (inPot && timeLeft > 0 && !gameOver) {
+          specialSeaCreature.caught = true;
+          // 新增：記錄相對於碗的偏移量，讓特殊生物在淡出期間跟著碗一起移動
+          specialSeaCreature.caughtOffsetX = specialSeaCreature.x - bowlX;
+          specialSeaCreature.caughtOffsetY = specialSeaCreature.y - bowlY;
+          // 分數比例：魷魚／章魚 400、黃魚 200、小黃魚 100、海參 20（元氣依同比例縮放）
+          if (specialSeaCreature.type === 'squid') {
+            score += BIG_FISH_SCORE;
+            timeLeft = Math.min(GAME_TIME, timeLeft + BIG_FISH_ENERGY);
+          } else if (specialSeaCreature.type === 'octopus') {
+            score += BIG_FISH_SCORE;
+            timeLeft = Math.min(GAME_TIME, timeLeft + BIG_FISH_ENERGY);
+          } else if (specialSeaCreature.type === 'seacucumber') {
+            score += SEA_CUCUMBER_SCORE;
+            timeLeft = Math.min(GAME_TIME, timeLeft + SEA_CUCUMBER_ENERGY);
+          }
+          // 進入漸層消失動畫
+          specialSeaCreature.fadeOut = true;
+          specialSeaCreature.alpha = 1;
+          specialSeaCreature.fadeElapsed = 0;
+          // 新增：只有特殊生物進入fadeOut時才播放食物音效
+          if (specialSeaCreature.type === 'squid' || specialSeaCreature.type === 'octopus' || specialSeaCreature.type === 'seacucumber') {
+            playRandomFoodSound();
+          }
+          // 下一隻特殊生物計時
+          scheduleSpecialSeaCreature();
+          // 消失（等淡出動畫完全播完再清除，時長跟其他物品一致）
+          setTimeout(() => { specialSeaCreature = null; }, CATCH_FADE_HOLD_MS + CATCH_FADE_DURATION_MS);
+          specialSeaCreature.lifting = false;
+          specialSeaCreature.everAboveWater = false;
+        }
+        // 還沒對到碗：繼續黏著鉤子/線等待玩家移動貓咪對準
+      } else {
+        if (specialSeaCreature.everAboveWater) {
+          // 曾經被拉出水面過，但沒對準碗、鉤子又沉回海裡：脫鉤沉回海底，之後繼續正常游動
+          specialSeaCreature.falling = true;
+          specialSeaCreature.fallT = 0;
+          specialSeaCreature.fallStartY = specialSeaCreature.y;
+          specialSeaCreature.fallEndY = 530 + Math.random() * 40;
+          specialSeaCreature.lifting = false;
+          specialSeaCreature.everAboveWater = false;
+        } else if (!fishing && !hookThrowing) {
+          specialSeaCreature.lifting = false;
+          specialSeaCreature.hookLineIndex = null;
+          specialSeaCreature.hookLineT = 0;
+        }
+      }
+      // 記錄這一幀的 Y 座標，供下一幀判斷方向使用
+      specialSeaCreature.prevLiftY = specialSeaCreature.y;
+    }
+    // 沒接住的特殊生物：沉回海底後繼續往前游（下沉速度跟游動速度差不多）
+    if (specialSeaCreature && specialSeaCreature.falling) {
+      let fallSpeed = specialSeaCreature.speed * 0.8;
+      if (specialSeaCreature.y < specialSeaCreature.fallEndY) {
+        specialSeaCreature.y += fallSpeed * timeScale;
+        if (specialSeaCreature.y > specialSeaCreature.fallEndY) specialSeaCreature.y = specialSeaCreature.fallEndY;
+      } else {
+        specialSeaCreature.y -= fallSpeed * timeScale;
+        if (specialSeaCreature.y < specialSeaCreature.fallEndY) specialSeaCreature.y = specialSeaCreature.fallEndY;
+      }
+      if (Math.abs(specialSeaCreature.y - specialSeaCreature.fallEndY) < 1) {
+        specialSeaCreature.y = specialSeaCreature.fallEndY;
+        specialSeaCreature.falling = false;
+      }
+    }
+
+    // 分數與元氣 HUD（樣式參考原版：分數在上、元氣量表在下）
+    // 補間動畫：讓 displayTimeLeft 慢慢趨近 timeLeft
+    const lerpSpeed = 0.18; // 越大越快
+    displayTimeLeft += (timeLeft - displayTimeLeft) * lerpSpeed;
+    if (Math.abs(displayTimeLeft - timeLeft) < 0.1) displayTimeLeft = timeLeft;
+    drawScoreAndEnergyHUD();
+
+    // 魚被釣上來動畫：全程緊貼釣線／鉤子，沒有自己獨立的物理運動
+    for (let fish of fishes) {
+      if (fish.lifting && !fish.caught) {
+        // 記錄前一幀的 Y 座標，用來判斷魚這一幀是「往下」還是「往上」經過碗
+        let prevLiftY = (typeof fish.prevLiftY === 'number') ? fish.prevLiftY : fish.y;
+        let isHookCatch = (typeof fish.hookLineIndex !== 'number') || fish.hookLineIndex >= LINE_POINTS - 1;
+        // 每一幀都直接把魚的位置設成鉤子或釣線上那一點的當下位置，
+        // 魚完全黏著線／鉤子移動，不會有自己另外的運動軌跡
+        if (isHookCatch) {
+          fish.x = hookDrawX;
+          fish.y = hookY;
+        } else {
+          let idx = fish.hookLineIndex;
+          let tt = typeof fish.hookLineT === 'number' ? fish.hookLineT : 0;
+          let p1 = linePoints[idx];
+          let p2 = linePoints[idx + 1] || p1;
+          fish.x = p1.x + (p2.x - p1.x) * tt;
+          fish.y = p1.y + (p2.y - p1.y) * tt;
+        }
+
+        let waterY = getWaveY(fish.x, wavePhase);
+        let aboveWater = fish.y <= waterY;
+        // 只有從碗的上方往下經過才算數；從下面往上經過碗不算
+        let movingDownIntoPot = fish.y > prevLiftY + 0.01;
+
+        if (aboveWater) {
+          fish.everAboveWater = true;
+          // 已經被拉出水面：貓咪左右移動時，魚會跟著鉤子/線一起移動，
+          // 只要目前位置剛好對到碗、且是從上往下經過，就算釣到
+          let inPot = isEnteringPotFromAbove(fish.x, fish.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
+          if (inPot && timeLeft > 0 && !gameOver) {
+            fish.caught = true;
+            // 新增：記錄相對於碗的偏移量，讓魚在淡出期間跟著碗一起移動，
+            // 不然碗會左右漂移、上下彈跳，魚卻卡在原地不動，看起來就像從碗裡跑出去
+            fish.caughtOffsetX = fish.x - bowlX;
+            fish.caughtOffsetY = fish.y - bowlY;
+            // 新增：碗下沉衝擊
+            bowlImpulseY = 8; // 下沉
+            // 參考原版：魚類是小幅度累積分數，壞魚只會消耗元氣
+            if (fish.color === "gold") {
+              score += fish.rewardScore;
+              timeLeft = Math.min(GAME_TIME, timeLeft + fish.rewardEnergy);
+            } else if (fish.color === "#fcf") {
+              timeLeft = Math.max(0, timeLeft + fish.rewardEnergy);
+            }
+            // 立刻生成新魚（小黃魚群的魚被釣到後不補新魚，牠們只在魚群批次裡出現，
+            // 釣完/游完就消失，等下一次 35 秒倒數才會有下一批）
+            if (fish.fishTier !== 'school') {
+              fishes.push(createFish());
+            }
+            // 新增：進入漸層消失動畫
+            fish.fadeOut = true;
+            fish.alpha = 1;
+            fish.fadeElapsed = 0;
+            // 新增：壞魚進入 fadeOut 時播放扣元氣音效（延遲 1 秒）
+            if (fish.color === "#fcf") {
+              penaltySound.currentTime = 0;
+              setTimeout(() => penaltySound.play(), 1000); // 延遲1秒播放
+            }
+            // 黃色魚進入fadeOut時才播放食物音效
+            if (fish.color === "gold") {
+              playRandomFoodSound();
+            }
+            fish.lifting = false;
+            fish.everAboveWater = false;
+          } else if (inPot) {
+            // 對到碗了，但當下時間已到／遊戲已結束：視為沒接住，沉回海裡
+            fish.falling = true;
+            fish.fallT = 0;
+            fish.fallStartY = fish.y;
+            fish.fallEndY = 530 + Math.random() * 40;
+            fish.lifting = false;
+            fish.everAboveWater = false;
+          }
+          // 還沒對到碗：繼續黏著鉤子/線等待玩家移動貓咪對準
+        } else {
+          // 目前沒有露出水面
+          if (fish.everAboveWater) {
+            // 曾經被拉出水面過，但沒對準碗、鉤子又沉回海裡：脫鉤沉回海底，之後繼續正常游動
+            fish.falling = true;
+            fish.fallT = 0;
+            fish.fallStartY = fish.y;
+            fish.fallEndY = 530 + Math.random() * 40;
+            fish.lifting = false;
+            fish.everAboveWater = false;
+          } else if (!fishing && !hookThrowing) {
+            // 從沒被拉出水面過，玩家已經放開釣竿：脫離釣線，恢復自由游動
+            // 修正：把 baseY 同步成目前實際位置，避免下一幀用舊的 baseY 計算位置，
+            // 造成魚瞬間「消失、瞬移回海裡」的跳動感
+            fish.baseY = fish.y;
+            fish.lifting = false;
+            fish.hookLineIndex = null;
+            fish.hookLineT = 0;
+          }
+        }
+        // 記錄這一幀的 Y 座標，供下一幀判斷方向使用
+        fish.prevLiftY = fish.y;
+      }
+      // 沒接住的魚：沉回海底後繼續往前游（下沉速度跟游動速度差不多）
+      if (fish.falling) {
+        let fallSpeed = fish.speed * 0.8; // 跟游動速度相近，不要太快
+        if (fish.y < fish.fallEndY) {
+          fish.y += fallSpeed * timeScale;
+          if (fish.y > fish.fallEndY) fish.y = fish.fallEndY;
+        } else {
+          fish.y -= fallSpeed * timeScale;
+          if (fish.y < fish.fallEndY) fish.y = fish.fallEndY;
+        }
+        if (Math.abs(fish.y - fish.fallEndY) < 1) {
+          fish.y = fish.fallEndY;
+          // 修正：下沉動畫結束時同步 baseY，避免恢復自由游動那一幀又跳回舊的 baseY
+          fish.baseY = fish.y;
+          fish.falling = false;
+        }
+      }
+    }
+
+    // 鉤子動畫：拋竿動畫結束後，若還沒沉回目標高度，慢慢回到目前的目標高度
+    // （拉竿甩竿過程中的速度改由 hookCastImpulse / hookCastAngDamp / hookFallGravity 等物理參數控制，詳見上方 hookThrowing 區塊）
+    if (hookY < hookTargetY && !hookThrowing) {
+      hookY += LINE_PARAMS.hookSettleDownSpeed * timeScale;
+      if (hookY > hookTargetY) hookY = hookTargetY;
+    }
+
+    // 除錯用：調參面板開啟時，把各物件目前的碰撞判定框畫成虛線
+    drawDebugHitboxes();
+
+    // --- 新增：碗沉到底動畫 ---
+    if (bowlSinking) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // 畫背景圖（天空+海洋）
+      if (bgImg.complete && bgImg.naturalWidth > 0) {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      } else {
+        let seaY = LINE_PARAMS.seaSurfaceY;
+        let skyGradient = ctx.createLinearGradient(0, 0, 0, seaY);
+        skyGradient.addColorStop(0, '#b3e0ff');
+        skyGradient.addColorStop(0.3, '#e6f6ff');
+        skyGradient.addColorStop(0.7, '#a4c8e1');
+        skyGradient.addColorStop(1, '#7bbbe6');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, canvas.width, seaY);
+        let seaGradient = ctx.createLinearGradient(0, seaY, 0, canvas.height);
+        seaGradient.addColorStop(0, '#7bbbe6');
+        seaGradient.addColorStop(0.15, '#3a8cc1');
+        seaGradient.addColorStop(0.4, '#206090');
+        seaGradient.addColorStop(0.7, '#133a5c');
+        seaGradient.addColorStop(1, '#0a1a2f');
+        ctx.fillStyle = seaGradient;
+        ctx.fillRect(0, seaY, canvas.width, canvas.height - seaY);
+      }
+      // 畫海平面線
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, LINE_PARAMS.seaSurfaceY);
+      ctx.lineTo(canvas.width, LINE_PARAMS.seaSurfaceY);
+      ctx.stroke();
+      // --- 鍋子下沉動畫 ---
+      if (bowlSinkTargetY === null) {
+        bowlSinkTargetY = canvas.height - pot.h - 20;
+      }
+      if (bowlY < bowlSinkTargetY) {
+        bowlY += bowlSinkSpeed * timeScale;
+        if (bowlY > bowlSinkTargetY) bowlY = bowlSinkTargetY;
+      }
+      drawPlayer();
+      // 分數／元氣 HUD 與結束字樣（不再疊加黑色半透明遮罩，畫面維持乾淨）
+      drawScoreAndEnergyHUD();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 48px Arial";
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "rgba(0,0,0,0.55)";
+      ctx.strokeText("遊戲結束", 300, 300);
+      ctx.fillText("遊戲結束", 300, 300);
+      ctx.font = "36px Arial";
+      ctx.fillStyle = "#0c0";
+      ctx.fillText("分數: " + score, 320, 360);
+      // --- 動畫結束，顯示排行榜 ---
+      if (bowlY >= bowlSinkTargetY) {
+        bowlY = bowlSinkTargetY; // 鎖定在水底
+        // 新增：播放碗沉到底音效
+        bowlSinkSound.currentTime = 0;
+        bowlSinkSound.play();
+        setTimeout(() => {
+          let arr = addRank(score);
+          showRankModal(score);
+        }, 400);
+        return;
+      }
+      animationId = requestAnimationFrame(gameLoop);
+      return;
+    }
+    // 遊戲結束
+    // --- 修改：只有沒垃圾動畫時才 gameOver ---
+    let trashAnimating = trashes.some(trash => trash.lifting);
+    if (timeLeft <= 0 && !gameOver && !trashAnimating && !pendingGameOver) {
+      gameOver = true;
+      displayTimeLeft = 0; // 修正：同步顯示歸零
+      restartBtn.style.display = "block";
+      // --- 修改：先播放「鍋蓋蓋下來」的動畫，鍋子先停止移動，蓋緊後才開始下沉 ---
+      lidDropping = true;
+      lidDropOffset = LID_DROP_START_OFFSET;
+      animationId = requestAnimationFrame(gameLoop);
+      // 排行榜會在下沉動畫真正結束後才顯示（見下方 bowlSinking 動畫結束處）
+      return;
+    }
+    animationId = requestAnimationFrame(gameLoop);
+
+    // === 緊張背景音效 ===
+    if (!gameOver && timeLeft > 0) {
+      let minInterval = 80; // 幾乎連續
+      let maxInterval = 2000; // 最慢2秒
+      let t = Math.max(0, Math.min(1, timeLeft / GAME_TIME));
+      tensionSoundInterval = minInterval + (maxInterval - minInterval) * t;
+      if (!lastTensionSoundTime) lastTensionSoundTime = currentTime;
+      // 只有當音效沒在播放時才播放下一次
+      if ((currentTime - lastTensionSoundTime >= tensionSoundInterval) && tensionSound.paused) {
+        tensionSound.currentTime = 0;
+        tensionSound.play();
+        lastTensionSoundTime = currentTime;
+      }
+    } else {
+      tensionSound.pause();
+      tensionSound.currentTime = 0;
+      lastTensionSoundTime = 0;
+    }
+  } catch (e) {
+    // 若有錯誤，顯示在 console，並嘗試繼續下一幀
+    console.error('gameLoop error:', e);
+    animationId = requestAnimationFrame(gameLoop);
+  }
+}
+
+function countdown() {
+  // 保留舊函式名稱，避免外部綁定失效；新版改由 gameLoop 連續消耗元氣。
+}
+
+// 釣魚（滑鼠點擊或空白鍵）
 canvas.addEventListener("mousedown", () => {
-  if (!gameOver && !fishing && !hookThrowing) startHookCast();
+  // !fishing && !hookThrowing 這個條件維持整個「迴圈甩竿＋自由落下」期間都是 false，
+  // 一定要等鉤子真的碰到水面（見 gameLoop 的 'fall' 階段）才會恢復成可以再拉竿一次。
+  if (!gameOver && !fishing && !hookThrowing) {
+    startHookCast();
+  }
 });
 document.addEventListener("keydown", (e) => {
-  if (e.code === "Space" && !gameOver && !fishing && !hookThrowing) {
-    e.preventDefault();
+  if (e.code === "Space" || e.code === "ArrowUp" || e.code === "ArrowDown") e.preventDefault();
+  if (!gameOver && !fishing && !hookThrowing && e.code === "Space") {
     startHookCast();
   }
 });
 
+// 觸控與鍵盤事件
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'ArrowLeft') keyState.left = true;
-  if (e.code === 'ArrowRight') keyState.right = true;
-  if (e.code === 'ArrowUp') keyState.up = true;
-  if (e.code === 'ArrowDown') keyState.down = true;
-});
-window.addEventListener('keyup', (e) => {
-  if (e.code === 'ArrowLeft') keyState.left = false;
-  if (e.code === 'ArrowRight') keyState.right = false;
-  if (e.code === 'ArrowUp') keyState.up = false;
-  if (e.code === 'ArrowDown') keyState.down = false;
+  if (e.key === 'ArrowLeft' || e.key === 'a') keyState.left = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') keyState.right = true;
+  if (e.key === 'ArrowUp' || e.key === 'w') keyState.up = true;
+  if (e.key === 'ArrowDown' || e.key === 's') keyState.down = true;
+  if (e.key === ' ' || e.key === 'Enter') {
+    if (!fishing && !hookThrowing && !gameOver) startHookCast();
+  }
 });
 
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') keyState.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') keyState.right = false;
+  if (e.key === 'ArrowUp' || e.key === 'w') keyState.up = false;
+  if (e.key === 'ArrowDown' || e.key === 's') keyState.down = false;
+});
+const joystick = document.getElementById('joystick');
+const knob = document.getElementById('joystick-knob');
+let joystickActive = false;
+let joystickCenter = { x: 0, y: 0 };
+
+joystick.addEventListener('pointerdown', (e) => {
+  joystickActive = true;
+  const rect = joystick.getBoundingClientRect();
+  joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  updateJoystick(e);
+});
+
+window.addEventListener('pointermove', (e) => {
+  if (joystickActive) updateJoystick(e);
+});
+
+window.addEventListener('pointerup', () => {
+  if (joystickActive) {
+    joystickActive = false;
+    knob.style.left = '30px';
+    knob.style.top = '30px';
+    keyState.left = false;
+    keyState.right = false;
+    keyState.up = false;
+    keyState.down = false;
+  }
+});
+
+function updateJoystick(e) {
+  const dx = e.clientX - joystickCenter.x;
+  const dy = e.clientY - joystickCenter.y;
+  const dist = Math.hypot(dx, dy);
+  const maxDist = 35;
+  const angle = Math.atan2(dy, dx);
+  
+  const moveDist = Math.min(dist, maxDist);
+  const knobX = 30 + Math.cos(angle) * moveDist;
+  const knobY = 30 + Math.sin(angle) * moveDist;
+  
+  knob.style.left = `${knobX}px`;
+  knob.style.top = `${knobY}px`;
+
+  keyState.left = dx < -12;
+  keyState.right = dx > 12;
+  keyState.up = dy < -12;
+  keyState.down = dy > 12;
+}
+// 響應式 canvas 尺寸調整
 function resizeGameCanvas() {
   const GAME_WIDTH = 540;
   const GAME_HEIGHT = 960;
@@ -2022,24 +3239,29 @@ function resizeGameCanvas() {
 window.addEventListener('resize', resizeGameCanvas);
 resizeGameCanvas();
 
+// 重新開始
 restartBtn.addEventListener("click", () => {
+  // 停止前一輪動畫和計時
   if (animationId) cancelAnimationFrame(animationId);
+  if (countdownTimer) clearTimeout(countdownTimer);
   score = 0;
   timeLeft = GAME_TIME;
   displayTimeLeft = GAME_TIME;
-  elapsedGameTime = 0;
+  elapsedGameTime = 0; // 重設扣速加速的計時
   gameOver = false;
   restartBtn.style.display = "none";
+  // 重置時間控制變數
   lastTime = 0;
   deltaTime = 0;
   spawnFish();
   spawnTrash();
-  initLinePoints();
+  initLinePoints(); // 重新初始化魚線點
   hookY = LINE_PARAMS.hookRestY;
   hookVelY = 0;
   hookTargetY = LINE_PARAMS.hookRestY;
   hookVelX = 0;
-  hookAutoSinking = false;
+  hookAutoSinking = false; // 重新開始時重置自動下沉狀態
+  // 重置拉竿物理狀態，避免重新開始時卡在上一輪的甩竿/落下狀態
   fishing = false;
   hookThrowing = false;
   hookThrowPhase = 'loop';
@@ -2049,27 +3271,26 @@ restartBtn.addEventListener("click", () => {
   hookFallVelX = 0;
   hookFallVelY = 0;
   specialSeaCreature = null;
-  if (specialSeaCreatureTimer) clearTimeout(specialSeaCreatureTimer);
-  scheduleSpecialSeaCreature();
-  if (fishSchoolTimer) clearTimeout(fishSchoolTimer);
-  if (fishSchoolBatchTimer) clearInterval(fishSchoolBatchTimer);
-  scheduleFishSchool();
+if (specialSeaCreatureTimer) clearTimeout(specialSeaCreatureTimer);
+scheduleSpecialSeaCreature();
+if (fishSchoolTimer) clearTimeout(fishSchoolTimer);
+if (fishSchoolBatchTimer) clearInterval(fishSchoolBatchTimer);
+scheduleFishSchool();
+  resizeGameCanvas();
+  // --- 新增：重設鍋子位置與動畫狀態 ---
   bowlY = pot.y;
   bowlX = pot.x;
   bowlXDir = 1;
   bowlSinking = false;
   bowlSinkTargetY = null;
   bowlY_vel = 0;
-  bowlImpulseY = 0;
-  lidDropping = false;
+  bowlImpulseY = 0; // 重置碗下沉衝擊
+  lidDropping = false; // 重置鍋蓋動畫狀態
   lidDropOffset = 0;
-  catAnimFrame = 0;
-  catAnimTimer = 0;
-  catWasMoving = false;
-  resizeGameCanvas();
+  pendingGameOver = false; // 重置 pendingGameOver
   animationId = requestAnimationFrame(gameLoop);
 });
-
+// 新增：遊戲說明按鈕
 const infoBtn = document.getElementById('infoBtn');
 const infoModal = document.getElementById('infoModal');
 const infoModalText = document.getElementById('infoModalText');
@@ -2080,73 +3301,573 @@ infoBtn.addEventListener('click', () => {
   infoModalText.innerHTML = `
     <ol style="padding-left: 1.2em;">
       <li>方向鍵移動，空白鍵或點擊畫面甩竿。</li>
-      <li>元氣會持續下降。</li>
-      <li>一般魚給分數與元氣，壞魚和垃圾扣元氣。</li>
-      <li>元氣歸零結束。</li>
+      <li>現在改成更接近原版的「元氣條」玩法，元氣會持續下降。</li>
+      <li>一般魚給小幅分數與元氣，壞魚和垃圾會扣元氣。</li>
+      <li>元氣歸零就結束，可隨時再玩一次。</li>
     </ol>
+    <hr style="margin: 12px 0;">
+    <div style="font-size:1.1em;">
+      <b>【目前版本規則】</b><br>
+      <ul style="padding-left: 1.2em;">
+        <li><b>小黃魚</b><br>分數：+100 分<br>元氣：+5</li>
+        <li><b>黃魚</b><br>分數：+200 分<br>元氣：+10</li>
+        <li><b>魷魚</b><br>分數：+400 分<br>元氣：+20</li>
+        <li><b>章魚</b><br>分數：+400 分<br>元氣：+20</li>
+        <li><b>海參</b><br>分數：+20 分<br>元氣：+1</li>
+        <li><b>紫色魚</b><br>分數：不變<br><span style="color:#e11;"><b>元氣：-8</b></span></li>
+        <li><b>垃圾</b><br>分數：不變<br><span style="color:#e11;"><b>元氣：-12</b></span></li>
+      </ul>
+    </div>
   `;
 });
-closeInfoModal.addEventListener('click', () => { infoModal.style.display = 'none'; });
-infoModal.addEventListener('click', (e) => { if (e.target === infoModal) infoModal.style.display = 'none'; });
-
-const playAgainBtn = document.getElementById('playAgainBtn');
-playAgainBtn.onclick = function() {
-  document.getElementById('rankModal').style.display = 'none';
-  restartBtn.click();
-};
-
-window.addEventListener('keydown', function(e) {
-  const rankModal = document.getElementById('rankModal');
-  if (rankModal.style.display === 'flex' && e.code === 'Space') {
-    e.preventDefault();
-    playAgainBtn.click();
+closeInfoModal.addEventListener('click', () => {
+  infoModal.style.display = 'none';
+});
+// 點擊 modal 外部也可關閉
+infoModal.addEventListener('click', (e) => {
+  if (e.target === infoModal) infoModal.style.display = 'none';
+});
+// 按 ESC 關閉
+window.addEventListener('keydown', (e) => {
+  if (infoModal.style.display === 'flex' && (e.key === 'Escape' || e.key === 'Esc')) {
+    infoModal.style.display = 'none';
   }
 });
 
-// Virtual controls (simplified)
+// 新增：排行榜內再玩一次按鈕
+const playAgainBtn = document.getElementById('playAgainBtn');
+if (playAgainBtn) {
+  playAgainBtn.onclick = function() {
+    document.getElementById('rankModal').style.display = 'none';
+    // 觸發 restartBtn 的 click 事件
+    restartBtn.click();
+  };
+}
+// 新增：排行榜顯示時按空白鍵可再玩一次
+window.addEventListener('keydown', function(e) {
+  const rankModal = document.getElementById('rankModal');
+  if (rankModal && rankModal.style.display === 'flex' && e.code === 'Space') {
+    e.preventDefault();
+    if (playAgainBtn) playAgainBtn.click();
+  }
+});
+
+// === 虛擬搖桿與螢幕按鈕 ===
 (function() {
   function updateControlsVisibility() {
-    const isPortrait = window.innerWidth < window.innerHeight;
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const isPortrait = window.innerWidth <= window.innerHeight;
     const isMobile = window.innerWidth <= 768;
     const joystick = document.getElementById('joystick');
     const screenButtons = document.getElementById('screenButtons');
     if (joystick && screenButtons) {
-      if (isMobile) {
+      if (isLandscape && window.innerWidth <= 900) {
+        joystick.style.display = 'block';
+        screenButtons.style.display = 'block';
+      } else if (isPortrait && isMobile) {
         joystick.style.display = 'block';
         screenButtons.style.display = 'block';
       } else {
         joystick.style.display = 'none';
         screenButtons.style.display = 'none';
       }
+      screenButtons.style.zIndex = 2000;
     }
   }
   window.addEventListener('resize', updateControlsVisibility);
+  window.addEventListener('orientationchange', updateControlsVisibility);
   updateControlsVisibility();
+  window.addEventListener('resize', () => setTimeout(updateKnobGeometry, 50));
+  window.addEventListener('orientationchange', () => setTimeout(updateKnobGeometry, 50));
+  setTimeout(updateKnobGeometry, 50);
 
-  // Joystick and action button logic (full implementation preserved but abbreviated)
-  const actionBtn = document.getElementById('actionBtn');
-  if (actionBtn) {
-    actionBtn.addEventListener('touchstart', () => {
-      if (!fishing && !hookThrowing && !gameOver) startHookCast();
+  // 虛擬搖桿控制
+  const joystick = document.getElementById('joystick');
+  const knob = document.getElementById('joystick-knob');
+  const directionIndicators = document.querySelectorAll('.direction-indicator');
+  let dragging = false, startX = 0, startY = 0, baseRect = null;
+  let joyDX = 0, joyDY = 0;
+  let activeTouchId = null;
+  let knobCenterOffset = 35; // 動態計算：底座與旋鈕置中所需的位移量
+  let knobMaxDist = 45; // 動態計算：旋鈕可拖曳的最大距離
+
+  function updateKnobGeometry() {
+    if (!joystick || !knob) return;
+    const baseSize = joystick.offsetWidth;
+    const knobSize = knob.offsetWidth;
+    knobCenterOffset = (baseSize - knobSize) / 2;
+    // 讓旋鈕邊緣最遠可以貼到底座邊緣，並保留一點緩衝
+    knobMaxDist = Math.max(20, baseSize / 2 - knobSize / 4);
+  }
+
+  function updateDirectionIndicators() {
+    directionIndicators.forEach(indicator => {
+      indicator.classList.remove('active');
+    });
+    if (Math.abs(joyDX) > 0.1 || Math.abs(joyDY) > 0.1) {
+      let direction = '';
+      if (joyDY < -0.3) direction += 'up';
+      else if (joyDY > 0.3) direction += 'down';
+      if (joyDX < -0.3) direction += '-left';
+      else if (joyDX > 0.3) direction += '-right';
+      if (direction.includes('-')) {
+        const indicator = document.querySelector(`.direction-indicator.${direction}`);
+        if (indicator) indicator.classList.add('active');
+      } else if (direction) {
+        const indicator = document.querySelector(`.direction-indicator.${direction}`);
+        if (indicator) indicator.classList.add('active');
+      }
+    }
+  }
+
+  function resetJoystick() {
+    dragging = false;
+    activeTouchId = null;
+    knob.style.left = knobCenterOffset + 'px';
+    knob.style.top = knobCenterOffset + 'px';
+    joyDX = 0; joyDY = 0;
+    keyState.left = keyState.right = keyState.up = keyState.down = false;
+    directionIndicators.forEach(indicator => {
+      indicator.classList.remove('active');
     });
   }
-  canvas.addEventListener('click', () => {
-    if (!fishing && !hookThrowing && !gameOver) startHookCast();
-  });
-  canvas.addEventListener('touchstart', (e) => {
-    if (!fishing && !hookThrowing && !gameOver) startHookCast();
-    e.preventDefault();
-  });
+
+  function moveKnobTo(clientX, clientY) {
+    let dx = clientX - startX;
+    let dy = clientY - startY;
+    const maxDist = knobMaxDist;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist > maxDist) {
+      dx = dx * maxDist / dist;
+      dy = dy * maxDist / dist;
+    }
+    knob.style.left = (knobCenterOffset + dx) + 'px';
+    knob.style.top = (knobCenterOffset + dy) + 'px';
+    joyDX = dx / maxDist;
+    joyDY = dy / maxDist;
+    keyState.left = joyDX < -0.2;
+    keyState.right = joyDX > 0.2;
+    keyState.up = joyDY < -0.2;
+    keyState.down = joyDY > 0.2;
+    updateDirectionIndicators();
+  }
+
+  if (joystick && knob) {
+    // 綁在整個底座（外圈）上，而不是只綁在中間的小旋鈕上，
+    // 這樣玩家點在搖桿範圍內任何地方都能立刻開始拖曳，大幅提升靈敏度
+    joystick.addEventListener('touchstart', function(e) {
+      if (dragging) return;
+      dragging = true;
+      updateKnobGeometry();
+      const touch = e.changedTouches[0];
+      activeTouchId = touch.identifier;
+      baseRect = joystick.getBoundingClientRect();
+      startX = baseRect.left + baseRect.width / 2;
+      startY = baseRect.top + baseRect.height / 2;
+      // 立刻把旋鈕移動到手指按下的位置，減少「按了沒反應」的感覺
+      moveKnobTo(touch.clientX, touch.clientY);
+      e.preventDefault();
+      e.stopPropagation();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+      if (!dragging) return;
+      let touch = null;
+      for (let t of e.touches) {
+        if (t.identifier === activeTouchId) {
+          touch = t;
+          break;
+        }
+      }
+      if (!touch) return;
+      moveKnobTo(touch.clientX, touch.clientY);
+      e.preventDefault();
+    }, {passive: false});
+
+    document.addEventListener('touchend', function(e) {
+      if (!dragging) return;
+      let stillTouching = false;
+      for (let t of e.touches) {
+        if (t.identifier === activeTouchId) {
+          stillTouching = true;
+          break;
+        }
+      }
+      if (stillTouching) return;
+      resetJoystick();
+    }, {passive: false});
+
+    // 補上 touchcancel：觸控常會被系統手勢、多指觸控等中斷而不會觸發 touchend，
+    // 若沒處理這個事件，dragging 會卡在 true，導致搖桿之後完全沒反應
+    document.addEventListener('touchcancel', function(e) {
+      if (!dragging) return;
+      let stillTouching = false;
+      for (let t of e.touches) {
+        if (t.identifier === activeTouchId) {
+          stillTouching = true;
+          break;
+        }
+      }
+      if (stillTouching) return;
+      resetJoystick();
+    }, {passive: false});
+  }
+
+  // 虛擬按鈕控制
+  const actionBtn = document.getElementById('actionBtn');
+  if (actionBtn) {
+    function triggerFishingAction(e) {
+      if (!fishing && !hookThrowing && !gameOver) {
+        startHookCast();
+      }
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+    actionBtn.addEventListener('touchstart', triggerFishingAction, { passive: false });
+    actionBtn.addEventListener('click', triggerFishingAction);
+  }
+
+  function triggerFishingFromCanvas(e) {
+    if (!fishing && !hookThrowing && !gameOver) {
+      startHookCast();
+    }
+    if (e) e.preventDefault();
+  }
+  canvas.addEventListener('click', triggerFishingFromCanvas);
+  canvas.addEventListener('touchstart', triggerFishingFromCanvas);
 })();
 
-// Initialize
+// ============================================================
+// 【調參面板】把 LINE_PARAMS_META 動態轉成可拖拉的滑桿 + 數字輸入框，
+// 並提供「複製目前參數」「套用貼上的參數」「還原預設值」三個功能，
+// 讓玩家可以把調好的參數複製起來，重開網頁後貼回去就能快速套用。
+// ============================================================
+(function() {
+  function buildParamPanel() {
+    const container = document.getElementById('paramSliders');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // 先把 meta 依 key 建立索引，方便依分類查找
+    const metaByKey = {};
+    LINE_PARAMS_META.forEach(function(meta) {
+      metaByKey[meta[1]] = meta;
+    });
+
+    function buildRow(meta) {
+      const label = meta[0], key = meta[1], min = meta[2], max = meta[3], step = meta[4];
+
+      const row = document.createElement('div');
+      row.className = 'param-row';
+
+      const top = document.createElement('div');
+      top.className = 'param-row-top';
+
+      const labelEl = document.createElement('label');
+      // 只顯示分類前綴之後的說明文字（避免每一列都重複「線-」「鉤-」字樣）
+      const shortLabel = label.replace(/^(線|鉤)-/, '');
+      labelEl.textContent = shortLabel;
+      labelEl.title = label;
+      labelEl.htmlFor = 'param-range-' + key;
+
+      const num = document.createElement('input');
+      num.type = 'number';
+      num.id = 'param-num-' + key;
+      num.min = min;
+      num.max = max;
+      num.step = step;
+      num.value = LINE_PARAMS[key];
+      num.className = 'param-num';
+
+      top.appendChild(labelEl);
+      top.appendChild(num);
+
+      const range = document.createElement('input');
+      range.type = 'range';
+      range.id = 'param-range-' + key;
+      range.min = min;
+      range.max = max;
+      range.step = step;
+      range.value = LINE_PARAMS[key];
+
+      function updateValue(v) {
+        let val = parseFloat(v);
+        if (isNaN(val)) return;
+        val = Math.max(min, Math.min(max, val));
+        LINE_PARAMS[key] = val;
+        range.value = val;
+        num.value = val;
+      }
+
+      range.addEventListener('input', function() { updateValue(range.value); });
+      // 拖曳中維持焦點（不影響拖動手感），但一放開就立刻失焦，
+      // 讓鍵盤事件（方向鍵、空白鍵等）可以馬上回到遊戲操作，不會被滑桿吃掉
+      range.addEventListener('change', function() { range.blur(); });
+      range.addEventListener('mouseup', function() { range.blur(); });
+      range.addEventListener('touchend', function() { range.blur(); });
+      num.addEventListener('change', function() { updateValue(num.value); num.blur(); });
+
+      row.appendChild(top);
+      row.appendChild(range);
+      return row;
+    }
+
+    // 依分類產生可折疊區塊；每個分類都是一個 <details>，標題點一下可展開/收合
+    PARAM_CATEGORIES.forEach(function(cat) {
+      const details = document.createElement('details');
+      details.className = 'param-group';
+      details.dataset.kind = cat.kind;
+      details.open = true;
+
+      const summary = document.createElement('summary');
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = cat.title;
+      const countSpan = document.createElement('span');
+      countSpan.className = 'param-group-count';
+      countSpan.textContent = cat.keys.length + ' 項';
+      summary.appendChild(titleSpan);
+      summary.appendChild(countSpan);
+
+      const body = document.createElement('div');
+      body.className = 'param-group-body';
+
+      cat.keys.forEach(function(key) {
+        const meta = metaByKey[key];
+        if (!meta) return; // 保護：分類設定裡若打錯 key 就跳過，不讓面板整個壞掉
+        body.appendChild(buildRow(meta));
+      });
+
+      details.appendChild(summary);
+      details.appendChild(body);
+      container.appendChild(details);
+    });
+
+    // 保護：如果有參數忘了放進 PARAM_CATEGORIES，仍會列在最後的「其他」分類，避免遺漏
+    const categorizedKeys = new Set(PARAM_CATEGORIES.reduce(function(acc, c) { return acc.concat(c.keys); }, []));
+    const leftover = LINE_PARAMS_META.filter(function(meta) { return !categorizedKeys.has(meta[1]); });
+    if (leftover.length) {
+      const details = document.createElement('details');
+      details.className = 'param-group';
+      details.dataset.kind = 'other';
+      details.open = true;
+      const summary = document.createElement('summary');
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = '⚙️ 其他';
+      const countSpan = document.createElement('span');
+      countSpan.className = 'param-group-count';
+      countSpan.textContent = leftover.length + ' 項';
+      summary.appendChild(titleSpan);
+      summary.appendChild(countSpan);
+      const body = document.createElement('div');
+      body.className = 'param-group-body';
+      leftover.forEach(function(meta) { body.appendChild(buildRow(meta)); });
+      details.appendChild(summary);
+      details.appendChild(body);
+      container.appendChild(details);
+    }
+  }
+
+  function refreshParamPanelValues() {
+    LINE_PARAMS_META.forEach(function(meta) {
+      const key = meta[1];
+      const range = document.getElementById('param-range-' + key);
+      const num = document.getElementById('param-num-' + key);
+      if (range) range.value = LINE_PARAMS[key];
+      if (num) num.value = LINE_PARAMS[key];
+    });
+  }
+
+  function showStatus(msg, ms) {
+    const statusEl = document.getElementById('paramCopyStatus');
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    setTimeout(function() { statusEl.textContent = ''; }, ms || 2500);
+  }
+
+  const paramPanelBtn = document.getElementById('paramPanelBtn');
+  const paramPanel = document.getElementById('paramPanel');
+  const closeParamPanel = document.getElementById('closeParamPanel');
+  const paramTextArea = document.getElementById('paramTextArea');
+  const copyParamsBtn = document.getElementById('copyParamsBtn');
+  const applyParamsBtn = document.getElementById('applyParamsBtn');
+  const resetParamsBtn = document.getElementById('resetParamsBtn');
+
+  if (paramPanelBtn && paramPanel) {
+    paramPanelBtn.addEventListener('click', function() {
+      const willShow = paramPanel.style.display === 'none';
+      paramPanel.style.display = willShow ? 'flex' : 'none';
+      paramPanelOpen = willShow;
+      if (willShow) refreshParamPanelValues();
+      paramPanelBtn.blur();
+    });
+  }
+  if (closeParamPanel && paramPanel) {
+    closeParamPanel.addEventListener('click', function() {
+      paramPanel.style.display = 'none';
+      paramPanelOpen = false;
+      closeParamPanel.blur();
+    });
+  }
+  if (copyParamsBtn && paramTextArea) {
+    copyParamsBtn.addEventListener('click', function() {
+      const json = JSON.stringify(LINE_PARAMS, null, 2);
+      paramTextArea.value = json;
+      let copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(json);
+          copied = true;
+        }
+      } catch (e) { /* 忽略，走下方 fallback */ }
+      if (!copied) {
+        try {
+          paramTextArea.select();
+          document.execCommand('copy');
+          copied = true;
+        } catch (e) { /* 忽略 */ }
+      }
+      showStatus(copied ? '已複製到剪貼簿！可以貼到別的地方保存。' : '已顯示在下方文字框，請手動全選複製。');
+      copyParamsBtn.blur();
+      paramTextArea.blur();
+    });
+  }
+  if (applyParamsBtn && paramTextArea) {
+    applyParamsBtn.addEventListener('click', function() {
+      try {
+        const parsed = JSON.parse(paramTextArea.value);
+        Object.keys(parsed).forEach(function(key) {
+          if (Object.prototype.hasOwnProperty.call(LINE_PARAMS, key) && typeof parsed[key] === 'number') {
+            LINE_PARAMS[key] = parsed[key];
+          }
+        });
+        refreshParamPanelValues();
+        showStatus('參數已套用！');
+      } catch (e) {
+        showStatus('格式錯誤，請確認貼上的是完整的參數 JSON。', 3000);
+      }
+      applyParamsBtn.blur();
+      paramTextArea.blur();
+    });
+  }
+  if (resetParamsBtn) {
+    resetParamsBtn.addEventListener('click', function() {
+      Object.assign(LINE_PARAMS, JSON.parse(JSON.stringify(LINE_PARAMS_DEFAULTS)));
+      refreshParamPanelValues();
+      showStatus('已還原成預設值。');
+      resetParamsBtn.blur();
+    });
+  }
+
+  buildParamPanel();
+})();
+
+// 初始化
+// 停止殘留動畫和計時
+if (animationId) cancelAnimationFrame(animationId);
+if (countdownTimer) clearTimeout(countdownTimer);
+// 重置時間控制變數
+lastTime = 0;
+deltaTime = 0;
 spawnFish();
 spawnTrash();
 initLinePoints();
+specialSeaCreature = null;
+if (specialSeaCreatureTimer) clearTimeout(specialSeaCreatureTimer);
 scheduleSpecialSeaCreature();
+if (fishSchoolTimer) clearTimeout(fishSchoolTimer);
+if (fishSchoolBatchTimer) clearInterval(fishSchoolBatchTimer);
 scheduleFishSchool();
 resizeGameCanvas();
-let animationId = requestAnimationFrame(gameLoop);
-  </script>
+// --- 新增：重設鍋子位置與動畫狀態 ---
+bowlY = pot.y;
+bowlX = pot.x;
+bowlXDir = 1;
+bowlSinking = false;
+bowlSinkTargetY = null;
+bowlY_vel = 0;
+bowlImpulseY = 0; // 重置碗下沉衝擊
+lidDropping = false;
+lidDropOffset = 0;
+catAnimFrame = 0; // 重置精靈移動動畫影格
+catAnimTimer = 0;
+catWasMoving = false;
+animationId = requestAnimationFrame(gameLoop);
+
+// 新增：拉起釣竿音效
+const rodPullSound = new Audio('sound/Data_1.wav');
+// 新增：釣到東西音效
+const catchSound = new Audio('sound/Data_2.wav');
+// 新增：釣到東西音效2
+const catchSound2 = new Audio('sound/Data_3.wav');
+// 新增：釣到食物音效（加時間）
+const foodSounds = [
+  new Audio('sound/Data_10.wav'),
+  new Audio('sound/Data_11.wav'),
+  new Audio('sound/Data_12.wav'),
+  new Audio('sound/Data_13.wav'),
+  new Audio('sound/Data_14.wav')
+];
+
+// 隨機播放食物音效（延遲1秒）
+function playRandomFoodSound() {
+  const idx = Math.floor(Math.random() * foodSounds.length);
+  const sound = foodSounds[idx];
+  if (sound) { 
+    sound.currentTime = 0; 
+    setTimeout(() => sound.play(), 1000); // 延遲1秒播放
+  }
+}
+
+// 將 catchSound 播放改為隨機播放 catchSound 或 catchSound2
+function playRandomCatchSound() {
+  const sound = Math.random() < 0.5 ? catchSound : catchSound2;
+  if (sound) { sound.currentTime = 0; sound.play(); }
+}
+
+// 新增：扣元氣物品消失音效
+const penaltySound = new Audio('sound/Data_15.wav');
+// 新增：碗沉到底音效
+const bowlSinkSound = new Audio('sound/Data_16.wav');
+
+let isMuted = false;
+
+function setAllAudioMuted(muted) {
+  tensionSound.muted = muted;
+  rodPullSound.muted = muted;
+  catchSound.muted = muted;
+  catchSound2.muted = muted;
+  penaltySound.muted = muted;
+  bowlSinkSound.muted = muted;
+  if (Array.isArray(foodSounds)) {
+    foodSounds.forEach(s => s.muted = muted);
+  }
+}
+
+window.toggleMute = function() {
+  isMuted = !isMuted;
+  setAllAudioMuted(isMuted);
+  // 切換 emoji
+  const btn = document.getElementById('muteBtn');
+  const emojiOn = document.getElementById('muteEmojiOn');
+  const emojiOff = document.getElementById('muteEmojiOff');
+  if (btn) btn.setAttribute('aria-pressed', isMuted ? 'true' : 'false');
+  if (emojiOn) emojiOn.style.display = isMuted ? 'none' : 'inline';
+  if (emojiOff) emojiOff.style.display = isMuted ? 'inline' : 'none';
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  const btn = document.getElementById('muteBtn');
+  if (btn) btn.addEventListener('click', window.toggleMute);
+  setAllAudioMuted(isMuted);
+  // 根據 isMuted 設定 emoji 狀態
+  const emojiOn = document.getElementById('muteEmojiOn');
+  const emojiOff = document.getElementById('muteEmojiOff');
+  if (btn) btn.setAttribute('aria-pressed', isMuted ? 'true' : 'false');
+  if (emojiOn) emojiOn.style.display = isMuted ? 'none' : 'inline';
+  if (emojiOff) emojiOff.style.display = isMuted ? 'inline' : 'none';
+});
+</script>
 </body>
 </html>
