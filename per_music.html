@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>YouTube 歌曲拍子遊戲</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a33cc;
+      --line:#2a3563;
+      --text:#eef2ff;
+      --good:#55d6a5;
+      --perfect:#6ea8ff;
+      --miss:#ff6b8a;
+      --accent:#ffd166;
+    }
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:radial-gradient(circle at top, #1a2450 0%, var(--bg) 55%, #05070f 100%);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang HK","Noto Sans CJK TC",sans-serif;
+      color:var(--text);
+      touch-action:none;
+    }
+    #app{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .frame{
+      width:min(100vw, calc(100vh * 9 / 16));
+      height:min(100vh, calc(100vw * 16 / 9));
+      aspect-ratio:9/16;
+      position:relative;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 20px 80px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    #playerWrap{
+      position:absolute;
+      inset:0 0 auto 0;
+      height:42%;
+      background:#000;
+    }
+    #player{
+      width:100%;
+      height:100%;
+    }
+    .hud{
+      position:absolute;
+      top:44%;
+      left:0;
+      right:0;
+      padding:14px 16px 0;
+      display:grid;
+      gap:10px;
+    }
+    .row{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      align-items:center;
+      font-size:14px;
+    }
+    .pill{
+      background:var(--panel);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:999px;
+      padding:8px 12px;
+      backdrop-filter:blur(10px);
+    }
+    .meter{
+      height:14px;
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .meter > div{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, var(--perfect), var(--good), var(--accent));
+      transition:width .08s linear;
+    }
+    .lane{
+      position:absolute;
+      left:8%;
+      right:8%;
+      top:62%;
+      height:26%;
+      border-radius:18px;
+      background:rgba(10,15,30,.55);
+      border:1px solid rgba(255,255,255,.08);
+      overflow:hidden;
+    }
+    .beatLine{
+      position:absolute;
+      left:0;
+      right:0;
+      top:50%;
+      height:2px;
+      background:rgba(255,255,255,.2);
+      transform:translateY(-50%);
+    }
+    .hitZone{
+      position:absolute;
+      left:18%;
+      right:18%;
+      top:50%;
+      height:64px;
+      transform:translateY(-50%);
+      border:2px solid rgba(255,255,255,.18);
+      border-radius:999px;
+      box-shadow:0 0 0 1px rgba(255,255,255,.04) inset;
+    }
+    .hitZone::after{
+      content:"HIT";
+      position:absolute;
+      top:-12px;
+      left:50%;
+      transform:translateX(-50%);
+      font-size:12px;
+      letter-spacing:.18em;
+      color:rgba(255,255,255,.55);
+      background:rgba(10,15,30,.85);
+      padding:0 8px;
+    }
+    #note{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      transform:translate(-50%, -50%);
+      background:radial-gradient(circle at 35% 30%, #fff 0%, #ffd166 24%, #ff8fab 100%);
+      box-shadow:0 0 18px rgba(255,209,102,.8);
+      display:none;
+    }
+    .controls{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:18px;
+      display:flex;
+      justify-content:center;
+      gap:12px;
+      padding:0 16px;
+      flex-wrap:wrap;
+    }
+    button{
+      border:none;
+      border-radius:14px;
+      padding:14px 18px;
+      font-size:15px;
+      color:var(--text);
+      background:#24315d;
+      box-shadow:0 8px 20px rgba(0,0,0,.25);
+    }
+    button.primary{ background:linear-gradient(135deg, #4f7cff, #6ea8ff); }
+    button.warn{ background:linear-gradient(135deg, #ff7a90, #ff4d72); }
+    #feedback{
+      position:absolute;
+      left:50%;
+      top:56%;
+      transform:translateX(-50%);
+      font-size:28px;
+      font-weight:800;
+      text-shadow:0 2px 12px rgba(0,0,0,.4);
+      pointer-events:none;
+      opacity:0;
+    }
+    #popup{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.6);
+      backdrop-filter:blur(10px);
+    }
+    .popupCard{
+      width:min(84%, 360px);
+      background:rgba(18,26,51,.96);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:22px;
+      padding:20px;
+      box-shadow:0 20px 80px rgba(0,0,0,.45);
+    }
+    .popupCard h2{ margin:0 0 10px; }
+    .statGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin:14px 0 18px;
+    }
+    .stat{
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:14px;
+      padding:10px;
+      text-align:center;
+    }
+    .stat b{ display:block; font-size:22px; margin-top:4px; }
+    #startOverlay{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.45);
+    }
+    .startCard{
+      width:min(86%, 380px);
+      background:rgba(18,26,51,.96);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:22px;
+      padding:18px;
+      text-align:center;
+    }
+    .small{ opacity:.8; font-size:13px; line-height:1.5; }
+    .inputRow{
+      margin-top:12px;
+      display:grid;
+      gap:10px;
+    }
+    input{
+      width:100%;
+      box-sizing:border-box;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:12px 14px;
+      font-size:14px;
+      outline:none;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="frame">
+    <div id="playerWrap"><div id="player"></div></div>
+
+    <div class="hud">
+      <div class="row">
+        <div class="pill">Score: <span id="score">0</span></div>
+        <div class="pill">Combo: <span id="combo">0</span></div>
+        <div class="pill">Time: <span id="time">0.0</span>s</div>
+      </div>
+      <div class="meter"><div id="progress"></div></div>
+    </div>
+
+    <div class="lane">
+      <div class="beatLine"></div>
+      <div class="hitZone"></div>
+      <div id="note"></div>
+      <div id="feedback"></div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="hitBtn">HIT</button>
+      <button id="pauseBtn">PAUSE</button>
+      <button class="warn" id="restartBtn">RESTART</button>
+    </div>
+
+    <div id="startOverlay">
+      <div class="startCard">
+        <h2>YouTube 拍子遊戲</h2>
+        <div class="small">按開始後會自動載入單首 YouTube 影片，播放器建議用支援 autoplay 的瀏覽器。<br>你可以改 VIDEO_ID 來換歌。</div>
+        <div class="inputRow">
+          <input id="videoInput" value="dQw4w9WgXcQ" />
+          <button class="primary" id="startBtn">START</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="popup">
+      <div class="popupCard">
+        <h2>Results</h2>
+        <div class="statGrid">
+          <div class="stat">Score<b id="finalScore">0</b></div>
+          <div class="stat">Accuracy<b id="finalAcc">0%</b></div>
+          <div class="stat">Perfect<b id="finalPerfect">0</b></div>
+          <div class="stat">Miss<b id="finalMiss">0</b></div>
+        </div>
+        <button class="primary" id="againBtn">PLAY AGAIN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+  let player;
+  let timer = null;
+  let startAt = 0;
+  let songLength = 180;
+  let running = false;
+  let paused = false;
+
+  let score = 0, combo = 0, perfect = 0, good = 0, miss = 0;
+  const scoreEl = document.getElementById('score');
+  const comboEl = document.getElementById('combo');
+  const timeEl = document.getElementById('time');
+  const progressEl = document.getElementById('progress');
+  const feedbackEl = document.getElementById('feedback');
+  const noteEl = document.getElementById('note');
+  const popupEl = document.getElementById('popup');
+  const startOverlay = document.getElementById('startOverlay');
+  const videoInput = document.getElementById('videoInput');
+
+  const HIT_WINDOW = 0.18;
+  const PERFECT_WINDOW = 0.08;
+  const BEAT_INTERVAL = 0.5;
+  let beatTimes = [];
+  let nextBeatIndex = 0;
+
+  function resetGame(){
+    score = combo = perfect = good = miss = 0;
+    running = false;
+    paused = false;
+    startAt = 0;
+    nextBeatIndex = 0;
+    scoreEl.textContent = score;
+    comboEl.textContent = combo;
+    timeEl.textContent = '0.0';
+    progressEl.style.width = '0%';
+    popupEl.style.display = 'none';
+    feedbackEl.style.opacity = 0;
+    noteEl.style.display = 'none';
+  }
+
+  function showFeedback(text, color){
+    feedbackEl.textContent = text;
+    feedbackEl.style.color = color;
+    feedbackEl.style.opacity = 1;
+    feedbackEl.style.transform = 'translateX(-50%) scale(1.1)';
+    setTimeout(() => {
+      feedbackEl.style.opacity = 0;
+      feedbackEl.style.transform = 'translateX(-50%) scale(1)';
+    }, 350);
+  }
+
+  function updateHUD(now){
+    const t = Math.max(0, now - startAt);
+    timeEl.textContent = t.toFixed(1);
+    progressEl.style.width = Math.min(100, (t / songLength) * 100) + '%';
+  }
+
+  function triggerHit(){
+    if(!running || paused || !player) return;
+    const now = player.getCurrentTime();
+    updateHUD(startAt + now);
+    const nearest = beatTimes[nextBeatIndex] ?? null;
+    if(nearest === null){
+      showFeedback('MISS', '#ff6b8a');
+      miss++;
+      combo = 0;
+      updateStats();
+      return;
+    }
+    const diff = Math.abs(now - nearest);
+    if(diff <= PERFECT_WINDOW){
+      perfect++;
+      combo++;
+      score += 100 + combo * 5;
+      showFeedback('PERFECT', '#6ea8ff');
+      nextBeatIndex++;
+    }else if(diff <= HIT_WINDOW){
+      good++;
+      combo++;
+      score += 60 + combo * 3;
+      showFeedback('GOOD', '#55d6a5');
+      nextBeatIndex++;
+    }else{
+      miss++;
+      combo = 0;
+      score = Math.max(0, score - 10);
+      showFeedback('MISS', '#ff6b8a');
+    }
+    updateStats();
+  }
+
+  function updateStats(){
+    scoreEl.textContent = score;
+    comboEl.textContent = combo;
+    const total = perfect + good + miss;
+    if(total > 0){
+      const acc = Math.round(((perfect + good * 0.6) / total) * 100);
+      window.__acc = acc;
+    }else{
+      window.__acc = 0;
+    }
+  }
+
+  function endGame(){
+    running = false;
+    paused = false;
+    clearInterval(timer);
+    const total = perfect + good + miss;
+    const acc = total ? Math.round(((perfect + good * 0.6) / total) * 100) : 0;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalAcc').textContent = acc + '%';
+    document.getElementById('finalPerfect').textContent = perfect;
+    document.getElementById('finalMiss').textContent = miss;
+    popupEl.style.display = 'flex';
+  }
+
+  function startGame(){
+    const id = videoInput.value.trim();
+    if(!id) return;
+    if(!player){
+      initPlayer(id);
+    }else{
+      player.loadVideoById(id);
+    }
+    popupEl.style.display = 'none';
+    startOverlay.style.display = 'none';
+    resetGame();
+    beatTimes = [];
+    for(let t = 0.8; t < songLength - 1; t += BEAT_INTERVAL){
+      beatTimes.push(t);
+    }
+    timer = setInterval(() => {
+      if(!running || paused || !player) return;
+      const now = player.getCurrentTime();
+      updateHUD(startAt + now);
+      if(now >= songLength - 0.2){
+        endGame();
+      }
+    }, 50);
+  }
+
+  function initPlayer(id){
+    player = new YT.Player('player', {
+      videoId: id,
+      playerVars: {
+        autoplay: 1,
+        controls: 1,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1,
+        fs: 0,
+        iv_load_policy: 3
+      },
+      events: {
+        onReady: (e) => {
+          e.target.mute();
+          e.target.playVideo();
+          startAt = 0;
+          running = true;
+          songLength = Math.max(60, e.target.getDuration() || 180);
+          beatTimes = [];
+          for(let t = 0.8; t < songLength - 1; t += BEAT_INTERVAL){
+            beatTimes.push(t);
+          }
+        },
+        onStateChange: (e) => {
+          if(e.data === YT.PlayerState.PLAYING && !running){
+            running = true;
+            startAt = 0;
+          }
+          if(e.data === YT.PlayerState.ENDED){
+            endGame();
+          }
+        }
+      }
+    });
+  }
+
+  document.getElementById('hitBtn').addEventListener('click', triggerHit);
+  document.getElementById('pauseBtn').addEventListener('click', () => {
+    if(!player) return;
+    if(paused){
+      player.playVideo();
+      paused = false;
+    }else{
+      player.pauseVideo();
+      paused = true;
+    }
+  });
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    if(player){
+      player.stopVideo();
+    }
+    resetGame();
+    startOverlay.style.display = 'flex';
+  });
+  document.getElementById('againBtn').addEventListener('click', () => {
+    popupEl.style.display = 'none';
+    startOverlay.style.display = 'flex';
+    if(player) player.stopVideo();
+    resetGame();
+  });
+  document.getElementById('startBtn').addEventListener('click', startGame);
+
+  window.addEventListener('keydown', (e) => {
+    if(e.code === 'Space'){
+      e.preventDefault();
+      triggerHit();
+    }
+    if(e.code === 'Enter' && startOverlay.style.display !== 'none'){
+      startGame();
+    }
+  });
+
+  window.onYouTubeIframeAPIReady = () => {
+    initPlayer(videoInput.value.trim());
+  };
+
+  resetGame();
+</script>
+</body>
+</html>

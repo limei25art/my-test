@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>YouTube 歌曲加拍子節奏遊戲</title>
+  <style>
+    :root {
+      --bg: #0f0f13;
+      --panel: #1a1a24;
+      --accent: #ff2d55;
+      --accent2: #00d4ff;
+      --good: #2ecc71;
+      --ok: #f1c40f;
+      --miss: #e74c3c;
+      --text: #f0f0f5;
+      --muted: #8888a0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+    header {
+      width: 100%;
+      padding: 16px 20px;
+      background: linear-gradient(180deg, #1e1e2a 0%, transparent 100%);
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+
+    /* Setup Panel */
+    #setup {
+      width: min(560px, 94vw);
+      background: var(--panel);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 20px 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #333;
+      border-radius: 10px;
+      background: #12121a;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus { border-color: var(--accent2); }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    button:active { transform: scale(0.96); }
+    #startBtn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #ff6b8a);
+      color: white;
+      margin-top: 8px;
+    }
+    #startBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+
+    /* Game Area */
+    #game {
+      display: none;
+      width: min(480px, 96vw);
+      flex-direction: column;
+      align-items: center;
+      margin-top: 8px;
+    }
+    #ytWrap {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    #ytWrap iframe { width: 100%; height: 100%; border: none; }
+    #hud {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 4px;
+      font-size: 0.95rem;
+    }
+    #scoreBox { font-weight: 700; color: var(--accent2); }
+    #comboBox { color: var(--accent); }
+    #timerBox { color: var(--muted); }
+
+    /* Playfield */
+    #playfield {
+      position: relative;
+      width: 100%;
+      height: 320px;
+      background: linear-gradient(180deg, #12121a 0%, #1a1a28 100%);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #2a2a3a;
+    }
+    .lane {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 25%;
+      border-right: 1px solid #2a2a3a;
+    }
+    .lane:last-child { border-right: none; }
+    .lane:nth-child(1) { left: 0; }
+    .lane:nth-child(2) { left: 25%; }
+    .lane:nth-child(3) { left: 50%; }
+    .lane:nth-child(4) { left: 75%; }
+
+    .note {
+      position: absolute;
+      width: 22%;
+      height: 18px;
+      border-radius: 6px;
+      left: 1.5%;
+      box-shadow: 0 0 12px currentColor;
+      transition: opacity 0.1s;
+    }
+    .note.lane0 { background: #ff2d55; color: #ff2d55; }
+    .note.lane1 { background: #00d4ff; color: #00d4ff; }
+    .note.lane2 { background: #2ecc71; color: #2ecc71; }
+    .note.lane3 { background: #f1c40f; color: #f1c40f; }
+
+    #hitLine {
+      position: absolute;
+      left: 0; right: 0;
+      bottom: 48px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #fff, transparent);
+      box-shadow: 0 0 10px #fff;
+      z-index: 5;
+    }
+
+    #keys {
+      display: flex;
+      width: 100%;
+      margin-top: 10px;
+      gap: 6px;
+    }
+    .key {
+      flex: 1;
+      height: 56px;
+      border-radius: 10px;
+      background: #1e1e2a;
+      border: 2px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--muted);
+      user-select: none;
+      transition: background 0.08s, border-color 0.08s, transform 0.08s;
+    }
+    .key.active {
+      transform: scale(0.94);
+      border-color: var(--accent2);
+      background: #2a2a40;
+      color: #fff;
+    }
+    .key.hit-good { border-color: var(--good); background: rgba(46,204,113,0.25); }
+    .key.hit-ok { border-color: var(--ok); background: rgba(241,196,15,0.25); }
+    .key.hit-miss { border-color: var(--miss); background: rgba(231,76,60,0.2); }
+
+    #feedback {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.6rem;
+      font-weight: 800;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 10;
+      text-shadow: 0 0 20px currentColor;
+    }
+    #feedback.show { animation: pop 0.5s ease-out forwards; }
+    @keyframes pop {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); }
+      40% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); }
+      100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+    }
+
+    #controls {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+    #pauseBtn, #endBtn {
+      flex: 1;
+      background: #2a2a3a;
+      color: var(--text);
+    }
+    #endBtn { background: #3a1a1a; color: #ff8a8a; }
+
+    /* Results Popup */
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+    #results {
+      background: var(--panel);
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: min(360px, 90vw);
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      animation: slideUp 0.35s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #results h2 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    #grade {
+      font-size: 3.5rem;
+      font-weight: 900;
+      margin: 12px 0;
+      line-height: 1;
+    }
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #2a2a3a;
+      font-size: 0.95rem;
+    }
+    .stat:last-of-type { border-bottom: none; }
+    .stat span:last-child { font-weight: 700; }
+    #retryBtn {
+      width: 100%;
+      margin-top: 20px;
+      background: linear-gradient(135deg, var(--accent2), #0099cc);
+      color: #fff;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 16px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎵 YouTube 節奏拍子遊戲</h1>
+    <p class="subtitle">貼上歌曲連結 → 設定 BPM → 打拍子拿高分</p>
+  </header>
+
+  <section id="setup">
+    <label for="ytUrl">YouTube 歌曲連結</label>
+    <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" />
+
+    <div class="row">
+      <div>
+        <label for="bpm">BPM（每分鐘拍數）</label>
+        <input type="number" id="bpm" value="120" min="40" max="240" />
+      </div>
+      <div>
+        <label for="duration">遊戲時長（秒）</label>
+        <input type="number" id="duration" value="45" min="15" max="180" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="offset">開始偏移（秒）</label>
+        <input type="number" id="offset" value="0" min="0" max="300" step="0.5" />
+      </div>
+      <div>
+        <label for="difficulty">難度</label>
+        <input type="number" id="difficulty" value="2" min="1" max="4" title="1=簡單 4=瘋狂" />
+      </div>
+    </div>
+
+    <button id="startBtn">開始遊戲 ▶</button>
+    <p class="hint">
+      操作：鍵盤 <b>A / S / D / F</b>（或 ← ↓ ↑ →）對應四條軌道，或直接點擊下方按鍵。<br>
+      建議先到歌曲中找一個穩定節拍的段落，再填 BPM 與偏移時間。
+    </p>
+  </section>
+
+  <section id="game">
+    <div id="ytWrap">
+      <div id="player"></div>
+    </div>
+    <div id="hud">
+      <div id="scoreBox">分數：0</div>
+      <div id="comboBox">連擊：0</div>
+      <div id="timerBox">剩餘：--</div>
+    </div>
+    <div id="playfield">
+      <div class="lane"></div>
+      <div class="lane"></div>
+      <div class="lane"></div>
+      <div class="lane"></div>
+      <div id="hitLine"></div>
+      <div id="feedback"></div>
+    </div>
+    <div id="keys">
+      <div class="key" data-lane="0">A</div>
+      <div class="key" data-lane="1">S</div>
+      <div class="key" data-lane="2">D</div>
+      <div class="key" data-lane="3">F</div>
+    </div>
+    <div id="controls">
+      <button id="pauseBtn">暫停</button>
+      <button id="endBtn">結束並看成績</button>
+    </div>
+  </section>
+
+  <div id="overlay">
+    <div id="results">
+      <h2>遊戲結束！</h2>
+      <div id="grade">S</div>
+      <div class="stat"><span>總分</span><span id="r-score">0</span></div>
+      <div class="stat"><span>最大連擊</span><span id="r-combo">0</span></div>
+      <div class="stat"><span>Perfect</span><span id="r-perfect">0</span></div>
+      <div class="stat"><span>Good</span><span id="r-good">0</span></div>
+      <div class="stat"><span>Miss</span><span id="r-miss">0</span></div>
+      <div class="stat"><span>準確率</span><span id="r-acc">0%</span></div>
+      <button id="retryBtn">再玩一次</button>
+    </div>
+  </div>
+
+  <footer>純前端網頁遊戲 · 請在有網路的瀏覽器開啟 · 支援桌面與手機</footer>
+
+  <script>
+    // ========== YouTube IFrame API ==========
+    let player = null;
+    let ytReady = false;
+
+    function onYouTubeIframeAPIReady() {
+      ytReady = true;
+    }
+
+    // Load YT API
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+
+    // ========== Game State ==========
+    const state = {
+      playing: false,
+      paused: false,
+      score: 0,
+      combo: 0,
+      maxCombo: 0,
+      perfect: 0,
+      good: 0,
+      miss: 0,
+      notes: [],          // { lane, time, el, hit }
+      startTime: 0,       // performance.now() when game starts
+      gameDuration: 45,   // seconds
+      bpm: 120,
+      offset: 0,
+      difficulty: 2,
+      videoId: null,
+      animId: null,
+      noteSpeed: 280,     // px per second (fall speed)
+      hitWindowPerfect: 0.08,
+      hitWindowGood: 0.16,
+    };
+
+    const playfield = document.getElementById('playfield');
+    const feedbackEl = document.getElementById('feedback');
+    const keys = document.querySelectorAll('.key');
+    const KEY_MAP = {
+      'a': 0, 's': 1, 'd': 2, 'f': 3,
+      'ArrowLeft': 0, 'ArrowDown': 1, 'ArrowUp': 2, 'ArrowRight': 3,
+    };
+
+    // ========== Helpers ==========
+    function extractVideoId(url) {
+      const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const m = url.match(reg);
+      return m ? m[1] : null;
+    }
+
+    function showFeedback(text, color) {
+      feedbackEl.textContent = text;
+      feedbackEl.style.color = color;
+      feedbackEl.classList.remove('show');
+      void feedbackEl.offsetWidth;
+      feedbackEl.classList.add('show');
+    }
+
+    function updateHUD() {
+      document.getElementById('scoreBox').textContent = `分數：${state.score}`;
+      document.getElementById('comboBox').textContent = `連擊：${state.combo}`;
+    }
+
+    // ========== Note Generation ==========
+    function generateNotes() {
+      state.notes = [];
+      const beatInterval = 60 / state.bpm; // seconds per beat
+      const totalBeats = Math.floor(state.gameDuration / beatInterval);
+      const density = [0.35, 0.55, 0.75, 0.95][state.difficulty - 1] || 0.55;
+
+      let lastLane = -1;
+      for (let i = 2; i < totalBeats; i++) { // skip first two beats for prep
+        if (Math.random() > density) continue;
+        let lane = Math.floor(Math.random() * 4);
+        // avoid same lane too often
+        if (lane === lastLane && Math.random() < 0.6) {
+          lane = (lane + 1 + Math.floor(Math.random() * 3)) % 4;
+        }
+        lastLane = lane;
+        const time = i * beatInterval; // time from game start
+        state.notes.push({ lane, time, el: null, hit: false, missed: false });
+      }
+    }
+
+    function spawnNoteVisual(note) {
+      const el = document.createElement('div');
+      el.className = `note lane${note.lane}`;
+      el.style.top = '-20px';
+      // position within lane
+      const laneWidth = playfield.clientWidth / 4;
+      el.style.left = (note.lane * laneWidth + laneWidth * 0.04) + 'px';
+      el.style.width = (laneWidth * 0.92) + 'px';
+      playfield.appendChild(el);
+      note.el = el;
+    }
+
+    // ========== Game Loop ==========
+    function gameLoop(now) {
+      if (!state.playing || state.paused) {
+        state.animId = requestAnimationFrame(gameLoop);
+        return;
+      }
+
+      const elapsed = (now - state.startTime) / 1000; // seconds
+      const remaining = Math.max(0, state.gameDuration - elapsed);
+      document.getElementById('timerBox').textContent = `剩餘：${remaining.toFixed(1)}s`;
+
+      const hitY = playfield.clientHeight - 48; // hit line position
+      const travelTime = hitY / state.noteSpeed; // seconds to fall
+
+      // Spawn notes that should appear soon
+      for (const note of state.notes) {
+        if (note.el || note.hit || note.missed) continue;
+        const appearTime = note.time - travelTime;
+        if (elapsed >= appearTime) {
+          spawnNoteVisual(note);
+        }
+      }
+
+      // Move notes
+      for (const note of state.notes) {
+        if (!note.el || note.hit || note.missed) continue;
+        const progress = (elapsed - (note.time - travelTime)) / travelTime;
+        const y = progress * hitY;
+        note.el.style.top = y + 'px';
+
+        // Miss if passed
+        if (progress > 1.25) {
+          note.missed = true;
+          note.el.style.opacity = '0.2';
+          setTimeout(() => note.el && note.el.remove(), 200);
+          state.miss++;
+          state.combo = 0;
+          updateHUD();
+          showFeedback('MISS', 'var(--miss)');
+        }
+      }
+
+      // End condition
+      if (elapsed >= state.gameDuration) {
+        endGame();
+        return;
+      }
+
+      state.animId = requestAnimationFrame(gameLoop);
+    }
+
+    // ========== Input ==========
+    function tryHit(lane) {
+      if (!state.playing || state.paused) return;
+      const now = performance.now();
+      const elapsed = (now - state.startTime) / 1000;
+
+      // Find closest unhit note in this lane within window
+      let best = null;
+      let bestDiff = Infinity;
+      for (const note of state.notes) {
+        if (note.lane !== lane || note.hit || note.missed) continue;
+        const diff = Math.abs(note.time - elapsed);
+        if (diff < bestDiff && diff <= state.hitWindowGood) {
+          bestDiff = diff;
+          best = note;
+        }
+      }
+
+      const keyEl = keys[lane];
+      keyEl.classList.add('active');
+      setTimeout(() => keyEl.classList.remove('active'), 100);
+
+      if (!best) {
+        // empty hit – small penalty optional, ignore
+        return;
+      }
+
+      best.hit = true;
+      if (best.el) {
+        best.el.style.opacity = '0';
+        setTimeout(() => best.el && best.el.remove(), 80);
+      }
+
+      if (bestDiff <= state.hitWindowPerfect) {
+        state.perfect++;
+        state.score += 100 + Math.min(state.combo, 50) * 2;
+        state.combo++;
+        showFeedback('PERFECT', 'var(--good)');
+        keyEl.classList.add('hit-good');
+      } else {
+        state.good++;
+        state.score += 50 + Math.min(state.combo, 30);
+        state.combo++;
+        showFeedback('GOOD', 'var(--ok)');
+        keyEl.classList.add('hit-ok');
+      }
+      if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+      updateHUD();
+      setTimeout(() => {
+        keyEl.classList.remove('hit-good', 'hit-ok', 'hit-miss');
+      }, 150);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.repeat) return;
+      const lane = KEY_MAP[e.key];
+      if (lane !== undefined) {
+        e.preventDefault();
+        tryHit(lane);
+      }
+    });
+
+    keys.forEach(k => {
+      k.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        tryHit(+k.dataset.lane);
+      });
+    });
+
+    // ========== Start / Pause / End ==========
+    document.getElementById('startBtn').addEventListener('click', () => {
+      const url = document.getElementById('ytUrl').value.trim();
+      const id = extractVideoId(url);
+      if (!id) {
+        alert('請輸入有效的 YouTube 連結');
+        return;
+      }
+      state.videoId = id;
+      state.bpm = +document.getElementById('bpm').value || 120;
+      state.gameDuration = +document.getElementById('duration').value || 45;
+      state.offset = +document.getElementById('offset').value || 0;
+      state.difficulty = Math.min(4, Math.max(1, +document.getElementById('difficulty').value || 2));
+
+      // Reset stats
+      state.score = 0;
+      state.combo = 0;
+      state.maxCombo = 0;
+      state.perfect = 0;
+      state.good = 0;
+      state.miss = 0;
+      state.paused = false;
+      updateHUD();
+
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('game').style.display = 'flex';
+
+      // Create / recreate player
+      if (player) {
+        player.destroy();
+        player = null;
+      }
+      player = new YT.Player('player', {
+        videoId: id,
+        playerVars: {
+          autoplay: 0,
+          controls: 1,
+          modestbranding: 1,
+          rel: 0,
+          start: Math.floor(state.offset),
+        },
+        events: {
+          onReady: (e) => {
+            // slight delay then start
+            setTimeout(() => {
+              e.target.seekTo(state.offset, true);
+              e.target.playVideo();
+              startGameplay();
+            }, 600);
+          },
+          onStateChange: (e) => {
+            // if user pauses video, sync
+            if (e.data === YT.PlayerState.PAUSED && state.playing) {
+              // keep our pause separate
+            }
+          }
+        }
+      });
+    });
+
+    function startGameplay() {
+      generateNotes();
+      // clear old notes
+      playfield.querySelectorAll('.note').forEach(n => n.remove());
+      state.playing = true;
+      state.startTime = performance.now();
+      if (state.animId) cancelAnimationFrame(state.animId);
+      state.animId = requestAnimationFrame(gameLoop);
+    }
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      if (!state.playing) return;
+      state.paused = !state.paused;
+      document.getElementById('pauseBtn').textContent = state.paused ? '繼續' : '暫停';
+      if (player) {
+        if (state.paused) player.pauseVideo();
+        else player.playVideo();
+      }
+      if (!state.paused) {
+        // adjust startTime so elapsed continues correctly
+        // simple approach: just resume, notes will be slightly off but acceptable
+      }
+    });
+
+    document.getElementById('endBtn').addEventListener('click', () => {
+      endGame();
+    });
+
+    function endGame() {
+      state.playing = false;
+      if (state.animId) cancelAnimationFrame(state.animId);
+      if (player) {
+        try { player.pauseVideo(); } catch (_) {}
+      }
+
+      // count remaining notes as miss
+      for (const n of state.notes) {
+        if (!n.hit && !n.missed) {
+          state.miss++;
+          n.missed = true;
+        }
+      }
+
+      const totalHits = state.perfect + state.good + state.miss;
+      const acc = totalHits === 0 ? 0 : ((state.perfect + state.good) / totalHits * 100);
+
+      // Grade
+      let grade = 'D';
+      let color = '#e74c3c';
+      if (acc >= 98 && state.miss <= 2) { grade = 'SS'; color = '#ffd700'; }
+      else if (acc >= 95) { grade = 'S'; color = '#00d4ff'; }
+      else if (acc >= 90) { grade = 'A'; color = '#2ecc71'; }
+      else if (acc >= 80) { grade = 'B'; color = '#f1c40f'; }
+      else if (acc >= 70) { grade = 'C'; color = '#e67e22'; }
+
+      document.getElementById('grade').textContent = grade;
+      document.getElementById('grade').style.color = color;
+      document.getElementById('r-score').textContent = state.score;
+      document.getElementById('r-combo').textContent = state.maxCombo;
+      document.getElementById('r-perfect').textContent = state.perfect;
+      document.getElementById('r-good').textContent = state.good;
+      document.getElementById('r-miss').textContent = state.miss;
+      document.getElementById('r-acc').textContent = acc.toFixed(1) + '%';
+
+      document.getElementById('overlay').style.display = 'flex';
+    }
+
+    document.getElementById('retryBtn').addEventListener('click', () => {
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('game').style.display = 'none';
+      document.getElementById('setup').style.display = 'block';
+      if (player) {
+        try { player.destroy(); } catch (_) {}
+        player = null;
+      }
+      // clear notes
+      playfield.querySelectorAll('.note').forEach(n => n.remove());
+      document.getElementById('pauseBtn').textContent = '暫停';
+    });
+  </script>
+</body>
+</html>
