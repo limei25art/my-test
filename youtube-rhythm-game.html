@@ -87,6 +87,36 @@
     #startBtn:disabled { opacity: 0.5; cursor: not-allowed; }
     .hint { font-size: 0.75rem; color: var(--muted); margin-top: 12px; line-height: 1.5; }
 
+    .sound-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .sound-row label { margin: 0; }
+    #soundToggle {
+      width: 48px;
+      height: 28px;
+      border-radius: 14px;
+      background: #333;
+      border: none;
+      position: relative;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    #soundToggle.on { background: var(--accent2); }
+    #soundToggle::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+    }
+    #soundToggle.on::after { transform: translateX(20px); }
+
     /* Game Area */
     #game {
       display: none;
@@ -320,10 +350,17 @@
       </div>
     </div>
 
+    <div class="sound-row">
+      <label for="soundToggle">節奏音效</label>
+      <button type="button" id="soundToggle" class="on" title="開啟/關閉音效" aria-label="音效開關"></button>
+      <span id="soundLabel" style="font-size:0.85rem;color:var(--muted)">開</span>
+    </div>
+
     <button id="startBtn">開始遊戲 ▶</button>
     <p class="hint">
       操作：鍵盤 <b>A / S / D / F</b>（或 ← ↓ ↑ →）對應四條軌道，或直接點擊下方按鍵。<br>
-      建議先到歌曲中找一個穩定節拍的段落，再填 BPM 與偏移時間。
+      建議先到歌曲中找一個穩定節拍的段落，再填 BPM 與偏移時間。<br>
+      音效使用瀏覽器 Web Audio 產生，不需額外下載音檔。
     </p>
   </section>
 
@@ -385,6 +422,70 @@
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     document.head.appendChild(tag);
+
+    // ========== Rhythm Sound Engine (Web Audio) ==========
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    /** Play a short synthesized tone */
+    function playTone({ freq = 440, duration = 0.12, type = 'sine', gain = 0.18, slideTo = null }) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = ensureAudio();
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        if (slideTo != null) {
+          osc.frequency.linearRampToValueAtTime(slideTo, ctx.currentTime + duration * 0.8);
+        }
+        g.gain.setValueAtTime(0, ctx.currentTime);
+        g.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.008);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + duration + 0.02);
+      } catch (_) {}
+    }
+
+    function playHitSound(kind) {
+      if (kind === 'perfect') {
+        // bright two-tone sparkle
+        playTone({ freq: 880, duration: 0.09, type: 'sine', gain: 0.16 });
+        playTone({ freq: 1320, duration: 0.12, type: 'triangle', gain: 0.1 });
+      } else if (kind === 'good') {
+        playTone({ freq: 660, duration: 0.1, type: 'triangle', gain: 0.14 });
+      } else if (kind === 'miss') {
+        playTone({ freq: 180, duration: 0.18, type: 'sawtooth', gain: 0.1, slideTo: 90 });
+      } else if (kind === 'tap') {
+        // soft key click
+        playTone({ freq: 420, duration: 0.04, type: 'square', gain: 0.06 });
+      }
+    }
+
+    // Sound toggle UI
+    const soundToggle = document.getElementById('soundToggle');
+    const soundLabel = document.getElementById('soundLabel');
+    soundToggle.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      soundToggle.classList.toggle('on', soundEnabled);
+      soundLabel.textContent = soundEnabled ? '開' : '關';
+      if (soundEnabled) {
+        ensureAudio();
+        playHitSound('tap');
+      }
+    });
 
     // ========== Game State ==========
     const state = {
@@ -509,6 +610,7 @@
           state.combo = 0;
           updateHUD();
           showFeedback('MISS', 'var(--miss)');
+          playHitSound('miss');
         }
       }
 
@@ -544,7 +646,8 @@
       setTimeout(() => keyEl.classList.remove('active'), 100);
 
       if (!best) {
-        // empty hit – small penalty optional, ignore
+        // empty hit – soft click only
+        playHitSound('tap');
         return;
       }
 
@@ -560,12 +663,14 @@
         state.combo++;
         showFeedback('PERFECT', 'var(--good)');
         keyEl.classList.add('hit-good');
+        playHitSound('perfect');
       } else {
         state.good++;
         state.score += 50 + Math.min(state.combo, 30);
         state.combo++;
         showFeedback('GOOD', 'var(--ok)');
         keyEl.classList.add('hit-ok');
+        playHitSound('good');
       }
       if (state.combo > state.maxCombo) state.maxCombo = state.combo;
       updateHUD();
@@ -592,6 +697,9 @@
 
     // ========== Start / Pause / End ==========
     document.getElementById('startBtn').addEventListener('click', () => {
+      // Unlock AudioContext on user gesture
+      if (soundEnabled) ensureAudio();
+
       const url = document.getElementById('ytUrl').value.trim();
       const id = extractVideoId(url);
       if (!id) {
