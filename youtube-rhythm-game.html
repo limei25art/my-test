@@ -3,20 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>YouTube 歌曲加拍子節奏遊戲</title>
+  <title>YouTube 歌曲節奏遊戲 - 琴音旗艦版</title>
   <style>
     :root {
-      --bg: #0f0f13;
-      --panel: #1a1a24;
+      --bg: #07090e;
+      --panel-bg: rgba(255, 255, 255, 0.03);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --panel-border-hover: rgba(0, 212, 255, 0.3);
+      
       --accent: #ff2d55;
+      --accent-glow: rgba(255, 45, 85, 0.4);
       --accent2: #00d4ff;
+      --accent2-glow: rgba(0, 212, 255, 0.4);
+      
       --good: #2ecc71;
       --ok: #f1c40f;
       --miss: #e74c3c;
-      --text: #f0f0f5;
-      --muted: #8888a0;
+      
+      --text: #f0f2f5;
+      --muted: #8a8ea8;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
       font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
       background: var(--bg);
@@ -26,142 +35,221 @@
       flex-direction: column;
       align-items: center;
       overflow-x: hidden;
+      position: relative;
     }
+
+    /* 背景流動霓虹光暈 */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(100px);
+      z-index: -1;
+      opacity: 0.15;
+      pointer-events: none;
+    }
+    body::before {
+      top: -100px;
+      left: -100px;
+      background: var(--accent2);
+    }
+    body::after {
+      bottom: -100px;
+      right: -100px;
+      background: var(--accent);
+    }
+
     header {
       width: 100%;
-      padding: 16px 20px;
-      background: linear-gradient(180deg, #1e1e2a 0%, transparent 100%);
+      padding: 24px 20px;
       text-align: center;
+      background: transparent;
     }
+    
     h1 {
-      font-size: 1.4rem;
+      font-size: 1.6rem;
       font-weight: 700;
-      letter-spacing: 0.05em;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #ffffff 30%, var(--muted) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .subtitle { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+    .subtitle { 
+      color: var(--muted); 
+      font-size: 0.85rem; 
+      margin-top: 6px; 
+      letter-spacing: 0.03em;
+    }
+
+    /* 玻璃擬態卡片 */
+    .glass-card {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
 
     /* Setup Panel */
     #setup {
-      width: min(560px, 94vw);
-      background: var(--panel);
-      border-radius: 16px;
-      padding: 24px;
-      margin: 20px 0;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      width: min(520px, 92vw);
+      padding: 32px;
+      margin: 10px 0 30px 0;
     }
-    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+    #setup:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    label { 
+      display: block; 
+      font-size: 0.8rem; 
+      color: var(--muted); 
+      margin-bottom: 8px; 
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
     input[type="text"], input[type="number"] {
       width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #333;
-      border-radius: 10px;
-      background: #12121a;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.25);
       color: var(--text);
-      font-size: 1rem;
-      margin-bottom: 16px;
+      font-size: 0.95rem;
+      margin-bottom: 20px;
       outline: none;
-      transition: border 0.2s;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
     }
-    input:focus { border-color: var(--accent2); }
-    .row { display: flex; gap: 12px; }
+    input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 12px var(--accent2-glow), inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .row { display: flex; gap: 16px; }
     .row > div { flex: 1; }
+
     button {
       cursor: pointer;
       border: none;
       border-radius: 12px;
       padding: 14px 28px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
-      transition: transform 0.15s, opacity 0.15s;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
-    button:active { transform: scale(0.96); }
+    button:active { transform: scale(0.98); }
+
     #startBtn {
       width: 100%;
-      background: linear-gradient(135deg, var(--accent), #ff6b8a);
+      background: linear-gradient(135deg, var(--accent), #ff5e7e);
       color: white;
-      margin-top: 8px;
+      margin-top: 10px;
+      box-shadow: 0 4px 20px var(--accent-glow);
     }
-    #startBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+    #startBtn:hover {
+      box-shadow: 0 6px 25px var(--accent-glow);
+      opacity: 0.95;
+    }
+    #startBtn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+    .hint { 
+      font-size: 0.75rem; 
+      color: var(--muted); 
+      margin-top: 16px; 
+      line-height: 1.6; 
+    }
+    .hint b { color: var(--text); font-weight: 500; }
 
     .sound-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
+      gap: 12px;
+      margin-bottom: 4px;
     }
     .sound-row label { margin: 0; }
+    
     #soundToggle {
-      width: 48px;
-      height: 28px;
-      border-radius: 14px;
-      background: #333;
-      border: none;
+      width: 44px;
+      height: 24px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.05);
       position: relative;
       cursor: pointer;
       padding: 0;
       flex-shrink: 0;
+      transition: background 0.2s ease;
     }
-    #soundToggle.on { background: var(--accent2); }
+    #soundToggle.on { background: var(--accent2); box-shadow: 0 0 10px var(--accent2-glow); }
     #soundToggle::after {
       content: '';
       position: absolute;
-      top: 3px; left: 3px;
-      width: 22px; height: 22px;
+      top: 2px; left: 2px;
+      width: 18px; height: 18px;
       border-radius: 50%;
       background: #fff;
-      transition: transform 0.2s;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     #soundToggle.on::after { transform: translateX(20px); }
 
     /* Game Area */
     #game {
       display: none;
-      width: min(480px, 96vw);
+      width: min(460px, 94vw);
       flex-direction: column;
       align-items: center;
-      margin-top: 8px;
+      margin-top: 4px;
     }
+    
     #ytWrap {
       width: 100%;
       aspect-ratio: 16/9;
       background: #000;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
       margin-bottom: 12px;
       position: relative;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     #ytWrap iframe { width: 100%; height: 100%; border: none; }
+    
     #hud {
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 4px;
-      font-size: 0.95rem;
+      padding: 6px 8px;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
     }
-    #scoreBox { font-weight: 700; color: var(--accent2); }
-    #comboBox { color: var(--accent); }
+    #scoreBox { font-weight: 600; color: var(--accent2); text-shadow: 0 0 10px var(--accent2-glow); }
+    #comboBox { color: var(--accent); font-weight: 600; }
     #timerBox { color: var(--muted); }
 
     /* Playfield */
     #playfield {
       position: relative;
       width: 100%;
-      height: 320px;
-      background: linear-gradient(180deg, #12121a 0%, #1a1a28 100%);
-      border-radius: 12px;
+      height: 300px;
+      background: linear-gradient(180deg, rgba(15,15,25,0.6) 0%, rgba(25,25,40,0.8) 100%);
+      border-radius: 16px;
       overflow: hidden;
-      border: 1px solid #2a2a3a;
+      border: 1px solid var(--panel-border);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
     }
     .lane {
       position: absolute;
       top: 0; bottom: 0;
       width: 25%;
-      border-right: 1px solid #2a2a3a;
+      border-right: 1px solid rgba(255, 255, 255, 0.03);
     }
     .lane:last-child { border-right: none; }
     .lane:nth-child(1) { left: 0; }
@@ -172,11 +260,11 @@
     .note {
       position: absolute;
       width: 22%;
-      height: 18px;
+      height: 16px;
       border-radius: 6px;
       left: 1.5%;
-      box-shadow: 0 0 12px currentColor;
-      transition: opacity 0.1s;
+      box-shadow: 0 0 14px currentColor;
+      transition: opacity 0.1s ease;
     }
     .note.lane0 { background: #ff2d55; color: #ff2d55; }
     .note.lane1 { background: #00d4ff; color: #00d4ff; }
@@ -186,42 +274,44 @@
     #hitLine {
       position: absolute;
       left: 0; right: 0;
-      bottom: 48px;
-      height: 4px;
-      background: linear-gradient(90deg, transparent, #fff, transparent);
-      box-shadow: 0 0 10px #fff;
+      bottom: 44px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+      box-shadow: 0 0 12px #fff;
       z-index: 5;
     }
 
     #keys {
       display: flex;
       width: 100%;
-      margin-top: 10px;
-      gap: 6px;
+      margin-top: 12px;
+      gap: 8px;
     }
     .key {
       flex: 1;
-      height: 56px;
-      border-radius: 10px;
-      background: #1e1e2a;
-      border: 2px solid #333;
+      height: 52px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 1rem;
+      font-weight: 600;
       color: var(--muted);
       user-select: none;
-      transition: background 0.08s, border-color 0.08s, transform 0.08s;
+      backdrop-filter: blur(10px);
+      transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .key.active {
-      transform: scale(0.94);
+      transform: scale(0.97);
       border-color: var(--accent2);
-      background: #2a2a40;
+      background: rgba(0, 212, 255, 0.15);
       color: #fff;
+      box-shadow: 0 0 15px var(--accent2-glow);
     }
-    .key.hit-good { border-color: var(--good); background: rgba(46,204,113,0.25); }
-    .key.hit-ok { border-color: var(--ok); background: rgba(241,196,15,0.25); }
+    .key.hit-good { border-color: var(--good); background: rgba(46,204,113,0.25); box-shadow: 0 0 15px rgba(46,204,113,0.3); }
+    .key.hit-ok { border-color: var(--ok); background: rgba(241,196,15,0.25); box-shadow: 0 0 15px rgba(241,196,15,0.3); }
     .key.hit-miss { border-color: var(--miss); background: rgba(231,76,60,0.2); }
 
     #feedback {
@@ -229,104 +319,117 @@
       top: 40%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 800;
       pointer-events: none;
       opacity: 0;
       z-index: 10;
+      letter-spacing: 0.05em;
       text-shadow: 0 0 20px currentColor;
     }
-    #feedback.show { animation: pop 0.5s ease-out forwards; }
+    #feedback.show { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     @keyframes pop {
       0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6); }
       40% { opacity: 1; transform: translate(-50%, -60%) scale(1.15); }
-      100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -75%) scale(1); }
     }
 
     #controls {
-      margin-top: 14px;
+      margin-top: 12px;
       display: flex;
       gap: 10px;
       width: 100%;
     }
     #pauseBtn, #endBtn {
       flex: 1;
-      background: #2a2a3a;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--text);
+      backdrop-filter: blur(10px);
     }
-    #endBtn { background: #3a1a1a; color: #ff8a8a; }
+    #pauseBtn:hover { background: rgba(255, 255, 255, 0.08); }
+    #endBtn { background: rgba(231, 76, 60, 0.15); border-color: rgba(231, 76, 60, 0.3); color: #ff8a8a; }
+    #endBtn:hover { background: rgba(231, 76, 60, 0.25); }
 
-    /* Results Popup */
+    /* Results Popup Overlay */
     #overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
+      background: rgba(5, 7, 12, 0.8);
       z-index: 100;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
     #results {
-      background: var(--panel);
-      border-radius: 20px;
-      padding: 32px 28px;
+      background: rgba(18, 20, 30, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 36px 30px;
       width: min(360px, 90vw);
       text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-      animation: slideUp 0.35s ease-out;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(30px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
     #results h2 {
-      font-size: 1.5rem;
-      margin-bottom: 8px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #fff, var(--muted));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     #grade {
-      font-size: 3.5rem;
+      font-size: 4rem;
       font-weight: 900;
-      margin: 12px 0;
+      margin: 8px 0 16px 0;
       line-height: 1;
+      text-shadow: 0 0 30px currentColor;
     }
     .stat {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #2a2a3a;
-      font-size: 0.95rem;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.9rem;
+      color: var(--muted);
     }
     .stat:last-of-type { border-bottom: none; }
-    .stat span:last-child { font-weight: 700; }
+    .stat span:last-child { font-weight: 600; color: var(--text); }
+    
     #retryBtn {
       width: 100%;
-      margin-top: 20px;
-      background: linear-gradient(135deg, var(--accent2), #0099cc);
+      margin-top: 24px;
+      background: linear-gradient(135deg, var(--accent2), #0088cc);
       color: #fff;
+      box-shadow: 0 4px 20px var(--accent2-glow);
     }
+    #retryBtn:hover { box-shadow: 0 6px 25px var(--accent2-glow); }
 
     footer {
       margin-top: auto;
-      padding: 16px;
+      padding: 20px;
       font-size: 0.75rem;
       color: var(--muted);
       text-align: center;
+      letter-spacing: 0.05em;
     }
   </style>
 </head>
 <body>
   <header>
     <h1>🎵 YouTube 節奏拍子遊戲</h1>
-    <p class="subtitle">貼上歌曲連結 → 設定 BPM → 打拍子拿高分</p>
+    <p class="subtitle">Cloud Audio & Glassmorphic UI Design</p>
   </header>
 
-  <section id="setup">
+  <section id="setup" class="glass-card">
     <label for="ytUrl">YouTube 歌曲連結</label>
-    <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." value="https://www.youtube.com/watch?v=eG5Zm8ZAutI" />
+    <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." value="https://www.youtube.com/watch?v=hetD-encqKA" />
 
     <div class="row">
       <div>
@@ -345,22 +448,21 @@
         <input type="number" id="offset" value="0" min="0" max="300" step="0.5" />
       </div>
       <div>
-        <label for="difficulty">難度</label>
-        <input type="number" id="difficulty" value="2" min="1" max="4" title="1=簡單 4=瘋狂" />
+        <label for="difficulty">難度 (1-4)</label>
+        <input type="number" id="difficulty" value="2" min="1" max="4" />
       </div>
     </div>
 
     <div class="sound-row">
-      <label for="soundToggle">節奏音效</label>
+      <label for="soundToggle">擬真琴音合成</label>
       <button type="button" id="soundToggle" class="on" title="開啟/關閉音效" aria-label="音效開關"></button>
       <span id="soundLabel" style="font-size:0.85rem;color:var(--muted)">開</span>
     </div>
 
-    <button id="startBtn">開始遊戲 ▶</button>
+    <button id="startBtn">開始體驗 ▶</button>
     <p class="hint">
-      操作：鍵盤 <b>A / S / D / F</b>（或 ← ↓ ↑ →）對應四條軌道，或直接點擊下方按鍵。<br>
-      建議先到歌曲中找一個穩定節拍的段落，再填 BPM 與偏移時間。<br>
-      音效使用瀏覽器 Web Audio 產生，不需額外下載音檔。
+      操作：鍵盤 <b>A / S / D / F</b>（或 <b>← ↓ ↑ →</b>）對應四條軌道，或直接點擊下方微光按鍵。<br>
+      內建 Web Audio 鋼琴/豎琴合成音效，敲擊時帶來溫潤清脆的弦音回饋。
     </p>
   </section>
 
@@ -389,13 +491,13 @@
     </div>
     <div id="controls">
       <button id="pauseBtn">暫停</button>
-      <button id="endBtn">結束並看成績</button>
+      <button id="endBtn">結束並結算</button>
     </div>
   </section>
 
   <div id="overlay">
     <div id="results">
-      <h2>遊戲結束！</h2>
+      <h2>演出結算</h2>
       <div id="grade">S</div>
       <div class="stat"><span>總分</span><span id="r-score">0</span></div>
       <div class="stat"><span>最大連擊</span><span id="r-combo">0</span></div>
@@ -403,11 +505,11 @@
       <div class="stat"><span>Good</span><span id="r-good">0</span></div>
       <div class="stat"><span>Miss</span><span id="r-miss">0</span></div>
       <div class="stat"><span>準確率</span><span id="r-acc">0%</span></div>
-      <button id="retryBtn">再玩一次</button>
+      <button id="retryBtn">再次挑戰</button>
     </div>
   </div>
 
-  <footer>純前端網頁遊戲 · 請在有網路的瀏覽器開啟 · 支援桌面與手機</footer>
+  <footer>Cloud Web Audio Engine · Glassmorphic UI Design</footer>
 
   <script>
     // ========== YouTube IFrame API ==========
@@ -418,12 +520,11 @@
       ytReady = true;
     }
 
-    // Load YT API
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     document.head.appendChild(tag);
 
-    // ========== Rhythm Sound Engine (Web Audio) ==========
+    // ========== Piano Sound Engine (Web Audio) ==========
     let audioCtx = null;
     let soundEnabled = true;
 
@@ -437,44 +538,86 @@
       return audioCtx;
     }
 
-    /** Play a short synthesized tone */
-    function playTone({ freq = 440, duration = 0.12, type = 'sine', gain = 0.18, slideTo = null }) {
+    /** 
+     * 模擬鋼琴琴音 (Piano / Mallet Synthesis)
+     * 採用多重諧波（基頻 + 泛音疊加）與鋼琴特有的衰減包絡（快起音、自然長尾衰減）
+     */
+    function playPianoNote({ baseFreq = 440, volume = 0.2 }) {
       if (!soundEnabled) return;
       try {
         const ctx = ensureAudio();
-        const osc = ctx.createOscillator();
-        const g = ctx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        if (slideTo != null) {
-          osc.frequency.linearRampToValueAtTime(slideTo, ctx.currentTime + duration * 0.8);
-        }
-        g.gain.setValueAtTime(0, ctx.currentTime);
-        g.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.008);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-        osc.connect(g);
-        g.connect(ctx.destination);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + duration + 0.02);
+        const now = ctx.currentTime;
+
+        // 琴音的泛音組合比例 (模擬鋼琴弦共鳴)
+        const harmonics = [
+          { ratio: 1.0, type: 'triangle', gain: 1.0 },
+          { ratio: 2.0, type: 'sine',     gain: 0.4 },
+          { ratio: 3.0, type: 'sine',     gain: 0.15 },
+          { ratio: 4.0, type: 'sine',     gain: 0.05 }
+        ];
+
+        const masterGain = ctx.createGain();
+        // 總音量與自然衰減曲線 (Exponential Decay)
+        masterGain.gain.setValueAtTime(0, now);
+        masterGain.gain.linearRampToValueAtTime(volume, now + 0.008); // 極快的槌擊感
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2); // 柔和悠長的琴音尾音
+
+        masterGain.connect(ctx.destination);
+
+        harmonics.forEach(h => {
+          const osc = ctx.createOscillator();
+          const oscGain = ctx.createGain();
+
+          osc.type = h.type;
+          osc.frequency.setValueAtTime(baseFreq * h.ratio, now);
+
+          // 泛音隨時間衰減更快（模擬高頻消散）
+          oscGain.gain.setValueAtTime(h.gain, now);
+          oscGain.gain.exponentialRampToValueAtTime(0.0001, now + (1.0 / h.ratio));
+
+          osc.connect(oscGain);
+          oscGain.connect(masterGain);
+
+          osc.start(now);
+          osc.stop(now + 1.4);
+        });
       } catch (_) {}
     }
 
-    function playHitSound(kind) {
+    // 四個軌道對應不同的鋼琴音高（例如：C4, E4, G4, C5 或類似和弦音階）
+    const LANE_NOTES = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+
+    function playHitSound(kind, lane = 0) {
       if (kind === 'perfect') {
-        // bright two-tone sparkle
-        playTone({ freq: 880, duration: 0.09, type: 'sine', gain: 0.16 });
-        playTone({ freq: 1320, duration: 0.12, type: 'triangle', gain: 0.1 });
+        // 完美的清脆琴音（主音 + 高八度裝飾音）
+        playPianoNote({ baseFreq: LANE_NOTES[lane] * 1.5, volume: 0.22 });
+        playPianoNote({ baseFreq: LANE_NOTES[lane], volume: 0.28 });
       } else if (kind === 'good') {
-        playTone({ freq: 660, duration: 0.1, type: 'triangle', gain: 0.14 });
+        // 標準琴音
+        playPianoNote({ baseFreq: LANE_NOTES[lane], volume: 0.22 });
       } else if (kind === 'miss') {
-        playTone({ freq: 180, duration: 0.18, type: 'sawtooth', gain: 0.1, slideTo: 90 });
+        // Miss 時播放低沉悶聲
+        try {
+          const ctx = ensureAudio();
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(110, now);
+          osc.frequency.linearRampToValueAtTime(60, now + 0.15);
+          g.gain.setValueAtTime(0.12, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          osc.connect(g);
+          g.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        } catch (_) {}
       } else if (kind === 'tap') {
-        // soft key click
-        playTone({ freq: 420, duration: 0.04, type: 'square', gain: 0.06 });
+        // 輕輕按下琴鍵的提示音
+        playPianoNote({ baseFreq: LANE_NOTES[lane], volume: 0.1 });
       }
     }
 
-    // Sound toggle UI
     const soundToggle = document.getElementById('soundToggle');
     const soundLabel = document.getElementById('soundLabel');
     soundToggle.addEventListener('click', () => {
@@ -483,7 +626,7 @@
       soundLabel.textContent = soundEnabled ? '開' : '關';
       if (soundEnabled) {
         ensureAudio();
-        playHitSound('tap');
+        playPianoNote({ baseFreq: 440, volume: 0.15 });
       }
     });
 
@@ -497,15 +640,15 @@
       perfect: 0,
       good: 0,
       miss: 0,
-      notes: [],          // { lane, time, el, hit }
-      startTime: 0,       // performance.now() when game starts
-      gameDuration: 45,   // seconds
+      notes: [],
+      startTime: 0,
+      gameDuration: 45,
       bpm: 120,
       offset: 0,
       difficulty: 2,
       videoId: null,
       animId: null,
-      noteSpeed: 280,     // px per second (fall speed)
+      noteSpeed: 280,
       hitWindowPerfect: 0.08,
       hitWindowGood: 0.16,
     };
@@ -518,7 +661,6 @@
       'ArrowLeft': 0, 'ArrowDown': 1, 'ArrowUp': 2, 'ArrowRight': 3,
     };
 
-    // ========== Helpers ==========
     function extractVideoId(url) {
       const reg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
       const m = url.match(reg);
@@ -538,23 +680,21 @@
       document.getElementById('comboBox').textContent = `連擊：${state.combo}`;
     }
 
-    // ========== Note Generation ==========
     function generateNotes() {
       state.notes = [];
-      const beatInterval = 60 / state.bpm; // seconds per beat
+      const beatInterval = 60 / state.bpm;
       const totalBeats = Math.floor(state.gameDuration / beatInterval);
       const density = [0.35, 0.55, 0.75, 0.95][state.difficulty - 1] || 0.55;
 
       let lastLane = -1;
-      for (let i = 2; i < totalBeats; i++) { // skip first two beats for prep
+      for (let i = 2; i < totalBeats; i++) {
         if (Math.random() > density) continue;
         let lane = Math.floor(Math.random() * 4);
-        // avoid same lane too often
         if (lane === lastLane && Math.random() < 0.6) {
           lane = (lane + 1 + Math.floor(Math.random() * 3)) % 4;
         }
         lastLane = lane;
-        const time = i * beatInterval; // time from game start
+        const time = i * beatInterval;
         state.notes.push({ lane, time, el: null, hit: false, missed: false });
       }
     }
@@ -563,7 +703,6 @@
       const el = document.createElement('div');
       el.className = `note lane${note.lane}`;
       el.style.top = '-20px';
-      // position within lane
       const laneWidth = playfield.clientWidth / 4;
       el.style.left = (note.lane * laneWidth + laneWidth * 0.04) + 'px';
       el.style.width = (laneWidth * 0.92) + 'px';
@@ -571,21 +710,19 @@
       note.el = el;
     }
 
-    // ========== Game Loop ==========
     function gameLoop(now) {
       if (!state.playing || state.paused) {
         state.animId = requestAnimationFrame(gameLoop);
         return;
       }
 
-      const elapsed = (now - state.startTime) / 1000; // seconds
+      const elapsed = (now - state.startTime) / 1000;
       const remaining = Math.max(0, state.gameDuration - elapsed);
       document.getElementById('timerBox').textContent = `剩餘：${remaining.toFixed(1)}s`;
 
-      const hitY = playfield.clientHeight - 48; // hit line position
-      const travelTime = hitY / state.noteSpeed; // seconds to fall
+      const hitY = playfield.clientHeight - 44;
+      const travelTime = hitY / state.noteSpeed;
 
-      // Spawn notes that should appear soon
       for (const note of state.notes) {
         if (note.el || note.hit || note.missed) continue;
         const appearTime = note.time - travelTime;
@@ -594,14 +731,12 @@
         }
       }
 
-      // Move notes
       for (const note of state.notes) {
         if (!note.el || note.hit || note.missed) continue;
         const progress = (elapsed - (note.time - travelTime)) / travelTime;
         const y = progress * hitY;
         note.el.style.top = y + 'px';
 
-        // Miss if passed
         if (progress > 1.25) {
           note.missed = true;
           note.el.style.opacity = '0.2';
@@ -614,7 +749,6 @@
         }
       }
 
-      // End condition
       if (elapsed >= state.gameDuration) {
         endGame();
         return;
@@ -623,13 +757,11 @@
       state.animId = requestAnimationFrame(gameLoop);
     }
 
-    // ========== Input ==========
     function tryHit(lane) {
       if (!state.playing || state.paused) return;
       const now = performance.now();
       const elapsed = (now - state.startTime) / 1000;
 
-      // Find closest unhit note in this lane within window
       let best = null;
       let bestDiff = Infinity;
       for (const note of state.notes) {
@@ -646,8 +778,7 @@
       setTimeout(() => keyEl.classList.remove('active'), 100);
 
       if (!best) {
-        // empty hit – soft click only
-        playHitSound('tap');
+        playHitSound('tap', lane);
         return;
       }
 
@@ -663,14 +794,14 @@
         state.combo++;
         showFeedback('PERFECT', 'var(--good)');
         keyEl.classList.add('hit-good');
-        playHitSound('perfect');
+        playHitSound('perfect', lane);
       } else {
         state.good++;
         state.score += 50 + Math.min(state.combo, 30);
         state.combo++;
         showFeedback('GOOD', 'var(--ok)');
         keyEl.classList.add('hit-ok');
-        playHitSound('good');
+        playHitSound('good', lane);
       }
       if (state.combo > state.maxCombo) state.maxCombo = state.combo;
       updateHUD();
@@ -695,9 +826,7 @@
       });
     });
 
-    // ========== Start / Pause / End ==========
     document.getElementById('startBtn').addEventListener('click', () => {
-      // Unlock AudioContext on user gesture
       if (soundEnabled) ensureAudio();
 
       const url = document.getElementById('ytUrl').value.trim();
@@ -712,7 +841,6 @@
       state.offset = +document.getElementById('offset').value || 0;
       state.difficulty = Math.min(4, Math.max(1, +document.getElementById('difficulty').value || 2));
 
-      // Reset stats
       state.score = 0;
       state.combo = 0;
       state.maxCombo = 0;
@@ -725,7 +853,6 @@
       document.getElementById('setup').style.display = 'none';
       document.getElementById('game').style.display = 'flex';
 
-      // Create / recreate player
       if (player) {
         player.destroy();
         player = null;
@@ -741,18 +868,11 @@
         },
         events: {
           onReady: (e) => {
-            // slight delay then start
             setTimeout(() => {
               e.target.seekTo(state.offset, true);
               e.target.playVideo();
               startGameplay();
             }, 600);
-          },
-          onStateChange: (e) => {
-            // if user pauses video, sync
-            if (e.data === YT.PlayerState.PAUSED && state.playing) {
-              // keep our pause separate
-            }
           }
         }
       });
@@ -760,7 +880,6 @@
 
     function startGameplay() {
       generateNotes();
-      // clear old notes
       playfield.querySelectorAll('.note').forEach(n => n.remove());
       state.playing = true;
       state.startTime = performance.now();
@@ -776,10 +895,6 @@
         if (state.paused) player.pauseVideo();
         else player.playVideo();
       }
-      if (!state.paused) {
-        // adjust startTime so elapsed continues correctly
-        // simple approach: just resume, notes will be slightly off but acceptable
-      }
     });
 
     document.getElementById('endBtn').addEventListener('click', () => {
@@ -793,7 +908,6 @@
         try { player.pauseVideo(); } catch (_) {}
       }
 
-      // count remaining notes as miss
       for (const n of state.notes) {
         if (!n.hit && !n.missed) {
           state.miss++;
@@ -804,10 +918,9 @@
       const totalHits = state.perfect + state.good + state.miss;
       const acc = totalHits === 0 ? 0 : ((state.perfect + state.good) / totalHits * 100);
 
-      // Grade
       let grade = 'D';
       let color = '#e74c3c';
-      if (acc >= 98 && state.miss <= 2) { grade = 'SS'; color = '#ffd700'; }
+      if (acc >= 98 && state.miss <= `2`) { grade = 'SS'; color = '#ffd700'; }
       else if (acc >= 95) { grade = 'S'; color = '#00d4ff'; }
       else if (acc >= 90) { grade = 'A'; color = '#2ecc71'; }
       else if (acc >= 80) { grade = 'B'; color = '#f1c40f'; }
@@ -833,7 +946,6 @@
         try { player.destroy(); } catch (_) {}
         player = null;
       }
-      // clear notes
       playfield.querySelectorAll('.note').forEach(n => n.remove());
       document.getElementById('pauseBtn').textContent = '暫停';
     });
