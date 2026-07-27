@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube 歌曲拍子遊戲</title>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #e94560;
+      --accent2: #0f3460;
+      --text: #eaeaea;
+      --muted: #a0a0b0;
+      --success: #00d9a5;
+      --warning: #ffc107;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+      background: linear-gradient(135deg, #0f0f1a 0%, #16213e 50%, #0f3460 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #e94560, #00d9a5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 24px;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 720px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      margin-bottom: 20px;
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 12px 16px;
+      border: 2px solid #2a2a4a;
+      border-radius: 10px;
+      background: #12122a;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    button:active { transform: scale(0.96); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary {
+      background: linear-gradient(135deg, #e94560, #c73e54);
+      color: white;
+    }
+    .btn-secondary {
+      background: var(--accent2);
+      color: white;
+    }
+    .btn-success {
+      background: linear-gradient(135deg, #00d9a5, #00b894);
+      color: #0f0f1a;
+    }
+    .btn-danger {
+      background: #4a1c24;
+      color: #ff6b81;
+    }
+    #player-container {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      display: none;
+    }
+    #player-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .status {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 12px;
+      min-height: 1.4em;
+    }
+    .status.recording { color: var(--accent); font-weight: 600; }
+    .tap-zone {
+      width: 100%;
+      max-width: 320px;
+      height: 160px;
+      margin: 0 auto 20px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #1e1e3a, #12122a);
+      border: 3px solid #2a2a4a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.08s;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .tap-zone:hover { border-color: var(--accent); }
+    .tap-zone.active {
+      background: linear-gradient(145deg, #e94560, #c73e54);
+      border-color: #ff6b81;
+      transform: scale(0.97);
+      box-shadow: 0 0 40px rgba(233, 69, 96, 0.5);
+    }
+    .tap-zone.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .stats-bar {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--success);
+    }
+    .stat .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    /* Popup */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .overlay.show { display: flex; }
+    .popup {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .popup h2 {
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .result-item {
+      background: #12122a;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .result-item .val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--success);
+    }
+    .result-item .lbl {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .grade {
+      font-size: 3rem;
+      font-weight: 800;
+      margin: 10px 0 20px;
+      line-height: 1;
+    }
+    .grade.S { color: #ffd700; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+    .grade.A { color: #00d9a5; }
+    .grade.B { color: #4fc3f7; }
+    .grade.C { color: #ffc107; }
+    .grade.D { color: #ff6b81; }
+    .hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+    .kbd {
+      display: inline-block;
+      background: #2a2a4a;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎵 YouTube 歌曲拍子遊戲</h1>
+  <p class="subtitle">貼上 YouTube 連結 → 播放歌曲 → 跟著拍子敲擊 → 看你的節奏分析結果</p>
+
+  <div class="card">
+    <div class="input-row">
+      <input type="text" id="yt-url" placeholder="貼上 YouTube 歌曲網址..." />
+      <button class="btn-primary" id="btn-load">載入影片</button>
+    </div>
+
+    <div id="player-container">
+      <div id="yt-player"></div>
+    </div>
+
+    <div class="status" id="status">請先載入一首 YouTube 歌曲</div>
+
+    <div class="controls">
+      <button class="btn-success" id="btn-start" disabled>開始記錄拍子</button>
+      <button class="btn-danger" id="btn-stop" disabled>結束並看結果</button>
+    </div>
+
+    <div class="tap-zone disabled" id="tap-zone">
+      點這裡或按 <span class="kbd">空白鍵</span>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="value" id="tap-count">0</div>
+        <div class="label">敲擊次數</div>
+      </div>
+      <div class="stat">
+        <div class="value" id="live-bpm">—</div>
+        <div class="label">目前 BPM</div>
+      </div>
+      <div class="stat">
+        <div class="value" id="duration">0.0s</div>
+        <div class="label">記錄時間</div>
+      </div>
+    </div>
+
+    <p class="hint">
+      提示：載入影片後按「開始記錄拍子」，跟著音樂的節奏敲擊。<br>
+      每次敲擊會發出拍子聲。結束後會彈出節奏分析結果。
+    </p>
+  </div>
+
+  <!-- Results Popup -->
+  <div class="overlay" id="overlay">
+    <div class="popup">
+      <h2>🥁 節奏分析結果</h2>
+      <div class="grade" id="grade">A</div>
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="val" id="res-taps">0</div>
+          <div class="lbl">總敲擊次數</div>
+        </div>
+        <div class="result-item">
+          <div class="val" id="res-bpm">—</div>
+          <div class="lbl">平均 BPM</div>
+        </div>
+        <div class="result-item">
+          <div class="val" id="res-stability">—</div>
+          <div class="lbl">節奏穩定度</div>
+        </div>
+        <div class="result-item">
+          <div class="val" id="res-time">0s</div>
+          <div class="lbl">記錄時長</div>
+        </div>
+      </div>
+      <p id="res-comment" style="color: var(--muted); margin-bottom: 20px; font-size: 0.95rem;"></p>
+      <button class="btn-primary" id="btn-close" style="width: 100%;">再玩一次</button>
+    </div>
+  </div>
+
+  <script>
+    // ========== Audio Context & Beat Sound ==========
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playBeatSound() {
+      initAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.7, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.13);
+    }
+
+    // ========== YouTube helpers ==========
+    function extractVideoId(url) {
+      if (!url) return null;
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+        /^([a-zA-Z0-9_-]{11})$/
+      ];
+      for (const re of patterns) {
+        const m = url.match(re);
+        if (m) return m[1];
+      }
+      return null;
+    }
+
+    // ========== Game State ==========
+    let taps = [];
+    let isRecording = false;
+    let startTime = 0;
+    let timerInterval = null;
+    let player = null;
+    let videoId = null;
+
+    // DOM
+    const ytUrlInput = document.getElementById('yt-url');
+    const btnLoad = document.getElementById('btn-load');
+    const playerContainer = document.getElementById('player-container');
+    const statusEl = document.getElementById('status');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const tapZone = document.getElementById('tap-zone');
+    const tapCountEl = document.getElementById('tap-count');
+    const liveBpmEl = document.getElementById('live-bpm');
+    const durationEl = document.getElementById('duration');
+    const overlay = document.getElementById('overlay');
+    const btnClose = document.getElementById('btn-close');
+
+    // Load YouTube API
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+
+    window.onYouTubeIframeAPIReady = function () {
+      // API ready, player will be created on load
+    };
+
+    function createPlayer(id) {
+      playerContainer.style.display = 'block';
+      if (player) {
+        player.destroy();
+      }
+      player = new YT.Player('yt-player', {
+        height: '100%',
+        width: '100%',
+        videoId: id,
+        playerVars: {
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1
+        },
+        events: {
+          onReady: () => {
+            statusEl.textContent = '影片已載入！可以播放，然後按「開始記錄拍子」';
+            btnStart.disabled = false;
+          },
+          onError: () => {
+            statusEl.textContent = '無法載入此影片，請換另一首試試';
+          }
+        }
+      });
+    }
+
+    btnLoad.addEventListener('click', () => {
+      const url = ytUrlInput.value.trim();
+      videoId = extractVideoId(url);
+      if (!videoId) {
+        statusEl.textContent = '無法辨識 YouTube 網址，請確認後再試';
+        return;
+      }
+      statusEl.textContent = '正在載入影片...';
+      if (typeof YT !== 'undefined' && YT.Player) {
+        createPlayer(videoId);
+      } else {
+        // wait a bit for API
+        const check = setInterval(() => {
+          if (typeof YT !== 'undefined' && YT.Player) {
+            clearInterval(check);
+            createPlayer(videoId);
+          }
+        }, 200);
+      }
+    });
+
+    // ========== Recording ==========
+    function startRecording() {
+      initAudio();
+      taps = [];
+      isRecording = true;
+      startTime = performance.now();
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      tapZone.classList.remove('disabled');
+      statusEl.textContent = '🔴 正在記錄中... 跟著節奏敲擊！';
+      statusEl.classList.add('recording');
+      tapCountEl.textContent = '0';
+      liveBpmEl.textContent = '—';
+      durationEl.textContent = '0.0s';
+
+      timerInterval = setInterval(() => {
+        const elapsed = (performance.now() - startTime) / 1000;
+        durationEl.textContent = elapsed.toFixed(1) + 's';
+      }, 100);
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      clearInterval(timerInterval);
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      tapZone.classList.add('disabled');
+      statusEl.classList.remove('recording');
+      statusEl.textContent = '記錄結束，查看結果';
+      showResults();
+    }
+
+    function registerTap() {
+      if (!isRecording) return;
+      playBeatSound();
+      const t = performance.now() - startTime;
+      taps.push(t);
+
+      // visual feedback
+      tapZone.classList.add('active');
+      setTimeout(() => tapZone.classList.remove('active'), 80);
+
+      tapCountEl.textContent = taps.length;
+
+      // live BPM from last few intervals
+      if (taps.length >= 2) {
+        const recent = taps.slice(-8);
+        const intervals = [];
+        for (let i = 1; i < recent.length; i++) {
+          intervals.push(recent[i] - recent[i - 1]);
+        }
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        const bpm = Math.round(60000 / avgInterval);
+        liveBpmEl.textContent = bpm > 30 && bpm < 300 ? bpm : '—';
+      }
+    }
+
+    btnStart.addEventListener('click', startRecording);
+    btnStop.addEventListener('click', stopRecording);
+
+    tapZone.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      registerTap();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        registerTap();
+      }
+    });
+
+    // ========== Results ==========
+    function showResults() {
+      const count = taps.length;
+      document.getElementById('res-taps').textContent = count;
+
+      if (count < 2) {
+        document.getElementById('res-bpm').textContent = '—';
+        document.getElementById('res-stability').textContent = '—';
+        document.getElementById('res-time').textContent = ((performance.now() - startTime) / 1000).toFixed(1) + 's';
+        document.getElementById('grade').textContent = 'D';
+        document.getElementById('grade').className = 'grade D';
+        document.getElementById('res-comment').textContent = '敲擊次數太少，無法分析節奏。再試一次吧！';
+        overlay.classList.add('show');
+        return;
+      }
+
+      // intervals
+      const intervals = [];
+      for (let i = 1; i < taps.length; i++) {
+        intervals.push(taps[i] - taps[i - 1]);
+      }
+
+      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const bpm = Math.round(60000 / avgInterval);
+      document.getElementById('res-bpm').textContent = bpm;
+
+      // stability: coefficient of variation (lower = more stable)
+      const mean = avgInterval;
+      const variance = intervals.reduce((sum, x) => sum + (x - mean) ** 2, 0) / intervals.length;
+      const std = Math.sqrt(variance);
+      const cv = std / mean; // coefficient of variation
+      // convert to score 0-100 (lower cv = higher score)
+      // typical good drumming cv ~0.03-0.08
+      let stability = Math.max(0, Math.min(100, Math.round(100 - cv * 400)));
+      document.getElementById('res-stability').textContent = stability + '%';
+
+      const totalTime = (taps[taps.length - 1] - taps[0]) / 1000;
+      document.getElementById('res-time').textContent = totalTime.toFixed(1) + 's';
+
+      // Grade
+      let grade, comment;
+      if (stability >= 90 && count >= 16) {
+        grade = 'S';
+        comment = '節奏感超強！幾乎像節拍器一樣穩定 🔥';
+      } else if (stability >= 80) {
+        grade = 'A';
+        comment = '很棒的節奏感！穩定又準確 👏';
+      } else if (stability >= 65) {
+        grade = 'B';
+        comment = '不錯的表現，再多練一下會更穩 💪';
+      } else if (stability >= 45) {
+        grade = 'C';
+        comment = '有跟上節奏，但穩定度還可以再提升 🎯';
+      } else {
+        grade = 'D';
+        comment = '節奏有點亂，慢慢跟著音樂再試一次吧 🎵';
+      }
+
+      document.getElementById('grade').textContent = grade;
+      document.getElementById('grade').className = 'grade ' + grade;
+      document.getElementById('res-comment').textContent = comment;
+
+      overlay.classList.add('show');
+    }
+
+    btnClose.addEventListener('click', () => {
+      overlay.classList.remove('show');
+      statusEl.textContent = '可以再次開始記錄，或換一首歌';
+    });
+
+    // Allow Enter to load
+    ytUrlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btnLoad.click();
+    });
+  </script>
+</body>
+</html>
