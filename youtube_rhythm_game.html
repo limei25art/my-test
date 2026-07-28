@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YouTube 節拍音遊 (AI 譜面整合版)</title>
+    <title>YouTube 節拍音遊 (AI 譜面片段生成版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
@@ -13,7 +13,7 @@
             background-color: #050505;
             color: white;
             overflow: hidden;
-            touch-action: none; /* 防止手機滑動 */
+            touch-action: none;
         }
 
         .neon-text {
@@ -25,7 +25,7 @@
         }
         
         .glass-panel {
-            background: rgba(10, 10, 20, 0.75);
+            background: rgba(10, 10, 20, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -63,13 +63,12 @@
             z-index: 20;
         }
         
-        /* 載入動畫 */
         .loader {
             border: 4px solid rgba(0, 255, 255, 0.2);
             border-top: 4px solid #0ff;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 24px;
+            height: 24px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -77,16 +76,22 @@
 </head>
 <body class="w-screen h-screen">
 
+    <!-- YouTube 背景影片容器 -->
     <div id="ytplayer-container">
         <div id="player"></div>
     </div>
 
+    <!-- 遊戲主繪圖畫布 -->
     <canvas id="gameCanvas"></canvas>
 
+    <!-- 抬頭顯示器 (HUD) -->
     <div id="hud" class="ui-layer top-0 left-0 w-full p-6 flex justify-between items-start pointer-events-none hidden">
         <div class="flex flex-col">
             <span class="text-gray-400 text-sm tracking-widest font-bold">SCORE</span>
             <span id="scoreDisplay" class="text-4xl font-black text-white neon-text">000000</span>
+        </div>
+        <div class="flex flex-col items-center">
+            <span class="text-cyan-400 text-xs tracking-widest font-bold bg-cyan-950/80 px-3 py-1 rounded-full border border-cyan-500/30 mb-1" id="timeDisplay">TIME: 01:00</span>
         </div>
         <div class="flex flex-col items-end">
             <span class="text-gray-400 text-sm tracking-widest font-bold">COMBO</span>
@@ -94,17 +99,33 @@
         </div>
     </div>
 
-    <!-- 啟動畫面 -->
+    <!-- 啟動與設定畫面 -->
     <div id="setupScreen" class="ui-layer inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md transition-opacity duration-500">
-        <div class="glass-panel p-8 rounded-2xl flex flex-col items-center w-11/12 max-w-md text-center">
-            <h1 class="text-3xl font-black mb-2 neon-text text-cyan-400 tracking-wider">AI TUBE RHYTHM</h1>
-            <p class="text-gray-400 text-sm mb-6">Powered by C-LSTM AI Beatmap Generation</p>
+        <div class="glass-panel p-8 rounded-2xl flex flex-col items-center w-11/12 max-w-md text-center border-t-2 border-cyan-400">
+            <h1 class="text-3xl font-black mb-1 neon-text text-cyan-400 tracking-wider">AI TUBE RHYTHM</h1>
+            <p class="text-gray-400 text-xs mb-6">C-LSTM AI Chart Generation with Time Offset</p>
             
-            <div class="w-full mb-6">
-                <label class="block text-left text-xs text-cyan-200 mb-2 font-bold tracking-widest">YOUTUBE VIDEO ID</label>
-                <input type="text" id="videoIdInput" value="x2fAnFXDj9Q" class="w-full bg-gray-900 border border-cyan-700/50 text-white px-4 py-3 rounded focus:outline-none focus:border-cyan-400 transition-colors text-center text-lg tracking-widest">
+            <!-- YouTube ID 輸入 -->
+            <div class="w-full mb-4">
+                <label class="block text-left text-xs text-cyan-200 mb-1 font-bold tracking-widest">YOUTUBE VIDEO ID</label>
+                <input type="text" id="videoIdInput" value="x2fAnFXDj9Q" class="w-full bg-gray-900/90 border border-cyan-700/50 text-white px-4 py-2.5 rounded focus:outline-none focus:border-cyan-400 transition-colors text-center text-base tracking-widest font-mono">
             </div>
 
+            <!-- 時間點設定 (預設 1 分鐘 = 60 秒) -->
+            <div class="w-full mb-6">
+                <div class="flex justify-between items-center mb-1">
+                    <label class="text-left text-xs text-cyan-200 font-bold tracking-widest">START TIME (秒 / 秒數)</label>
+                    <span id="timeLabel" class="text-xs text-pink-400 font-bold font-mono">60s (01:00)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="startTimeInput" value="60" min="0" max="600" class="w-full bg-gray-900/90 border border-cyan-700/50 text-white px-4 py-2.5 rounded focus:outline-none focus:border-cyan-400 text-center text-lg font-bold font-mono text-cyan-300">
+                    <button id="quick1MinBtn" class="bg-cyan-900/50 hover:bg-cyan-800 border border-cyan-500/50 text-cyan-200 text-xs px-3 py-3 rounded font-bold whitespace-nowrap">
+                        1 分鐘
+                    </button>
+                </div>
+            </div>
+
+            <!-- 按鍵指引 -->
             <div class="w-full flex justify-between mb-8 text-sm text-gray-300">
                 <div class="flex flex-col items-center"><span class="font-bold text-2xl mb-1 border-2 border-gray-600 rounded-lg w-10 h-10 flex items-center justify-center bg-gray-800">D</span><span class="text-xs">Lane 1</span></div>
                 <div class="flex flex-col items-center"><span class="font-bold text-2xl mb-1 border-2 border-gray-600 rounded-lg w-10 h-10 flex items-center justify-center bg-gray-800">F</span><span class="text-xs">Lane 2</span></div>
@@ -113,12 +134,12 @@
             </div>
 
             <button id="startBtn" class="neon-border w-full py-4 rounded-xl text-cyan-400 font-bold tracking-widest text-lg hover:bg-cyan-900/40 transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-3">
-                <span>CONNECTING...</span>
+                <span>GENERATE FROM 1 MIN & PLAY</span>
             </button>
         </div>
     </div>
 
-    <!-- 結算畫面 -->
+    <!-- 結算彈出視窗 (Pop-up Results) -->
     <div id="resultsModal" class="ui-layer inset-0 flex items-center justify-center bg-black/90 hidden opacity-0 transition-opacity duration-500">
         <div class="glass-panel p-8 rounded-3xl flex flex-col items-center w-11/12 max-w-lg border-t-4 border-cyan-400 relative overflow-hidden">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/20 rounded-full blur-2xl"></div>
@@ -149,7 +170,7 @@
     </div>
 
     <script>
-        // --- Web Audio API (音效) ---
+        // --- Web Audio API (動態合成敲擊音效) ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
         function initAudio() {
@@ -162,7 +183,6 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             
-            // 咚(Don)頻率較低，咔(Ka)頻率較高
             const startFreq = isDon ? 400 : 800; 
             const endFreq = isDon ? 50 : 150;
 
@@ -197,7 +217,7 @@
         }
         function onPlayerReady(event) {
             isYtReady = true;
-            document.getElementById('startBtn').innerText = "FETCH AI CHART & PLAY";
+            document.getElementById('startBtn').innerText = "GENERATE FROM 1 MIN & PLAY";
             document.getElementById('startBtn').disabled = false;
         }
         function onPlayerStateChange(event) {
@@ -208,38 +228,34 @@
             }
         }
 
-        // --- 模擬 AI 後端 API 請求 ---
-        async function fetchAIGeneratedChart(videoId) {
-            // 在真實環境中，這裡會是：
-            // const response = await fetch(`/api/generate-chart?v=${videoId}`);
-            // return await response.json();
-            
-            // 這裡模擬網路延遲與 AI 處理時間 (2秒)
+        // --- 模擬 AI 後端從指定時間點 (例: 60秒) 生成譜面 ---
+        async function fetchAIGeneratedChart(videoId, startOffset = 60) {
             return new Promise(resolve => {
                 setTimeout(() => {
-                    // 模擬 C-LSTM 模型生成的結構化 JSON 譜面
                     const mockJson = {
-                        metadata: { title: "AI Generated Track", bpm: 120, offset: 0 },
+                        metadata: { title: "AI Generated Track", bpm: 128, startOffset: startOffset },
                         notes: []
                     };
-                    // 模擬生成一段 30 秒的節拍，對齊 1/4 或 1/8 網格
-                    let currentTime = 1.0;
-                    while(currentTime < 30.0) {
+                    
+                    // 從 startOffset 秒開始，生成 40 秒長度的精準 AI 節拍
+                    let currentTime = startOffset + 1.5; 
+                    const endTime = startOffset + 45.0;
+
+                    while(currentTime < endTime) {
                         mockJson.notes.push({
-                            id: Math.floor(Math.random()*10000),
+                            id: Math.floor(Math.random()*100000),
                             time: currentTime,
-                            type: Math.random() > 0.5 ? 'don' : 'ka', // 咚或咔
-                            lane: Math.floor(Math.random() * 4)       // 分配到 4 個軌道
+                            type: Math.random() > 0.5 ? 'don' : 'ka',
+                            lane: Math.floor(Math.random() * 4)
                         });
-                        // 節拍間隔模擬
-                        currentTime += (Math.random() > 0.7) ? 0.25 : 0.5;
+                        currentTime += (Math.random() > 0.75) ? 0.234 : 0.468; // 對齊 128 BPM 網格
                     }
                     resolve(mockJson);
-                }, 2000);
+                }, 1000); // 後端指定時間區段生成僅需 1 秒
             });
         }
 
-        // --- 遊戲引擎 ---
+        // --- 遊戲核心引擎 ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         let width, height;
@@ -254,8 +270,8 @@
         
         class Game {
             constructor() {
-                this.state = 'setup'; // setup, fetching, waiting_video, playing, ended
-                this.chartData = null; // 存放 AI JSON
+                this.state = 'setup'; 
+                this.chartData = null;
                 this.notes = [];
                 this.particles = [];
                 this.judgments = [];
@@ -263,13 +279,13 @@
                 this.score = 0; this.combo = 0; this.maxCombo = 0;
                 this.stats = { perfect: 0, great: 0, miss: 0 };
                 this.gameStartTime = 0;
+                this.startTimeOffset = 60;
                 
                 this.lanes = 4;
                 this.laneWidth = 0; this.startX = 0; this.hitY = 0; this.noteSpeed = 0;
                 this.keyStates = [false, false, false, false];
                 this.laneGlows = [0, 0, 0, 0];
                 
-                // 4 軌顏色設定 (模擬太鼓的紅色與藍色概念)
                 this.colors = ['#ff0055', '#00e5ff', '#00e5ff', '#ff0055'];
                 this.updateDimensions();
             }
@@ -279,32 +295,30 @@
                 this.laneWidth = Math.min(width / 5, maxLaneWidth);
                 this.startX = (width - (this.laneWidth * this.lanes)) / 2;
                 this.hitY = height * 0.85;
-                this.noteSpeed = height / 1.5; // 1.5秒從上落到底
+                this.noteSpeed = height / 1.5;
             }
 
             async initPlay() {
                 initAudio();
                 const btn = document.getElementById('startBtn');
-                btn.innerHTML = `<div class="loader"></div><span>AI MODEL ANALYZING...</span>`;
+                this.startTimeOffset = parseFloat(document.getElementById('startTimeInput').value) || 60;
+                
+                btn.innerHTML = `<div class="loader"></div><span>ANALYZING FROM ${this.startTimeOffset}s...</span>`;
                 btn.disabled = true;
                 this.state = 'fetching';
                 
                 const vid = document.getElementById('videoIdInput').value.trim();
                 
-                // 1. 向 "後端" 獲取 AI JSON 譜面
                 try {
-                    this.chartData = await fetchAIGeneratedChart(vid);
-                    // 解析 JSON 載入 notes
-                    this.notes = this.chartData.notes.map(n => ({
-                        ...n, active: true
-                    }));
+                    // 請求後端 AI 生成指定秒數之後的譜面
+                    this.chartData = await fetchAIGeneratedChart(vid, this.startTimeOffset);
+                    this.notes = this.chartData.notes.map(n => ({ ...n, active: true }));
                 } catch (e) {
                     console.error("AI Chart fetch failed", e);
                     btn.innerText = "ERROR FETCHING CHART";
                     return;
                 }
 
-                // 2. 譜面就緒，準備播放影片
                 this.state = 'waiting_video';
                 document.getElementById('setupScreen').style.opacity = '0';
                 setTimeout(() => {
@@ -316,16 +330,19 @@
                 this.stats = { perfect: 0, great: 0, miss: 0 };
                 this.updateHUD();
                 
-                // 載入 YT 影片，等待 playing 事件觸發 startVideoSync
-                if (vid) ytPlayer.loadVideoById(vid);
-                else ytPlayer.playVideo();
+                // 跳轉影片至指定秒數 (如 60 秒) 並播放
+                if (vid) {
+                    ytPlayer.loadVideoById({ videoId: vid, startSeconds: this.startTimeOffset });
+                } else {
+                    ytPlayer.seekTo(this.startTimeOffset, true);
+                    ytPlayer.playVideo();
+                }
                 
                 requestAnimationFrame(() => this.loop());
             }
 
             startVideoSync() {
                 this.state = 'playing';
-                // 記錄精準的開始時間點，做為與 AI JSON time 的校準基準
                 this.gameStartTime = performance.now() - (ytPlayer.getCurrentTime() * 1000);
             }
 
@@ -333,7 +350,7 @@
                 const ytTime = ytPlayer.getCurrentTime() * 1000;
                 const perfTime = performance.now() - this.gameStartTime;
                 if (Math.abs(ytTime - perfTime) > 150 && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-                    this.gameStartTime = performance.now() - ytTime; // 修正漂移
+                    this.gameStartTime = performance.now() - ytTime;
                 }
                 return (performance.now() - this.gameStartTime) / 1000;
             }
@@ -347,7 +364,6 @@
                 let targetNote = null;
                 let minDiff = Infinity;
                 
-                // 尋找判定區間內的音符
                 for (let i = 0; i < this.notes.length; i++) {
                     const note = this.notes[i];
                     if (note.active && note.lane === laneIdx) {
@@ -361,14 +377,14 @@
 
                 if (targetNote) {
                     targetNote.active = false;
-                    playHitSound(targetNote.type === 'don'); // 根據 JSON 類型播放不同音效
+                    playHitSound(targetNote.type === 'don');
                     
-                    if (minDiff < 0.05) { // Perfect (< 50ms)
+                    if (minDiff < 0.05) {
                         this.score += 100 + (this.combo * 5);
                         this.combo++; this.stats.perfect++;
                         this.showJudgment('PERFECT', '#00ffcc', laneIdx);
                         this.spawnParticles(laneIdx, this.colors[laneIdx]);
-                    } else { // Great (< 150ms)
+                    } else {
                         this.score += 50 + (this.combo * 2);
                         this.combo++; this.stats.great++;
                         this.showJudgment('GREAT', '#44aaff', laneIdx);
@@ -377,7 +393,6 @@
                     if (this.combo > this.maxCombo) this.maxCombo = this.combo;
                     this.updateHUD();
                 } else {
-                    // 空揮播放預設音效
                     playHitSound(laneIdx === 0 || laneIdx === 3);
                 }
             }
@@ -414,6 +429,11 @@
                     const currentTime = this.getCurrentAudioTime();
                     const dt = 1/60;
                     
+                    // 更新頂部時間顯示 (例: 01:15)
+                    const mins = String(Math.floor(currentTime / 60)).padStart(2, '0');
+                    const secs = String(Math.floor(currentTime % 60)).padStart(2, '0');
+                    document.getElementById('timeDisplay').innerText = `TIME: ${mins}:${secs}`;
+
                     this.updateLogic(currentTime, dt);
                     this.drawEnvironment();
                     this.drawNotes(currentTime);
@@ -423,7 +443,6 @@
             }
 
             updateLogic(currentTime, dt) {
-                // 檢查 Miss
                 for (let i = 0; i < this.notes.length; i++) {
                     const note = this.notes[i];
                     if (note.active && (currentTime - note.time > 0.15)) { 
@@ -492,10 +511,8 @@
                     if (!note.active) continue;
                     
                     const timeDiff = note.time - currentTime;
-                    // 根據物理公式: Y = 打擊線Y - (時間差 * 下落速度)
                     const y = this.hitY - (timeDiff * this.noteSpeed);
                     
-                    // 優化渲染效能，僅繪製在可視範圍內的音符
                     if (y > -100 && y < height + 100) {
                         const x = this.startX + note.lane * this.laneWidth;
                         const w = this.laneWidth - 24;
@@ -536,7 +553,7 @@
                 for (let i = this.particles.length - 1; i >= 0; i--) {
                     const p = this.particles[i];
                     p.x += p.vx * dt; p.y += p.vy * dt;
-                    p.vy += 1000 * dt; // Gravity
+                    p.vy += 1000 * dt;
                     p.life -= dt * 2.0;
                     if (p.life <= 0) { this.particles.splice(i, 1); continue; }
                     ctx.globalAlpha = p.life;
@@ -575,7 +592,7 @@
                 setTimeout(() => {
                     modal.classList.add('hidden');
                     const btn = document.getElementById('startBtn');
-                    btn.innerHTML = `FETCH AI CHART & PLAY`;
+                    btn.innerHTML = `GENERATE FROM 1 MIN & PLAY`;
                     btn.disabled = false;
                     document.getElementById('setupScreen').classList.remove('hidden');
                     void document.getElementById('setupScreen').offsetWidth;
@@ -586,6 +603,20 @@
 
         const game = new Game();
         resize();
+
+        // 快捷按鈕：快速設為 60 秒 (1 分鐘)
+        document.getElementById('quick1MinBtn').addEventListener('click', () => {
+            const input = document.getElementById('startTimeInput');
+            input.value = 60;
+            document.getElementById('timeLabel').innerText = "60s (01:00)";
+        });
+
+        document.getElementById('startTimeInput').addEventListener('input', (e) => {
+            const val = parseInt(e.target.value) || 0;
+            const m = String(Math.floor(val / 60)).padStart(2, '0');
+            const s = String(val % 60).padStart(2, '0');
+            document.getElementById('timeLabel').innerText = `${val}s (${m}:${s})`;
+        });
 
         document.getElementById('startBtn').addEventListener('click', () => {
             if (isYtReady) game.initPlay();
