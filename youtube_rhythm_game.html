@@ -1,445 +1,290 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube AI 太鼓達人 rhythm game</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #121212;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
-    }
-
-    #game-container {
-      position: relative;
-      width: 800px;
-      background: #1e1e1e;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    }
-
-    /* YouTube 影片視窗 */
-    #yt-player-container {
-      position: relative;
-      width: 100%;
-      height: 360px;
-      background: #000;
-      pointer-events: none; /* 避免玩家誤點影片 */
-    }
-
-    #yt-player { width: 100%; height: 100%; }
-
-    /* 太鼓遊戲軌道 (Canvas) */
-    #canvas-container {
-      position: relative;
-      width: 100%;
-      height: 120px;
-      background: #2a2a2a;
-      border-top: 4px solid #444;
-      border-bottom: 4px solid #444;
-    }
-
-    canvas { display: block; width: 100%; height: 100%; }
-
-    /* 控制面板與計分板 */
-    #hud {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 20px;
-      background: #181818;
-    }
-
-    .stat-box { font-size: 18px; font-weight: bold; }
-    .stat-value { color: #ff0055; font-size: 24px; }
-
-    #start-btn {
-      padding: 10px 25px;
-      font-size: 18px;
-      font-weight: bold;
-      background: #ff0055;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    #start-btn:hover { background: #ff3377; transform: scale(1.05); }
-
-    /* 按鍵提示 */
-    #key-hints {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      padding: 10px;
-      background: #111;
-      font-size: 14px;
-      color: #aaa;
-    }
-    .key-badge {
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-weight: bold;
-      color: #fff;
-    }
-    .red { background: #ff4757; }
-    .blue { background: #1e90ff; }
-
-    /* Pop-up Results 結算彈窗 */
-    #results-modal {
-      display: none;
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.92);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      animation: fadeIn 0.4s ease-out;
-    }
-
-    .modal-card {
-      background: #252525;
-      padding: 30px 40px;
-      border-radius: 16px;
-      border: 2px solid #ff0055;
-      text-align: center;
-      box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);
-    }
-
-    .modal-title { font-size: 32px; color: #ff0055; margin-bottom: 15px; }
-    .modal-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin: 20px 0;
-      text-align: left;
-      font-size: 18px;
-    }
-
-    @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-  </style>
+    <meta charset="UTF-8">
+    <title>YouTube 網頁節奏遊戲</title>
+    <style>
+        body {
+            margin: 0; background-color: #111; color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex; flex-direction: column; align-items: center; overflow: hidden;
+        }
+        #game-container {
+            position: relative; width: 800px; height: 600px; margin-top: 20px;
+            background: #000; border: 2px solid #333; border-radius: 10px; box-shadow: 0 0 20px rgba(0,255,255,0.2);
+        }
+        /* 將 YouTube 影片放在背景並調暗 */
+        #youtube-player {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.4; pointer-events: none; z-index: 1;
+        }
+        /* 遊戲畫布在影片上層 */
+        #game-canvas {
+            position: absolute; top: 0; left: 0; z-index: 2;
+        }
+        #ui-layer {
+            position: absolute; top: 10px; left: 20px; z-index: 3; font-size: 24px; font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+        }
+        #start-screen, #result-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 10;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        #result-screen { display: none; }
+        .btn {
+            padding: 15px 40px; font-size: 24px; font-weight: bold; cursor: pointer;
+            background: linear-gradient(45deg, #ff007f, #00f0ff); color: white;
+            border: none; border-radius: 30px; margin-top: 20px; transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.1); }
+        .result-text { font-size: 32px; margin: 10px 0; }
+        .highlight { color: #00f0ff; }
+        .controls-hint { margin-top: 20px; color: #aaa; font-size: 18px; }
+    </style>
 </head>
 <body>
 
-<div id="game-container">
-  <!-- YouTube 播放器 -->
-  <div id="yt-player-container">
-    <div id="yt-player"></div>
-  </div>
+    <h2>YouTube Rhythm Game 🎵</h2>
+    
+    <div id="game-container">
+        <div id="youtube-player"></div>
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+        
+        <div id="ui-layer">
+            <div>Score: <span id="score-display">0</span></div>
+            <div>Combo: <span id="combo-display">0</span></div>
+        </div>
 
-  <!-- 太鼓遊戲 Canvas 軌道 -->
-  <div id="canvas-container">
-    <canvas id="gameCanvas" width="800" height="120"></canvas>
-  </div>
+        <!-- 開始畫面 -->
+        <div id="start-screen">
+            <h1 style="font-size: 48px; margin-bottom: 0;">太鼓 X 音遊</h1>
+            <p>歌曲: Edan 呂爵安 X Ryan 蔡俊彥《1206》</p>
+            <button class="btn" id="start-btn">開始遊戲</button>
+            <div class="controls-hint">操作按鍵: [D] [F] [J] [K]<br>(紅色=咚/D/K，藍色=咔/F/J)</div>
+        </div>
 
-  <!-- 計分資訊列 -->
-  <div id="hud">
-    <div class="stat-box">分數: <span id="score" class="stat-value">0</span></div>
-    <button id="start-btn" onclick="startGame()">▶ 開始遊戲</button>
-    <div class="stat-box">Combo: <span id="combo" class="stat-value">0</span></div>
-  </div>
-
-  <!-- 按鍵提示 -->
-  <div id="key-hints">
-    <div>紅(咚): <span class="key-badge red">F</span> / <span class="key-badge red">J</span></div>
-    <div>藍(咔): <span class="key-badge blue">D</span> / <span class="key-badge blue">K</span></div>
-  </div>
-
-  <!-- Pop-up Results 結算畫面 -->
-  <div id="results-modal">
-    <div class="modal-card">
-      <div class="modal-title">STAGE CLEAR!</div>
-      <div class="modal-grid">
-        <div>總分數:</div><div id="res-score" style="color:#ff0055; font-weight:bold;">0</div>
-        <div>最大連擊 (Max Combo):</div><div id="res-combo">0</div>
-        <div>Perfect 判定:</div><div id="res-perfect" style="color:#2ed573;">0</div>
-        <div>Great 判定:</div><div id="res-great" style="color:#eccc68;">0</div>
-        <div>Miss 判定:</div><div id="res-miss" style="color:#ff4757;">0</div>
-        <div>準確率:</div><div id="res-acc">0%</div>
-      </div>
-      <button id="start-btn" onclick="restartGame()">再玩一次</button>
+        <!-- 結算畫面 (Pop-up Results) -->
+        <div id="result-screen">
+            <h1 style="font-size: 48px; color: #ffeb3b;">Game Clear!</h1>
+            <div class="result-text">Total Score: <span id="res-score" class="highlight">0</span></div>
+            <div class="result-text">Max Combo: <span id="res-combo" class="highlight">0</span></div>
+            <div class="result-text">Perfect: <span id="res-perfect">0</span> | Great: <span id="res-great">0</span> | Miss: <span id="res-miss">0</span></div>
+            <button class="btn" onclick="location.reload()">再玩一次</button>
+        </div>
     </div>
-  </div>
-</div>
 
-<!-- 載入 YouTube API -->
-<script src="https://www.youtube.com/iframe_api"></script>
+    <!-- 引入 YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        // --- 遊戲狀態與變數 ---
+        let player, audioCtx;
+        let isPlaying = false;
+        let notes = [];
+        let score = 0, combo = 0, maxCombo = 0;
+        let perfects = 0, greats = 0, misses = 0;
+        let hitFeedback = { text: "", alpha: 0, color: "" };
+        
+        const KEYS = ['d', 'f', 'j', 'k']; // 4條軌道的按鍵
+        const HIT_LINE_Y = 500; // 判定線的 Y 座標
+        const SCROLL_SPEED = 600; // 音符下落速度 (像素/秒)
+        
+        // --- YouTube API 初始化 ---
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                videoId: 'x2fAnFXDj9Q', // Edan 1206
+                playerVars: { 'controls': 0, 'disablekb': 1, 'fs': 0, 'rel': 0 },
+                events: {
+                    'onStateChange': function(event) {
+                        if (event.data === YT.PlayerState.ENDED) showResults();
+                    }
+                }
+            });
+        }
 
-<script>
-// =================================================================
-// 1. JSON 譜面資料 (可直接替換為 Python AI 輸出的 JSON)
-// =================================================================
-const chartJSON = {
-  "metadata": {
-    "title": "1206",
-    "youtubeId": "x2fAnFXDj9Q",
-    "offset": 0.1,
-    "scrollSpeed": 400 // 每秒下落像素 px/sec
-  },
-  "notes": [
-    { "time": 1.20, "type": "don" },
-    { "time": 1.60, "type": "don" },
-    { "time": 2.00, "type": "ka"  },
-    { "time": 2.40, "type": "ka"  },
-    { "time": 2.80, "type": "don" },
-    { "time": 3.20, "type": "don" },
-    { "time": 3.50, "type": "ka"  },
-    { "time": 3.80, "type": "don" },
-    { "time": 4.20, "type": "don" },
-    { "time": 4.60, "type": "ka"  },
-    { "time": 5.00, "type": "don" },
-    { "time": 5.40, "type": "don" },
-    { "time": 5.80, "type": "ka"  },
-    { "time": 6.20, "type": "don" },
-    { "time": 6.60, "type": "ka"  },
-    { "time": 7.00, "type": "don" }
-  ]
-};
+        // --- 生成模擬譜面 (Mock Chart Generation) ---
+        function generateChart() {
+            notes = [];
+            let bpm = 120;
+            let beatInterval = 60 / bpm; // 每拍 0.5 秒
+            let startTime = 2.0; // 2秒後開始掉落
+            
+            // 隨機生成 50 個音符作為測試
+            for (let i = 0; i < 50; i++) {
+                let lane = Math.floor(Math.random() * 4);
+                // lane 0,3 (外側) 設定為 'don'(紅), lane 1,2 (內側) 設定為 'ka'(藍)
+                let type = (lane === 0 || lane === 3) ? 'don' : 'ka';
+                notes.push({
+                    id: i,
+                    time: startTime + (i * beatInterval),
+                    lane: lane,
+                    type: type,
+                    hit: false,
+                    missed: false
+                });
+            }
+        }
 
-// =================================================================
-// 2. Web Audio API 音效合成器 (免外部音訊檔產生 咚/咔 聲)
-// =================================================================
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // --- Web Audio API 合成打擊聲 ---
+        function playBeatSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'don') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            } else {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            }
+            
+            gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
 
-function playHitsound(type) {
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
+        // --- 開始遊戲按鈕邏輯 ---
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('start-screen').style.display = 'none';
+            // 初始化音效 (必須由使用者互動觸發)
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            generateChart();
+            player.playVideo();
+            isPlaying = true;
+            requestAnimationFrame(gameLoop);
+            
+            // 遊戲會在 30 秒後自動結束展示結算 (因為完整版 MV 太長)
+            setTimeout(showResults, 30000); 
+        });
 
-  if (type === 'don') { // 咚 (低音太鼓)
-    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.12);
-    gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.12);
-  } else { // 咔 (高音鼓邊)
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.08);
-  }
-}
+        // --- 鍵盤輸入判定邏輯 ---
+        window.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+            let key = e.key.toLowerCase();
+            let laneIndex = KEYS.indexOf(key);
+            if (laneIndex === -1) return;
 
-// =================================================================
-// 3. 遊戲核心邏輯與 YouTube Player 整合
-// =================================================================
-let ytPlayer;
-let isPlaying = false;
-let notes = [];
-let targetX = 120; // 判定線 X 座標
-let score = 0, combo = 0, maxCombo = 0;
-let counts = { perfect: 0, great: 0, miss: 0 };
-let lastJudgementText = "";
-let judgementTimer = 0;
+            let currentTime = player.getCurrentTime();
+            
+            // 根據類型發出音效
+            playBeatSound((laneIndex === 0 || laneIndex === 3) ? 'don' : 'ka');
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+            // 尋找該軌道中最接近判定線且未打擊的音符
+            let targetNote = notes.find(n => n.lane === laneIndex && !n.hit && !n.missed);
+            
+            if (targetNote) {
+                let timeDiff = Math.abs(targetNote.time - currentTime);
+                
+                if (timeDiff <= 0.08) { // Perfect 判定 (80ms內)
+                    handleHit(targetNote, "Perfect!", "#00ffff", 100);
+                    perfects++;
+                } else if (timeDiff <= 0.15) { // Great 判定 (150ms內)
+                    handleHit(targetNote, "Great!", "#88ff00", 50);
+                    greats++;
+                }
+            }
+        });
 
-function onYouTubeIframeAPIReady() {
-  ytPlayer = new YT.Player('yt-player', {
-    videoId: chartJSON.metadata.youtubeId,
-    playerVars: { 'controls': 0, 'disablekb': 1, 'rel': 0 },
-    events: { 'onStateChange': onPlayerStateChange }
-  });
-}
+        function handleHit(note, text, color, pts) {
+            note.hit = true;
+            score += pts + (combo * 2); // 連擊加成
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+            
+            hitFeedback = { text: text, alpha: 1.0, color: color };
+            
+            document.getElementById('score-display').innerText = score;
+            document.getElementById('combo-display').innerText = combo;
+        }
 
-function onPlayerStateChange(event) {
-  // 影片播放結束 (ENDED = 0) 觸發 Pop-up 結算視窗
-  if (event.data === YT.PlayerState.ENDED) {
-    showResults();
-  }
-}
+        // --- 遊戲主渲染迴圈 (Canvas) ---
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const laneWidth = 100;
+        const offsetX = (canvas.width - (laneWidth * 4)) / 2;
 
-function startGame() {
-  if (!ytPlayer) return;
-  audioCtx.resume();
-  
-  // 深拷貝並初始化音符狀態
-  notes = chartJSON.notes.map((n, i) => ({ ...n, id: i, hit: false, missed: false }));
-  score = 0; combo = 0; maxCombo = 0;
-  counts = { perfect: 0, great: 0, miss: 0 };
-  updateHUD();
+        function gameLoop() {
+            if (!isPlaying) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let currentTime = player.getCurrentTime() || 0;
 
-  document.getElementById('results-modal').style.display = 'none';
-  document.getElementById('start-btn').style.display = 'none';
+            // 1. 畫軌道與判定線
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i=0; i<4; i++) {
+                ctx.fillRect(offsetX + (i * laneWidth), 0, laneWidth - 2, canvas.height);
+            }
+            // 判定線
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(offsetX, HIT_LINE_Y - 2, laneWidth * 4, 4);
 
-  ytPlayer.seekTo(0);
-  ytPlayer.playVideo();
-  isPlaying = true;
+            // 2. 畫音符與處理 Miss
+            notes.forEach(note => {
+                if (note.hit || note.missed) return;
 
-  requestAnimationFrame(gameLoop);
-}
+                // 計算 Y 座標 ( 時間差 * 下落速度 )
+                let y = HIT_LINE_Y - ((note.time - currentTime) * SCROLL_SPEED);
 
-// 遊戲渲染與即時邏輯主迴圈
-function gameLoop() {
-  if (!isPlaying) return;
+                // Miss 判定 (超過判定線 0.15 秒)
+                if (currentTime - note.time > 0.15) {
+                    note.missed = true;
+                    combo = 0;
+                    misses++;
+                    hitFeedback = { text: "Miss", alpha: 1.0, color: "#ff0000" };
+                    document.getElementById('combo-display').innerText = combo;
+                }
 
-  const currentTime = ytPlayer.getCurrentTime() - chartJSON.metadata.offset;
+                // 只畫出畫面內的音符
+                if (y > -50 && y < canvas.height + 50) {
+                    ctx.beginPath();
+                    ctx.arc(offsetX + (note.lane * laneWidth) + (laneWidth/2), y, 30, 0, Math.PI * 2);
+                    // 紅色(咚), 藍色(咔)
+                    ctx.fillStyle = note.type === 'don' ? '#ff0055' : '#00aaff';
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#fff';
+                    ctx.stroke();
+                }
+            });
 
-  // 清空 Canvas
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 3. 畫判定回饋文字 (Perfect / Great / Miss)
+            if (hitFeedback.alpha > 0) {
+                ctx.fillStyle = `rgba(${hexToRgb(hitFeedback.color)}, ${hitFeedback.alpha})`;
+                ctx.font = 'bold 40px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(hitFeedback.text, canvas.width / 2, HIT_LINE_Y - 100);
+                hitFeedback.alpha -= 0.02; // 淡出動畫
+            }
 
-  // 1. 繪製軌道背景與判定線
-  ctx.fillStyle = "#333";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // 判定線 (Target Line)
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(targetX, 60, 35, 0, Math.PI * 2);
-  ctx.stroke();
+            requestAnimationFrame(gameLoop);
+        }
 
-  // 2. 渲染並更新每一個音符
-  notes.forEach(note => {
-    if (note.hit) return;
+        // --- 顯示結算畫面 ---
+        function showResults() {
+            if (!isPlaying) return;
+            isPlaying = false;
+            player.pauseVideo();
+            
+            document.getElementById('res-score').innerText = score;
+            document.getElementById('res-combo').innerText = maxCombo;
+            document.getElementById('res-perfect').innerText = perfects;
+            document.getElementById('res-great').innerText = greats;
+            document.getElementById('res-miss').innerText = misses;
+            
+            document.getElementById('result-screen').style.display = 'flex';
+        }
 
-    // 計算當前音符的 X 座標位置
-    const timeDiff = note.time - currentTime;
-    const x = targetX + (timeDiff * chartJSON.metadata.scrollSpeed);
-
-    // Miss 判定：過界超出 80px
-    if (timeDiff < -0.2 && !note.missed) {
-      note.missed = true;
-      combo = 0;
-      counts.miss++;
-      showJudgement("MISS", "#ff4757");
-      updateHUD();
-    }
-
-    // 繪製音符 (僅繪製在畫面上方的)
-    if (x > -50 && x < canvas.width + 50 && !note.missed) {
-      ctx.beginPath();
-      ctx.arc(x, 60, 28, 0, Math.PI * 2);
-      ctx.fillStyle = note.type === 'don' ? '#ff4757' : '#1e90ff';
-      ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#fff';
-      ctx.stroke();
-
-      // 音符內圈文字
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(note.type === 'don' ? '咚' : '咔', x, 60);
-    }
-  });
-
-  // 3. 繪製打擊判定反饋文字 (PERFECT / GREAT / MISS)
-  if (judgementTimer > 0) {
-    ctx.fillStyle = lastJudgementColor;
-    ctx.font = 'bold 28px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(lastJudgementText, targetX, 110);
-    judgementTimer--;
-  }
-
-  // 自動判斷是否所有音符皆已處理完畢
-  if (notes.every(n => n.hit || n.missed) && notes.length > 0) {
-    setTimeout(() => { if (isPlaying) showResults(); }, 1500);
-  } else {
-    requestAnimationFrame(gameLoop);
-  }
-}
-
-// =================================================================
-// 4. 按鍵打擊處理與判定邏輯
-// =================================================================
-window.addEventListener('keydown', (e) => {
-  if (!isPlaying) return;
-  const key = e.key.toLowerCase();
-  
-  let keyType = null;
-  if (key === 'f' || key === 'j') keyType = 'don';
-  if (key === 'd' || key === 'k') keyType = 'ka';
-
-  if (keyType) {
-    playHitsound(keyType); // 播放聲音
-    checkHit(keyType);     // 進行時間差判定
-  }
-});
-
-function checkHit(inputType) {
-  const currentTime = ytPlayer.getCurrentTime() - chartJSON.metadata.offset;
-
-  // 找出距離判定線最近且未擊中的音符
-  const targetNote = notes.find(n => !n.hit && !n.missed && Math.abs(n.time - currentTime) < 0.25);
-
-  if (targetNote) {
-    if (targetNote.type === inputType) {
-      const diff = Math.abs(targetNote.time - currentTime);
-      targetNote.hit = true;
-
-      if (diff < 0.08) { // Perfect (80ms 內)
-        score += 1000;
-        combo++;
-        counts.perfect++;
-        showJudgement("PERFECT!", "#2ed573");
-      } else { // Great
-        score += 500;
-        combo++;
-        counts.great++;
-        showJudgement("GREAT", "#eccc68");
-      }
-
-      if (combo > maxCombo) maxCombo = combo;
-      updateHUD();
-    }
-  }
-}
-
-function showJudgement(text, color) {
-  lastJudgementText = text;
-  lastJudgementColor = color;
-  judgementTimer = 30; // 顯示約 0.5 秒
-}
-
-function updateHUD() {
-  document.getElementById('score').innerText = score;
-  document.getElementById('combo').innerText = combo;
-}
-
-// =================================================================
-// 5. Pop-up Results 結算視窗邏輯
-// =================================================================
-function showResults() {
-  isPlaying = false;
-  ytPlayer.pauseVideo();
-
-  const total = notes.length || 1;
-  const acc = (((counts.perfect * 1.0 + counts.great * 0.5) / total) * 100).toFixed(1);
-
-  document.getElementById('res-score').innerText = score;
-  document.getElementById('res-combo').innerText = maxCombo;
-  document.getElementById('res-perfect').innerText = counts.perfect;
-  document.getElementById('res-great').innerText = counts.great;
-  document.getElementById('res-miss').innerText = counts.miss;
-  document.getElementById('res-acc').innerText = acc + "%";
-
-  document.getElementById('results-modal').style.display = 'flex';
-}
-
-function restartGame() {
-  document.getElementById('results-modal').style.display = 'none';
-  startGame();
-}
-</script>
+        // 輔助函式：Hex 色碼轉 RGB 供透明度動畫使用
+        function hexToRgb(hex) {
+            let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : "255,255,255";
+        }
+    </script>
 </body>
 </html>
