@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YouTube 節拍音遊 (TubeRhythm)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #050505;
+            color: white;
+            overflow: hidden;
+            touch-action: none; /* 防止手機滑動 */
+        }
+
+        /* 霓虹發光效果 */
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #0ff, 0 0 40px #0ff, 0 0 80px #0ff;
+        }
+        .neon-border {
+            box-shadow: 0 0 5px #0ff, 0 0 10px #0ff inset;
+            border: 1px solid #0ff;
+        }
+        
+        /* UI 漸變背景 */
+        .glass-panel {
+            background: rgba(10, 10, 20, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* YouTube 隱藏容器，僅作背景 */
+        #ytplayer-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100vw;
+            height: 100vh;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        /* 確保影片按比例填滿 */
+        @media (min-aspect-ratio: 16/9) {
+            #ytplayer-container { height: 300vw; margin-top: -100vw; }
+        }
+        @media (max-aspect-ratio: 16/9) {
+            #ytplayer-container { width: 300vh; margin-left: -100vh; }
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        .ui-layer {
+            position: absolute;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen">
+
+    <!-- 背景 YouTube 播放器 -->
+    <div id="ytplayer-container">
+        <div id="player"></div>
+    </div>
+
+    <!-- 遊戲主畫布 -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 遊戲進行中 HUD -->
+    <div id="hud" class="ui-layer top-0 left-0 w-full p-4 flex justify-between items-start pointer-events-none hidden">
+        <div class="flex flex-col">
+            <span class="text-gray-400 text-sm tracking-widest">SCORE</span>
+            <span id="scoreDisplay" class="text-4xl font-bold text-white neon-text">000000</span>
+        </div>
+        <div class="flex flex-col items-end">
+            <span class="text-gray-400 text-sm tracking-widest">COMBO</span>
+            <span id="comboDisplay" class="text-4xl font-bold text-pink-400">0</span>
+        </div>
+    </div>
+
+    <!-- 啟動與設定畫面 -->
+    <div id="setupScreen" class="ui-layer inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-500">
+        <div class="glass-panel p-8 rounded-2xl flex flex-col items-center w-11/12 max-w-md text-center">
+            <h1 class="text-3xl font-black mb-2 neon-text text-cyan-400 tracking-wider">TUBE RHYTHM</h1>
+            <p class="text-gray-400 text-sm mb-6">Play rhythm game to any YouTube video!</p>
+            
+            <div class="w-full mb-4">
+                <label class="block text-left text-xs text-gray-400 mb-1">YouTube Video ID</label>
+                <input type="text" id="videoIdInput" value="dQw4w9WgXcQ" class="w-full bg-gray-900 border border-gray-700 text-white px-4 py-2 rounded focus:outline-none focus:border-cyan-400 transition-colors">
+                <p class="text-xs text-gray-500 mt-1 text-left">預設: Rick Astley - Never Gonna Give You Up</p>
+            </div>
+
+            <div class="w-full flex justify-between mb-6 text-sm text-gray-300">
+                <div class="flex flex-col items-center"><span class="font-bold text-xl mb-1 border border-gray-600 rounded px-2">D</span><span>Lane 1</span></div>
+                <div class="flex flex-col items-center"><span class="font-bold text-xl mb-1 border border-gray-600 rounded px-2">F</span><span>Lane 2</span></div>
+                <div class="flex flex-col items-center"><span class="font-bold text-xl mb-1 border border-gray-600 rounded px-2">J</span><span>Lane 3</span></div>
+                <div class="flex flex-col items-center"><span class="font-bold text-xl mb-1 border border-gray-600 rounded px-2">K</span><span>Lane 4</span></div>
+            </div>
+
+            <button id="startBtn" class="neon-border w-full py-3 rounded-lg text-cyan-400 font-bold tracking-widest hover:bg-cyan-900/30 transition-all active:scale-95 disabled:opacity-50">
+                LOADING YOUTUBE...
+            </button>
+        </div>
+    </div>
+
+    <!-- 結算畫面 (Pop-up Results) -->
+    <div id="resultsModal" class="ui-layer inset-0 flex items-center justify-center bg-black/90 hidden opacity-0 transition-opacity duration-500">
+        <div class="glass-panel p-8 rounded-3xl flex flex-col items-center w-11/12 max-w-lg border-t-4 border-cyan-400 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/20 rounded-full blur-2xl"></div>
+            
+            <h2 class="text-4xl font-black mb-6 tracking-widest text-white">TRACK CLEARED</h2>
+            
+            <div class="w-full grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-gray-800/50 p-4 rounded-xl flex flex-col items-center border border-gray-700">
+                    <span class="text-gray-400 text-xs mb-1">FINAL SCORE</span>
+                    <span id="resScore" class="text-3xl font-bold text-cyan-400">0</span>
+                </div>
+                <div class="bg-gray-800/50 p-4 rounded-xl flex flex-col items-center border border-gray-700">
+                    <span class="text-gray-400 text-xs mb-1">MAX COMBO</span>
+                    <span id="resCombo" class="text-3xl font-bold text-pink-400">0</span>
+                </div>
+                <div class="bg-gray-800/50 p-4 rounded-xl flex flex-col items-center border border-gray-700 col-span-2">
+                    <span class="text-gray-400 text-xs mb-1">ACCURACY</span>
+                    <span id="resAccuracy" class="text-4xl font-bold text-yellow-400">0.00%</span>
+                </div>
+            </div>
+
+            <div class="flex space-x-6 text-sm mb-8 w-full justify-center">
+                <div class="text-center"><span class="block text-green-400 font-bold" id="resPerfect">0</span>Perfect</div>
+                <div class="text-center"><span class="block text-blue-400 font-bold" id="resGreat">0</span>Great</div>
+                <div class="text-center"><span class="block text-red-400 font-bold" id="resMiss">0</span>Miss</div>
+            </div>
+
+            <button id="restartBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg tracking-widest transition-colors">
+                PLAY AGAIN
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Web Audio API (音效合成) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 合成打擊聲 (類似木魚或電子鼓)
+        function playHitSound() {
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime;
+            
+            // 振盪器
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            // 頻率快速下降產生打擊感
+            osc.frequency.setValueAtTime(800, t);
+            osc.frequency.exponentialRampToValueAtTime(50, t + 0.1);
+            
+            // 音量快速衰減
+            gain.gain.setValueAtTime(0.8, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start(t);
+            osc.stop(t + 0.1);
+        }
+
+        // --- YouTube API 整合 ---
+        let ytPlayer;
+        let isYtReady = false;
+
+        // 動態載入 YT API
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                videoId: document.getElementById('videoIdInput').value,
+                playerVars: {
+                    'playsinline': 1,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'fs': 0,
+                    'modestbranding': 1,
+                    'rel': 0
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            isYtReady = true;
+            const startBtn = document.getElementById('startBtn');
+            startBtn.innerText = "START GAME";
+            startBtn.disabled = false;
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING && game.state === 'loading') {
+                game.start();
+            } else if (event.data == YT.PlayerState.ENDED) {
+                game.endGame();
+            }
+        }
+
+        // --- 遊戲引擎與邏輯 ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            // 更新遊戲參數
+            if (game) game.updateDimensions();
+        }
+        window.addEventListener('resize', resize);
+
+        const keys = ['d', 'f', 'j', 'k'];
+        
+        class Game {
+            constructor() {
+                this.state = 'setup'; // setup, loading, playing, ended
+                this.notes = [];
+                this.particles = [];
+                this.judgments = []; // 畫面上的 PERFECT/GREAT/MISS 字樣
+                
+                this.score = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.stats = { perfect: 0, great: 0, miss: 0 };
+                
+                this.videoDuration = 0;
+                this.gameStartTime = 0;
+                
+                // 視覺參數
+                this.lanes = 4;
+                this.laneWidth = 0;
+                this.startX = 0;
+                this.hitY = 0;
+                this.noteSpeed = 0; // px per second
+                this.keyStates = [false, false, false, false];
+                this.laneGlows = [0, 0, 0, 0]; // 敲擊時的軌道發光強度
+                
+                this.colors = ['#ff0055', '#00e5ff', '#00e5ff', '#ff0055']; // 軌道顏色
+                
+                this.updateDimensions();
+            }
+
+            updateDimensions() {
+                // 在畫面中間保留 4 個軌道
+                const maxLaneWidth = 100;
+                this.laneWidth = Math.min(width / 5, maxLaneWidth);
+                const totalWidth = this.laneWidth * this.lanes;
+                this.startX = (width - totalWidth) / 2;
+                
+                // 打擊線位置 (螢幕下方 85% 處)
+                this.hitY = height * 0.85;
+                // 音符下落速度: 螢幕高度需要 1.5 秒走完
+                this.noteSpeed = height / 1.5; 
+            }
+
+            generateBeatmap() {
+                this.notes = [];
+                // 取得影片長度
+                this.videoDuration = ytPlayer.getDuration() || 180;
+                
+                // 假設一首 120 BPM 的歌，每 0.5 秒一個節拍。這裡加入一些隨機性來生成譜面。
+                const beatInterval = 0.5; // 秒
+                let currentTime = 3.0; // 延遲 3 秒開始出現音符
+                
+                while (currentTime < this.videoDuration - 2) {
+                    // 根據機率生成單鍵或雙鍵
+                    const r = Math.random();
+                    if (r < 0.7) {
+                        // 單鍵
+                        const lane = Math.floor(Math.random() * this.lanes);
+                        this.notes.push({ time: currentTime, lane: lane, active: true });
+                    } else if (r < 0.9) {
+                        // 雙鍵
+                        const lane1 = Math.floor(Math.random() * 2);
+                        const lane2 = 2 + Math.floor(Math.random() * 2);
+                        this.notes.push({ time: currentTime, lane: lane1, active: true });
+                        this.notes.push({ time: currentTime, lane: lane2, active: true });
+                    }
+                    
+                    // 下一個節拍時間
+                    if (Math.random() > 0.8) {
+                        currentTime += beatInterval / 2; // 八分音符
+                    } else {
+                        currentTime += beatInterval; // 四分音符
+                    }
+                }
+            }
+
+            initPlay() {
+                initAudio();
+                
+                // 設定影片
+                const vid = document.getElementById('videoIdInput').value.trim();
+                if (vid) {
+                    ytPlayer.loadVideoById(vid);
+                } else {
+                    ytPlayer.playVideo();
+                }
+                
+                this.state = 'loading';
+                document.getElementById('setupScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('setupScreen').classList.add('hidden');
+                    document.getElementById('hud').classList.remove('hidden');
+                }, 500);
+
+                // 分數重置
+                this.score = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.stats = { perfect: 0, great: 0, miss: 0 };
+                this.updateHUD();
+                
+                // 開始主迴圈
+                requestAnimationFrame(() => this.loop());
+            }
+
+            start() {
+                this.state = 'playing';
+                this.generateBeatmap();
+                // 使用 performance.now() 結合 YT API 來獲得精確同步
+                this.gameStartTime = performance.now() - ytPlayer.getCurrentTime() * 1000;
+            }
+
+            getCurrentAudioTime() {
+                // 每隔一段時間校準一次時間，防止 performance.now() 與影片產生漂移
+                const ytTime = ytPlayer.getCurrentTime() * 1000;
+                const perfTime = performance.now() - this.gameStartTime;
+                
+                // 如果誤差大於 100ms，以 YT 為準進行平滑校正
+                if (Math.abs(ytTime - perfTime) > 100 && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+                    this.gameStartTime = performance.now() - ytTime;
+                }
+                
+                return (performance.now() - this.gameStartTime) / 1000;
+            }
+
+            handleInput(laneIdx) {
+                if (this.state !== 'playing') return;
+                
+                this.keyStates[laneIdx] = true;
+                this.laneGlows[laneIdx] = 1.0; // 觸發軌道發光
+                
+                const currentTime = this.getCurrentAudioTime();
+                
+                // 尋找該軌道最接近的有效音符
+                let targetNote = null;
+                let minDiff = Infinity;
+                
+                for (let i = 0; i < this.notes.length; i++) {
+                    const note = this.notes[i];
+                    if (note.active && note.lane === laneIdx) {
+                        const diff = Math.abs(note.time - currentTime);
+                        // 判定區間 (-150ms 到 +150ms)
+                        if (diff < 0.15 && diff < minDiff) {
+                            minDiff = diff;
+                            targetNote = note;
+                        }
+                    }
+                }
+
+                if (targetNote) {
+                    targetNote.active = false;
+                    playHitSound(); // 播放音效
+                    
+                    // 根據誤差決定判定
+                    if (minDiff < 0.05) { // Perfect (< 50ms)
+                        this.score += 100 + (this.combo * 5);
+                        this.combo++;
+                        this.stats.perfect++;
+                        this.showJudgment('PERFECT', '#00ffcc', laneIdx);
+                        this.spawnParticles(laneIdx, this.colors[laneIdx]);
+                    } else { // Great (< 150ms)
+                        this.score += 50 + (this.combo * 2);
+                        this.combo++;
+                        this.stats.great++;
+                        this.showJudgment('GREAT', '#44aaff', laneIdx);
+                        this.spawnParticles(laneIdx, '#ffffff');
+                    }
+                    
+                    if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+                    this.updateHUD();
+                }
+            }
+
+            handleKeyUp(laneIdx) {
+                this.keyStates[laneIdx] = false;
+            }
+
+            showJudgment(text, color, laneIdx) {
+                const x = this.startX + laneIdx * this.laneWidth + this.laneWidth / 2;
+                this.judgments.push({
+                    text: text,
+                    color: color,
+                    x: x,
+                    y: this.hitY - 60,
+                    life: 1.0 // 生命週期 1.0 -> 0
+                });
+            }
+
+            spawnParticles(laneIdx, color) {
+                const x = this.startX + laneIdx * this.laneWidth + this.laneWidth / 2;
+                const y = this.hitY;
+                for (let i = 0; i < 15; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 400, // 爆炸速度
+                        vy: (Math.random() - 1) * 400,
+                        life: 1.0,
+                        color: color,
+                        size: Math.random() * 6 + 2
+                    });
+                }
+            }
+
+            updateHUD() {
+                document.getElementById('scoreDisplay').innerText = String(this.score).padStart(6, '0');
+                document.getElementById('comboDisplay').innerText = this.combo;
+                
+                // 動態效果
+                const comboEl = document.getElementById('comboDisplay');
+                comboEl.style.transform = 'scale(1.5)';
+                setTimeout(() => comboEl.style.transform = 'scale(1)', 100);
+            }
+
+            loop() {
+                if (this.state !== 'playing' && this.state !== 'loading') return;
+                
+                // 畫面清理
+                ctx.clearRect(0, 0, width, height);
+                
+                if (this.state === 'playing') {
+                    const currentTime = this.getCurrentAudioTime();
+                    const dt = 1/60; // 簡化為每幀固定時間差用於動畫
+                    
+                    this.updateLogic(currentTime, dt);
+                    this.drawEnvironment();
+                    this.drawNotes(currentTime);
+                    this.drawEffects(dt);
+                }
+
+                requestAnimationFrame(() => this.loop());
+            }
+
+            updateLogic(currentTime, dt) {
+                // 檢查 Miss
+                for (let i = 0; i < this.notes.length; i++) {
+                    const note = this.notes[i];
+                    if (note.active) {
+                        if (currentTime - note.time > 0.15) { // 超過 150ms 沒打
+                            note.active = false;
+                            this.combo = 0;
+                            this.stats.miss++;
+                            this.showJudgment('MISS', '#ff3333', note.lane);
+                            this.updateHUD();
+                        }
+                    }
+                }
+            }
+
+            drawEnvironment() {
+                // 畫背景漸變
+                const gradient = ctx.createLinearGradient(0, height/2, 0, height);
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(1, 'rgba(0, 255, 255, 0.05)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(this.startX, 0, this.lanes * this.laneWidth, height);
+
+                // 畫軌道分隔線
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let i = 0; i <= this.lanes; i++) {
+                    const x = this.startX + i * this.laneWidth;
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                }
+                ctx.stroke();
+
+                // 畫打擊線 (Hit Line)
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00ffff';
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(this.startX, this.hitY);
+                ctx.lineTo(this.startX + this.lanes * this.laneWidth, this.hitY);
+                ctx.stroke();
+                ctx.shadowBlur = 0; // 重置
+
+                // 畫按鍵判定區與發光
+                for (let i = 0; i < this.lanes; i++) {
+                    const x = this.startX + i * this.laneWidth;
+                    
+                    // 按下發光衰減
+                    if (this.laneGlows[i] > 0) {
+                        this.laneGlows[i] -= 0.05;
+                        if (this.laneGlows[i] < 0) this.laneGlows[i] = 0;
+                        
+                        ctx.fillStyle = `rgba(255, 255, 255, ${this.laneGlows[i] * 0.3})`;
+                        ctx.fillRect(x, 0, this.laneWidth, height);
+                    }
+
+                    // 底部按鍵視覺
+                    ctx.fillStyle = this.keyStates[i] ? this.colors[i] : 'rgba(50, 50, 50, 0.5)';
+                    ctx.strokeStyle = this.colors[i];
+                    ctx.lineWidth = 2;
+                    
+                    ctx.beginPath();
+                    // 圓角矩形
+                    const r = 10;
+                    const w = this.laneWidth - 10;
+                    const h = 40;
+                    const rx = x + 5;
+                    const ry = this.hitY - 20;
+                    
+                    ctx.moveTo(rx + r, ry);
+                    ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
+                    ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
+                    ctx.arcTo(rx, ry + h, rx, ry, r);
+                    ctx.arcTo(rx, ry, rx + w, ry, r);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // 按鍵文字
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 20px Orbitron';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(keys[i].toUpperCase(), x + this.laneWidth/2, this.hitY);
+                }
+            }
+
+            drawNotes(currentTime) {
+                for (let i = 0; i < this.notes.length; i++) {
+                    const note = this.notes[i];
+                    if (!note.active) continue;
+                    
+                    // 計算 Y 座標：根據時間差與速度
+                    const timeDiff = note.time - currentTime;
+                    const y = this.hitY - (timeDiff * this.noteSpeed);
+                    
+                    // 只有在螢幕範圍內才畫
+                    if (y > -50 && y < height + 50) {
+                        const x = this.startX + note.lane * this.laneWidth;
+                        
+                        // 畫音符 (發光矩形)
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = this.colors[note.lane];
+                        ctx.fillStyle = '#ffffff';
+                        
+                        const w = this.laneWidth - 20;
+                        const h = 20;
+                        const nx = x + 10;
+                        const ny = y - h/2;
+                        
+                        ctx.beginPath();
+                        ctx.roundRect ? ctx.roundRect(nx, ny, w, h, 10) : ctx.rect(nx, ny, w, h); // 相容舊版
+                        ctx.fill();
+                        
+                        // 內層顏色
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = this.colors[note.lane];
+                        ctx.beginPath();
+                        ctx.roundRect ? ctx.roundRect(nx + 3, ny + 3, w - 6, h - 6, 7) : ctx.rect(nx + 3, ny + 3, w - 6, h - 6);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            drawEffects(dt) {
+                // 畫 Judgments (Perfect/Great/Miss)
+                for (let i = this.judgments.length - 1; i >= 0; i--) {
+                    const j = this.judgments[i];
+                    j.life -= dt * 1.5;
+                    j.y -= dt * 30; // 緩慢上升
+                    
+                    if (j.life <= 0) {
+                        this.judgments.splice(i, 1);
+                        continue;
+                    }
+                    
+                    ctx.globalAlpha = j.life;
+                    ctx.fillStyle = j.color;
+                    ctx.font = '900 24px Orbitron';
+                    ctx.textAlign = 'center';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = j.color;
+                    ctx.fillText(j.text, j.x, j.y);
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1.0;
+                }
+
+                // 畫粒子特效
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    p.vy += 800 * dt; // 重力
+                    p.life -= dt * 1.5;
+                    
+                    if (p.life <= 0) {
+                        this.particles.splice(i, 1);
+                        continue;
+                    }
+                    
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+
+            endGame() {
+                if (this.state === 'ended') return;
+                this.state = 'ended';
+                
+                // 隱藏 HUD
+                document.getElementById('hud').classList.add('hidden');
+                
+                // 計算準確率
+                const totalPlayed = this.stats.perfect + this.stats.great + this.stats.miss;
+                let accuracy = 0;
+                if (totalPlayed > 0) {
+                    // Perfect = 100%, Great = 50%
+                    accuracy = ((this.stats.perfect * 1 + this.stats.great * 0.5) / totalPlayed) * 100;
+                }
+                
+                // 填入結算資料
+                document.getElementById('resScore').innerText = this.score;
+                document.getElementById('resCombo').innerText = this.maxCombo;
+                document.getElementById('resAccuracy').innerText = accuracy.toFixed(2) + '%';
+                
+                document.getElementById('resPerfect').innerText = this.stats.perfect;
+                document.getElementById('resGreat').innerText = this.stats.great;
+                document.getElementById('resMiss').innerText = this.stats.miss;
+                
+                // 顯示彈出視窗
+                const modal = document.getElementById('resultsModal');
+                modal.classList.remove('hidden');
+                // 觸發重繪以應用漸變動畫
+                void modal.offsetWidth; 
+                modal.style.opacity = '1';
+            }
+
+            reset() {
+                const modal = document.getElementById('resultsModal');
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    document.getElementById('setupScreen').classList.remove('hidden');
+                    void document.getElementById('setupScreen').offsetWidth;
+                    document.getElementById('setupScreen').style.opacity = '1';
+                }, 500);
+            }
+        }
+
+        // 初始化遊戲實例
+        const game = new Game();
+        resize();
+
+        // 綁定按鈕事件
+        document.getElementById('startBtn').addEventListener('click', () => {
+            if (isYtReady) game.initPlay();
+        });
+        
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            game.reset();
+        });
+
+        // 綁定鍵盤輸入
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return; // 避免長按連續觸發
+            const key = e.key.toLowerCase();
+            const idx = keys.indexOf(key);
+            if (idx !== -1) {
+                game.handleInput(idx);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            const idx = keys.indexOf(key);
+            if (idx !== -1) {
+                game.handleKeyUp(idx);
+            }
+        });
+
+        // 加入觸控支援 (手機/平板)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 防止滾動等預設行為
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                // 判斷按在哪個軌道
+                if (touch.clientX >= game.startX && touch.clientX <= game.startX + game.lanes * game.laneWidth) {
+                    const laneIdx = Math.floor((touch.clientX - game.startX) / game.laneWidth);
+                    game.handleInput(laneIdx);
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            // 觸控結束時簡單地清除所有按鍵狀態，或進階處理對應 ID
+            for(let i=0; i<4; i++) game.handleKeyUp(i);
+        }, { passive: false });
+
+    </script>
+</body>
+</html>
