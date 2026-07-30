@@ -1,0 +1,778 @@
+html_content = """<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12種動物系男友心理測驗（MIRROR 12子對應版）</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Analytics Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    },
+                    colors: {
+                        mirror: {
+                            gold: '#D4AF37',
+                            dark: '#121826',
+                            card: '#1E293B',
+                            accent: '#3B82F6',
+                            pink: '#EC4899',
+                            purple: '#8B5CF6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0F172A;
+            color: #F8FAFC;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #60A5FA, #A78BFA, #F472B6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .option-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-card:hover {
+            transform: translateY(-2px);
+            border-color: #60A5FA;
+            background: rgba(59, 130, 246, 0.15);
+        }
+        .option-card.selected {
+            border-color: #A78BFA;
+            background: rgba(167, 139, 250, 0.25);
+            box-shadow: 0 0 15px rgba(167, 139, 250, 0.3);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            opacity: 0.95;
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px -10px rgba(139, 92, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+
+    <!-- Header / Navbar -->
+    <header class="w-full border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="goHome()">
+                <span class="text-2xl">🐾</span>
+                <span class="font-bold text-lg tracking-wide gradient-text">MIRROR 動物系男友測試</span>
+            </div>
+            <button onclick="toggleDashboardDirect()" class="text-xs md:text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-pie text-purple-400"></i>
+                <span>查看全網統計</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto px-4 py-6 md:py-10 flex-grow flex flex-col justify-center">
+
+        <!-- 1. LANDING SCREEN -->
+        <section id="screen-landing" class="text-center space-y-8 animate-fade-in">
+            <div class="inline-block px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs md:text-sm font-medium mb-2">
+                ✨ 配合 MIRROR 12子性格 ‧ 精準多標籤統計
+            </div>
+            
+            <h1 class="text-3xl md:text-5xl font-black tracking-tight leading-tight">
+                尋找命中注定嘅<br>
+                <span class="gradient-text">12種動物系男友</span> 心理測驗
+            </h1>
+            
+            <p class="text-slate-400 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+                只需回答 12 條簡單廣東話問題，系統將自動演算並統計相對應嘅動物性格標籤，幫你找出最 Match 嘅動物系男友與對應 MIRROR 成員！
+            </p>
+
+            <!-- Grid Preview -->
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-2.5 max-w-2xl mx-auto py-2">
+                <div class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-center">
+                    <div class="text-2xl">🐨</div>
+                    <div class="text-xs font-bold mt-1 text-slate-300">姜濤</div>
+                    <div class="text-[10px] text-slate-400">樹熊系</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-center">
+                    <div class="text-2xl">🐱</div>
+                    <div class="text-xs font-bold mt-1 text-slate-300">Anson Lo</div>
+                    <div class="text-[10px] text-slate-400">貓系</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-center">
+                    <div class="text-2xl">🐻</div>
+                    <div class="text-xs font-bold mt-1 text-slate-300">Ian</div>
+                    <div class="text-[10px] text-slate-400">熊系</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-center">
+                    <div class="text-2xl">🐶</div>
+                    <div class="text-xs font-bold mt-1 text-slate-300">Edan</div>
+                    <div class="text-[10px] text-slate-400">狗系</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-center">
+                    <div class="text-2xl">🦉</div>
+                    <div class="text-xs font-bold mt-1 text-slate-300">Jer</div>
+                    <div class="text-[10px] text-slate-400">貓頭鷹系</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-center">
+                    <div class="text-2xl">🦁</div>
+                    <div class="text-xs font-bold mt-1 text-slate-300">AK</div>
+                    <div class="text-[10px] text-slate-400">獅子系</div>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button onclick="startQuiz()" class="btn-gradient text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 mx-auto">
+                    <span>開始心靈測驗</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <div class="text-xs text-slate-500 mt-3 flex items-center justify-center gap-4">
+                    <span><i class="fa-solid fa-bolt text-amber-400 mr-1"></i>耗時約 2 分鐘</span>
+                    <span><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i>基率平均 8.33%</span>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 2. QUIZ STEPPER SCREEN -->
+        <section id="screen-quiz" class="hidden max-w-2xl mx-auto w-full">
+            <!-- Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+                    <span id="quiz-step-text" class="font-bold text-purple-400">問題 1 / 12</span>
+                    <span id="quiz-progress-percent">8%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                    <div id="quiz-progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-300" style="width: 8.33%;"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="glass-card rounded-2xl p-6 md:p-8 shadow-xl">
+                <h2 id="question-text" class="text-xl md:text-2xl font-bold mb-6 text-slate-100 leading-snug">
+                    加載問題中...
+                </h2>
+
+                <div id="options-container" class="space-y-3.5">
+                    <!-- Options inserted via JS -->
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center mt-6">
+                <button id="btn-prev" onclick="prevQuestion()" class="text-sm text-slate-400 hover:text-slate-200 px-4 py-2 rounded-lg bg-slate-800/80 border border-slate-700 transition flex items-center gap-1.5 opacity-50 cursor-not-allowed" disabled>
+                    <i class="fa-solid fa-chevron-left text-xs"></i> 上一題
+                </button>
+                <span class="text-xs text-slate-500">點擊選項即可自動前往下一題</span>
+            </div>
+        </section>
+
+
+        <!-- 3. RESULT SCREEN -->
+        <section id="screen-result" class="hidden max-w-2xl mx-auto w-full py-4">
+            <!-- Result Card Header -->
+            <div id="result-card" class="glass-card rounded-3xl p-6 md:p-8 text-center border-2 border-purple-500/30 relative overflow-hidden shadow-2xl">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl"></div>
+                
+                <div class="inline-block px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-semibold mb-3 border border-purple-500/30">
+                    你的命定男友類型
+                </div>
+
+                <div id="res-emoji" class="text-7xl md:text-8xl my-2 transform hover:scale-110 transition duration-300 inline-block">🐨</div>
+                
+                <h2 id="res-title" class="text-2xl md:text-4xl font-black gradient-text tracking-wide mt-2">
+                    樹熊系男友
+                </h2>
+                
+                <div id="res-mirror" class="text-lg md:text-xl font-bold text-amber-400 mt-1 flex items-center justify-center gap-2">
+                    <span>對應 MIRROR 成員：姜濤 (Keung To)</span>
+                </div>
+
+                <!-- Tag Badges -->
+                <div id="res-tags" class="flex flex-wrap justify-center gap-2 my-4">
+                    <!-- Badges -->
+                </div>
+
+                <!-- Match Score Info -->
+                <div class="bg-slate-900/60 rounded-xl p-3 my-4 text-xs text-slate-300 flex justify-around border border-slate-800">
+                    <div>測驗最高得分：<span id="res-score" class="font-bold text-purple-400 text-sm">--</span> 標籤分</div>
+                    <div class="border-r border-slate-700"></div>
+                    <div>獲得機率：<span class="font-bold text-blue-400 text-sm">~ 8.33%</span> (平均分佈)</div>
+                </div>
+
+                <!-- Detailed Breakdown -->
+                <div class="text-left space-y-4 mt-6 pt-6 border-t border-slate-800">
+                    <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                        <h3 class="font-bold text-purple-300 text-sm md:text-base flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-sparkles"></i> 性格特質與真心話
+                        </h3>
+                        <p id="res-desc" class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                            --
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
+                        <h3 class="font-bold text-pink-300 text-sm md:text-base flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-heart"></i> 甜蜜戀愛體驗
+                        </h3>
+                        <p id="res-love" class="text-slate-300 text-xs md:text-sm leading-relaxed">
+                            --
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Secondary Match if tied -->
+                <div id="res-secondary-box" class="hidden mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-left text-xs">
+                    <span class="font-bold text-amber-400">💡 次要契合類型：</span>
+                    <span id="res-secondary-text" class="text-slate-300">--</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                <button onclick="shareResult()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl font-bold text-sm border border-slate-700 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-share-nodes text-purple-400"></i> 分享結果 / 複製連結
+                </button>
+                <button onclick="toggleDashboardDirect()" class="flex-1 btn-gradient text-white py-3 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-chart-line"></i> 查看全網 12子 統計分佈
+                </button>
+            </div>
+
+            <div class="text-center mt-4">
+                <button onclick="restartQuiz()" class="text-xs text-slate-400 hover:text-slate-200 underline">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> 重新測試
+                </button>
+            </div>
+        </section>
+
+
+        <!-- 4. ANALYTICS DASHBOARD SCREEN -->
+        <section id="screen-dashboard" class="hidden max-w-3xl mx-auto w-full py-4">
+            <div class="glass-card rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-700">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                    <div>
+                        <div class="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold mb-1">
+                            全網填答數據統計 Dashboard
+                        </div>
+                        <h2 class="text-2xl md:text-3xl font-black text-slate-100">
+                            12種動物系男友 填答分佈
+                        </h2>
+                    </div>
+                    <div class="bg-slate-800 px-4 py-2 rounded-xl text-xs text-slate-400 border border-slate-700">
+                        總填答人次：<span id="stat-total-count" class="font-bold text-amber-400 text-sm">12,845</span> 人
+                    </div>
+                </div>
+
+                <!-- Chart Box -->
+                <div class="my-6">
+                    <div class="h-80 md:h-96 relative">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Baseline Note -->
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1.5">
+                    <div class="font-bold text-slate-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-blue-400"></i> 機率設計說明
+                    </div>
+                    <p>
+                        整份測驗共 12 條題目，12 種動物標籤喺全測驗中出現嘅總次數完全相等（各 10 次），因此基準概率為標準均勻分佈 <strong class="text-purple-300">8.33%（1/12）</strong>。
+                    </p>
+                </div>
+
+                <!-- Grid Summary Cards -->
+                <div id="dash-grid-cards" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-6">
+                    <!-- Inserted via JS -->
+                </div>
+
+                <div class="mt-8 flex justify-between items-center pt-4 border-t border-slate-800">
+                    <button onclick="backFromDashboard()" class="text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> 返去測驗 / 結果
+                    </button>
+                    <button onclick="restartQuiz()" class="text-sm btn-gradient text-white px-5 py-2.5 rounded-xl font-bold shadow transition">
+                        再測一次
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-slate-800 py-4 text-center text-xs text-slate-500 bg-slate-900/50">
+        <p>12種動物系男友心理測試 × MIRROR 12子性格對應 ‧ 廣東話精準版</p>
+    </footer>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 1. DATA DEFINITIONS
+        const ANIMALS = {
+            "樹熊": { emoji: "🐨", mirror: "姜濤 (Keung To)", tags: ["愛食愛睡", "呆萌可愛", "執著純真"], color: "#F59E0B", desc: "愛食愛睡、呆萌可愛、對熱愛嘅嘢極度執著。平時睇落懶洋洋，但一遇到美食或者熱愛嘅事就會超熱情！私底下一面呆萌，超激發你嘅保護慾。", love: "同佢一齊永遠唔缺好食嘅嘢，佢會無微不至咁依賴你，喺你面前展現最真實、最天真嘅一面。" },
+            "貓": { emoji: "🐱", mirror: "盧瀚霆 (Anson Lo)", tags: ["高貴優雅", "注重儀式感", "傲嬌黐人"], color: "#EC4899", desc: "高貴優雅、注重儀式感、表面傲嬌私下超黐人！平時自帶氣場，但一認定你就變身黐人小貓。", love: "注重細節同浪漫，會為你準備滿滿驚喜，同佢談戀愛好似活喺偶像劇裡面咁精緻浪漫。" },
+            "熊": { emoji: "🐻", mirror: "陳卓賢 (Ian)", tags: ["外冷內熱", "沉穩內斂", "默默溫柔"], color: "#10B981", desc: "外冷內熱、沉穩內斂、勝負欲強兼默默溫柔！唔善於甜言蜜語，看似冷淡但會用行動幫你搞掂一切。", love: "雖然把口唔會成日講愛，但佢嘅細心同行動會比你最大嘅安全感，係個超級可靠嘅默默守護型男友。" },
+            "狗": { emoji: "🐶", mirror: "呂爵安 (Edan)", tags: ["陽光開朗", "幽默搞笑", "氣氛擔當"], color: "#3B82F6", desc: "陽光開朗、幽默搞笑、毫無架子兼氣氛擔當！正能量爆棚，同佢一齊永遠唔會無聊。", love: "願意為你放下偶像包袱搞笑，永遠想逗你笑。佢係你最熱情嘅戀人，同時亦係你最好嘅閨蜜。" },
+            "貓頭鷹": { emoji: "🦉", mirror: "柳應廷 (Jer)", tags: ["藝術家氣質", "感性有深度", "靈魂共鳴"], color: "#8B5CF6", desc: "藝術家氣質、感性有深度、追求靈魂共鳴。真正的靈魂伴侶，鍾意同你深度探討音樂、藝術同人生。", love: "感性起來超溫柔，會帶你進入佢豐富嘅內心世界，兩個人嘅戀愛充滿精神上嘅共鳴同感動。" },
+            "獅子": { emoji: "🦁", mirror: "江𤒹生 (AK)", tags: ["熱血直率", "正義感爆棚", "霸氣護短"], color: "#EF4444", desc: "熱血直率、正義感爆棚、霸氣護短直球出擊！談戀愛從不拐彎抹角，鍾意你就直球對決！", love: "極具男子氣概，會將你保護得好好，唔比任何人欺負你。雖然有時直男，但真心絕無保留。" },
+            "大象": { emoji: "🐘", mirror: "邱士縉 (Stanley)", tags: ["成熟穩重", "EQ超高", "可靠後盾"], color: "#64748B", desc: "成熟穩重、EQ超高、身材高大嘅可靠後盾！擁有超闊肩膀同極高EQ，有佢喺度你就安心。", love: "唔會搶風頭，但喺生活細節上把你照顧得無微不至。就算天塌落嚟，都有佢幫你頂住。" },
+            "鹿": { emoji: "🦌", mirror: "李駿傑 (Jeremy)", tags: ["溫柔細膩", "精緻優雅", "體貼寵愛"], color: "#06B6D4", desc: "溫柔細膩、精緻優雅、善解人意又體貼。心思極度細密，秒察覺你嘅微小情緒變化。", love: "講嘢輕聲細語，舉止優雅，會將你當公主般溫柔寵愛，給予無壓力的潤物細無聲之愛。" },
+            "老虎": { emoji: "🐯", mirror: "邱傲然 (Tiger)", tags: ["舞台霸氣", "傳統內斂", "極大反差萌"], color: "#F97316", desc: "舞台霸氣外露、私下傳統內斂、反差萌極大！台上霸氣十足，私底下卻係個傳統害羞嘅男仔。", love: "這種極大反差萌超吸引人！對感情極度專一認真，係個用行動說話嘅默默守護者。" },
+            "狐狸": { emoji: "🦊", mirror: "王智德 (Alton)", tags: ["機智幽默", "轉數極快", "善於撩人"], color: "#D97706", desc: "機智幽默、轉數極快、口才了得兼善於撩人！腦筋轉得超快，一句話就能將你逗笑。", love: "同佢談戀愛充滿互相推拉嘅趣味，懂得營造氛圍，約會永遠唔會冷場或尷尬。" },
+            "樹懶": { emoji: "𦡯", mirror: "陳瑞輝 (Frankie)", tags: ["佛系隨和", "情緒穩定", "安心舒壓"], color: "#84CC16", desc: "佛系隨和、情緒極度穩定、高顏值安心感！脾氣超好，從唔輕易發火，能包容你所有小脾氣。", love: "同佢喺一齊步調會變慢，感覺非常舒服自在，唔使刻意討好，享受最純粹平靜嘅陪伴。" },
+            "狼": { emoji: "🐺", mirror: "楊樂文 (Lokman)", tags: ["天生領袖", "果斷擔當", "痞帥魅力"], color: "#6366F1", desc: "天生領袖、果斷有擔當、散發痞帥魅力！充滿自信，做嘢果斷又有大將之風。", love: "會帶領你一齊成長，面對困難絕不退縮。痞帥得來又非常有責任感同強大安全感。" }
+        };
+
+        const QUESTIONS = [
+            {
+                title: "1. 難得放假，你最想另一半陪你做咩？",
+                options: [
+                    { text: "A. 留喺屋企狂食零食睇戲，輕鬆廢足一整天", tags: ["樹熊", "樹懶"] },
+                    { text: "B. 話走就走，開車去海邊兜風或者做戶外運動", tags: ["獅子", "狼", "狗"] },
+                    { text: "C. 去文青Café打卡，或者睇展覽感受浪漫氣氛", tags: ["貓", "鹿"] },
+                    { text: "D. 兩個人安靜留喺房，各自做自己嘢互不打擾", tags: ["熊", "貓頭鷹", "老虎"] }
+                ]
+            },
+            {
+                title: "2. 當你心情低落、受咗委屈嗰陣，你希望佢點樣安慰你？",
+                options: [
+                    { text: "A. 用幽默嘅說話同搞怪Meme，瞬間氹返你開心", tags: ["狗", "狐狸"] },
+                    { text: "B. 展現大哥風範幫你出頭，兼冷靜分析比解決方案", tags: ["狼", "獅子", "大象"] },
+                    { text: "C. 唱歌比你聽，或者靜靜地做你最溫柔嘅心靈樹洞", tags: ["貓頭鷹", "鹿"] },
+                    { text: "D. 默默幫你搞掂啲家務，兼準備好食嘅零食陪住你", tags: ["熊", "樹熊", "老虎"] }
+                ]
+            },
+            {
+                title: "3. 遇到意見唔合或者吵架嗰陣，你希望佢嘅處理態度係？",
+                options: [
+                    { text: "A. 情緒超穩定，永遠先包容順從你，等你消咗氣先講", tags: ["樹懶", "鹿"] },
+                    { text: "B. 嘴硬傲嬌唔認錯，但一見到你難過就立刻心軟", tags: ["貓", "老虎", "樹熊"] },
+                    { text: "C. 冷靜理性咁同你傾，比出成熟穩重嘅解決方案", tags: ["大象", "熊"] },
+                    { text: "D. 有嗰句講嗰句，直截了當，但同時超霸氣護短", tags: ["獅子", "狼", "狐狸"] }
+                ]
+            },
+            {
+                title: "4. 週年紀念日，你最期待收到佢送咩禮物？",
+                options: [
+                    { text: "A. 充滿個人品味、儀式感滿滿嘅名牌精品或者精緻香水", tags: ["貓", "鹿"] },
+                    { text: "B. 實用性極高、質感好嘅電子產品或者生活精品", tags: ["熊", "大象", "樹懶"] },
+                    { text: "C. 佢親手整、熱血又充滿驚喜嘅心思禮物", tags: ["狗", "獅子"] },
+                    { text: "D. 藏住靈魂共鳴、紀念你哋獨家回憶嘅文藝感禮物", tags: ["貓頭鷹", "狐狸", "老虎"] }
+                ]
+            },
+            {
+                title: "5. 你最無可抗拒男生邊一種「反差萌」？",
+                options: [
+                    { text: "A. 外表高冷傲嬌生人勿近，私底下超黏人愛討摸", tags: ["貓", "老虎"] },
+                    { text: "B. 舞台/工作時霸氣四射，私下係個愛食愛睡嘅呆萌男孩", tags: ["樹熊", "狐狸", "獅子"] },
+                    { text: "C. 平時看似隨和佛系，關鍵時刻展現超強領導力同擔當", tags: ["狼", "大象"] },
+                    { text: "D. 平時心思細膩感性，笑起來帶住孩子氣嘅真摯", tags: ["貓頭鷹", "樹懶", "鹿"] }
+                ]
+            },
+            {
+                title: "6. 喺社交Party或者朋友聚會，你希望佢係點樣嘅角色？",
+                options: [
+                    { text: "A. 氣氛製造機，同所有人都可以打成一片，笑聲不斷", tags: ["狗", "狐狸"] },
+                    { text: "B. 默默坐在你身邊陪你，給人滿滿安心感嘅成熟存在", tags: ["大象", "熊", "樹懶"] },
+                    { text: "C. 自帶全場焦點嘅氣場，但佢眼裏永遠只得你一個", tags: ["獅子", "貓"] },
+                    { text: "D. 話唔多，但一開口就句句金句或者好有個人魅力", tags: ["狼", "貓頭鷹", "老虎"] }
+                ]
+            },
+            {
+                title: "7. 佢平時覆Message嘅風格係點樣嘅？",
+                options: [
+                    { text: "A. 回覆超快，充滿搞笑梗圖（Meme）兼接梗神速", tags: ["狗", "狐狸"] },
+                    { text: "B. 語氣溫柔精緻，會用好多可愛Emoji，禮貌又貼心", tags: ["鹿", "貓", "樹熊"] },
+                    { text: "C. 字數精簡，直截了當（例如「我到咗」、「等等接你」）", tags: ["狼", "熊"] },
+                    { text: "D. 回得慢但極具深度，或者會分享歌/影片同你交流", tags: ["貓頭鷹", "樹懶", "大象"] }
+                ]
+            },
+            {
+                title: "8. 關於理想嘅工作同追夢態度，你最欣賞佢邊一點？",
+                options: [
+                    { text: "A. 對夢想熱血沸騰，有一團火，永遠唔服輸", tags: ["獅子", "狼"] },
+                    { text: "B. 對自己專業領域（如音樂/藝術/表演）極度執著追求完美", tags: ["貓頭鷹", "貓", "老虎"] },
+                    { text: "C. 默默耕耘唔搶風頭，永遠係團隊最堅實可靠嘅後盾", tags: ["大象", "熊"] },
+                    { text: "D. 享受過程，心態隨緣，但關鍵時刻爆發超水準", tags: ["樹懶", "樹熊", "狗"] }
+                ]
+            },
+            {
+                title: "9. 佢對你表達愛意最常見嘅方式？",
+                options: [
+                    { text: "A. 肢體接觸，好似隻小動物咁隨時想抱抱、黐住你", tags: ["狗", "貓"] },
+                    { text: "B. 霸道直球，坦率又直接表達對你嘅愛意同保護欲", tags: ["獅子", "狼", "老虎"] },
+                    { text: "C. 無微不至嘅照顧，喺生活細節幫你安排得妥妥貼貼", tags: ["大象", "鹿"] },
+                    { text: "D. 用滿滿嘅陪伴同幽默，令你可以喺佢身邊放鬆做返自己", tags: ["樹熊", "狐狸", "樹懶"] }
+                ]
+            },
+            {
+                title: "10. 當兩個人一齊去旅行嗰陣，佢通常擔當咩角色？",
+                options: [
+                    { text: "A. 全程行程官，將景點同交通安排得井井有條", tags: ["狼", "大象"] },
+                    { text: "B. 探店美食家，跟住佢絕對食到最正最在地嘅美食", tags: ["樹熊", "狗", "狐狸"] },
+                    { text: "C. 專屬攝影兼儀式感擔當，幫你影一堆高質打卡相", tags: ["貓", "鹿"] },
+                    { text: "D. 隨和跟班，負責搬行李同陪你漫無目的地放空", tags: ["樹懶", "熊", "貓頭鷹"] }
+                ]
+            },
+            {
+                title: "11. 喺你眼裏，男生嘅咩小動作最令你心動？",
+                options: [
+                    { text: "A. 眼神交流嗰陣帶點壞壞嘅撩人魔力同微笑", tags: ["狐狸", "貓"] },
+                    { text: "B. 行路時自然拉你行內側，或者霸氣地幫你撥開頭髮", tags: ["獅子", "老虎", "大象"] },
+                    { text: "C. 專注工作或創作嗰陣，側臉展現出嘅深邃同認真", tags: ["熊", "貓頭鷹"] },
+                    { text: "D. 見到小動物或者小朋友嗰陣，流露出嘅天然童心同溫柔", tags: ["狗", "鹿", "樹熊"] }
+                ]
+            },
+            {
+                title: "12. 你渴望嘅長遠感情關係狀態係？",
+                options: [
+                    { text: "A. 強強聯手、互相帶領，成為彼此最驕傲嘅戰友", tags: ["狼", "獅子"] },
+                    { text: "B. 平淡溫馨、細水長流，唔使多言都有極深默契", tags: ["熊", "樹懶", "樹熊"] },
+                    { text: "C. 精緻浪漫，互相崇拜同寵愛嘅浪漫關係", tags: ["鹿", "老虎"] },
+                    { text: "D. 歡聲笑語兼心靈共鳴，每天都充滿新鮮感", tags: ["狗", "貓頭鷹", "狐狸"] }
+                ]
+            }
+        ];
+
+        // Global Baseline Stats
+        let globalStats = {
+            "樹熊": 1180,
+            "貓": 1250,
+            "熊": 1020,
+            "狗": 1190,
+            "貓頭鷹": 950,
+            "獅子": 1080,
+            "大象": 1040,
+            "鹿": 990,
+            "老虎": 920,
+            "狐狸": 890,
+            "樹懶": 1010,
+            "狼": 965
+        };
+
+        // State variables
+        let currentStep = 0;
+        let userAnswers = new Array(QUESTIONS.length).fill(null);
+        let previousScreen = 'screen-landing';
+        let chartInstance = null;
+        let lastResultAnimal = null;
+
+        // Initialize LocalStorage Stats
+        function initStats() {
+            const saved = localStorage.getItem('mirror_quiz_stats');
+            if (saved) {
+                try {
+                    globalStats = JSON.parse(saved);
+                } catch(e){}
+            }
+        }
+
+        function saveStats() {
+            localStorage.setItem('mirror_quiz_stats', JSON.stringify(globalStats));
+        }
+
+        // NAVIGATION FUNCTIONS
+        function showScreen(screenId) {
+            ['screen-landing', 'screen-quiz', 'screen-result', 'screen-dashboard'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goHome() {
+            showScreen('screen-landing');
+        }
+
+        function startQuiz() {
+            currentStep = 0;
+            userAnswers = new Array(QUESTIONS.length).fill(null);
+            renderQuestion();
+            showScreen('screen-quiz');
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        // RENDER QUESTION
+        function renderQuestion() {
+            const q = QUESTIONS[currentStep];
+            document.getElementById('quiz-step-text').innerText = `問題 ${currentStep + 1} / ${QUESTIONS.length}`;
+            
+            const pct = Math.round(((currentStep + 1) / QUESTIONS.length) * 100);
+            document.getElementById('quiz-progress-percent').innerText = `${pct}%`;
+            document.getElementById('quiz-progress-bar').style.width = `${pct}%`;
+
+            document.getElementById('question-text').innerText = q.title;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const isSelected = userAnswers[currentStep] === idx;
+                const btn = document.createElement('div');
+                btn.className = `option-card glass-card p-4 rounded-xl cursor-pointer flex items-center justify-between border ${isSelected ? 'selected' : 'border-slate-700/60'}`;
+                btn.onclick = () => selectOption(idx);
+
+                btn.innerHTML = `
+                    <span class="text-sm md:text-base font-medium text-slate-200 leading-snug">${opt.text}</span>
+                    <i class="fa-solid ${isSelected ? 'fa-circle-check text-purple-400' : 'fa-circle text-slate-700'} text-lg"></i>
+                `;
+                container.appendChild(btn);
+            });
+
+            // Prev button state
+            const prevBtn = document.getElementById('btn-prev');
+            if (currentStep === 0) {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function selectOption(optionIndex) {
+            userAnswers[currentStep] = optionIndex;
+            renderQuestion();
+
+            setTimeout(() => {
+                if (currentStep < QUESTIONS.length - 1) {
+                    currentStep++;
+                    renderQuestion();
+                } else {
+                    calculateResult();
+                }
+            }, 180);
+        }
+
+        function prevQuestion() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderQuestion();
+            }
+        }
+
+        // CALCULATE RESULT
+        function calculateResult() {
+            let tagCounts = {};
+            Object.keys(ANIMALS).forEach(a => tagCounts[a] = 0);
+
+            userAnswers.forEach((ansIdx, qIdx) => {
+                if (ansIdx !== null) {
+                    const tags = QUESTIONS[qIdx].options[ansIdx].tags;
+                    tags.forEach(t => {
+                        if (tagCounts[t] !== undefined) tagCounts[t]++;
+                    });
+                }
+            });
+
+            // Sort by count
+            let sorted = Object.keys(tagCounts).map(key => ({
+                animal: key,
+                count: tagCounts[key]
+            })).sort((a, b) => b.count - a.count);
+
+            const topMatch = sorted[0];
+            lastResultAnimal = topMatch.animal;
+
+            // Save to Global Stats
+            globalStats[topMatch.animal]++;
+            saveStats();
+
+            // Display Result
+            displayResultScreen(topMatch, sorted);
+        }
+
+        function displayResultScreen(topMatch, sorted) {
+            const data = ANIMALS[topMatch.animal];
+
+            document.getElementById('res-emoji').innerText = data.emoji;
+            document.getElementById('res-title').innerText = `${topMatch.animal}系男友`;
+            document.getElementById('res-mirror').innerText = `對應 MIRROR 成員：${data.mirror}`;
+            document.getElementById('res-score').innerText = topMatch.count;
+            document.getElementById('res-desc').innerText = data.desc;
+            document.getElementById('res-love').innerText = data.love;
+
+            // Badges
+            const tagContainer = document.getElementById('res-tags');
+            tagContainer.innerHTML = '';
+            data.tags.forEach(t => {
+                const badge = document.createElement('span');
+                badge.className = 'px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-purple-300 font-medium';
+                badge.innerText = `#${t}`;
+                tagContainer.appendChild(badge);
+            });
+
+            // Check tie or close secondary match
+            const secondaryBox = document.getElementById('res-secondary-box');
+            if (sorted[1] && sorted[1].count >= topMatch.count - 1) {
+                const secData = ANIMALS[sorted[1].animal];
+                document.getElementById('res-secondary-text').innerText = `${secData.emoji} ${sorted[1].animal}系男友 (${secData.mirror}) - 獲得 ${sorted[1].count} 標籤分`;
+                secondaryBox.classList.remove('hidden');
+            } else {
+                secondaryBox.classList.add('hidden');
+            }
+
+            showScreen('screen-result');
+
+            // Trigger Confetti
+            try {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            } catch(e){}
+        }
+
+        // ANALYTICS DASHBOARD
+        function toggleDashboardDirect() {
+            previousScreen = document.querySelector('main > section:not(.hidden)').id;
+            renderDashboard();
+            showScreen('screen-dashboard');
+        }
+
+        function backFromDashboard() {
+            showScreen(previousScreen || 'screen-landing');
+        }
+
+        function renderDashboard() {
+            // Calculate Total Count
+            const total = Object.values(globalStats).reduce((a, b) => a + b, 0);
+            document.getElementById('stat-total-count').innerText = total.toLocaleString();
+
+            const labels = [];
+            const percentages = [];
+            const counts = [];
+            const backgroundColors = [];
+
+            Object.keys(ANIMALS).forEach(key => {
+                const cnt = globalStats[key];
+                const pct = ((cnt / total) * 100).toFixed(1);
+                labels.push(`${ANIMALS[key].emoji} ${key}系 (${ANIMALS[key].mirror.split(' ')[0]})`);
+                percentages.push(pct);
+                counts.push(cnt);
+
+                if (lastResultAnimal === key) {
+                    backgroundColors.push('#EC4899'); // Highlight user result
+                } else {
+                    backgroundColors.push('rgba(99, 102, 241, 0.7)');
+                }
+            });
+
+            // Render Chart.js
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '佔比 (%)',
+                        data: percentages,
+                        backgroundColor: backgroundColors,
+                        borderRadius: 6,
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.1)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    return ` 佔比: ${percentages[index]}% (${counts[index]} 人)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94A3B8', callback: v => v + '%' },
+                            suggestedMax: 15
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#E2E8F0', font: { size: 11, family: "'Noto Sans TC', sans-serif" } }
+                        }
+                    }
+                }
+            });
+
+            // Grid Cards Summary
+            const gridContainer = document.getElementById('dash-grid-cards');
+            gridContainer.innerHTML = '';
+            Object.keys(ANIMALS).forEach(key => {
+                const data = ANIMALS[key];
+                const cnt = globalStats[key];
+                const pct = ((cnt / total) * 100).toFixed(1);
+                const isUser = lastResultAnimal === key;
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border text-center transition ${isUser ? 'bg-purple-900/40 border-purple-500 shadow-lg' : 'bg-slate-800/50 border-slate-700/60'}`;
+                card.innerHTML = `
+                    <div class="text-xl">${data.emoji}</div>
+                    <div class="text-xs font-bold text-slate-200 mt-1">${key}系男友</div>
+                    <div class="text-[10px] text-slate-400 truncate">${data.mirror.split(' ')[0]}</div>
+                    <div class="text-xs font-black text-amber-400 mt-1">${pct}%</div>
+                    ${isUser ? '<span class="inline-block text-[9px] bg-purple-500 text-white px-1.5 py-0.5 rounded mt-1">你的結果</span>' : ''}
+                `;
+                gridContainer.appendChild(card);
+            });
+        }
+
+        // SHARE RESULT
+        function shareResult() {
+            const text = `我喺《12種動物系男友心理測試》測出最 Match 嘅係【${lastResultAnimal || '樹熊'}系男友】（對應 MIRROR ${ANIMALS[lastResultAnimal || '樹熊'].mirror}）！快啲來測吓你的命定動物男友啦！`;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text + " " + window.location.href);
+                alert("已複製測驗結果同連結！快啲分享比朋友或 Group 啦！");
+            } else {
+                alert(text);
+            }
+        }
+
+        // On Load Init
+        window.onload = function() {
+            initStats();
+        };
+    </script>
+</body>
+</html>
+"""
+
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("Successfully generated index.html")
