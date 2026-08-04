@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>平衡疊疊高</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  }
+  #game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 40%, #334155 100%);
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+  #hud {
+    position: absolute;
+    top: env(safe-area-inset-top, 12px);
+    left: 0;
+    right: 0;
+    padding: 16px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    color: #e2e8f0;
+    font-size: 15px;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .hud-item {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+  }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(10px);
+    color: #f8fafc;
+    pointer-events: auto;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+  }
+  #overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* 勝利畫面：左側最終塔截圖 + 右側結算 */
+  #overlay.win-mode {
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(8px);
+    justify-content: center;
+    align-items: center;
+    padding: 20px 16px calc(env(safe-area-inset-bottom, 16px) + 20px);
+  }
+  #overlay.win-mode .win-panel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    max-width: 100%;
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  }
+  #overlay.win-mode .win-shot-wrap {
+    flex-shrink: 0;
+    width: 38%;
+    max-width: 150px;
+    max-height: 70vh;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #1e293b;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #overlay.win-mode .win-shot-wrap img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    object-fit: contain;
+    vertical-align: middle;
+  }
+  #overlay.win-mode .win-card {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 8px 4px;
+    text-align: center;
+  }
+  #overlay .crop-hint {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0 0 14px;
+  }
+  #overlay .btn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  #overlay .btn.secondary {
+    background: linear-gradient(135deg, #64748b, #475569);
+    box-shadow: 0 6px 16px rgba(71, 85, 105, 0.35);
+    font-size: 0.95rem;
+    padding: 12px 20px;
+  }
+  #hud {
+    transition: opacity 0.4s ease;
+  }
+  @media (max-width: 360px) {
+    #overlay.win-mode .win-panel {
+      flex-direction: column;
+    }
+    #overlay.win-mode .win-shot-wrap {
+      width: 55%;
+      max-width: 140px;
+    }
+  }
+  #overlay h1 {
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #38bdf8, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  #overlay .subtitle {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    margin-bottom: 28px;
+    text-align: center;
+    line-height: 1.5;
+    padding: 0 24px;
+  }
+  #overlay .btn {
+    pointer-events: auto;
+    border: none;
+    outline: none;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  #overlay .btn:active {
+    transform: scale(0.96);
+  }
+  #overlay .result {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  #overlay .result.win { color: #4ade80; }
+  #overlay .result.lose { color: #f87171; }
+  #overlay .score-line {
+    font-size: 1rem;
+    color: #cbd5e1;
+    margin-bottom: 28px;
+  }
+  #hint {
+    position: absolute;
+    bottom: calc(env(safe-area-inset-bottom, 16px) + 24px);
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: rgba(226, 232, 240, 0.7);
+    font-size: 14px;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  #hint.hidden { opacity: 0; }
+  #loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0f172a;
+    color: #94a3b8;
+    font-size: 15px;
+    z-index: 20;
+  }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="game-container">
+  <canvas id="c"></canvas>
+  <div id="ui">
+    <div id="hud">
+      <div class="hud-item">層數 <span id="level">0</span>/12</div>
+      <div class="hud-item">速度 <span id="spd">1</span></div>
+    </div>
+    <div id="hint">點擊螢幕放下積木</div>
+    <div id="overlay">
+      <h1>平衡疊疊高</h1>
+      <p class="subtitle">控制 12 塊積木精準疊高<br>保持平衡，別讓它倒塌！</p>
+      <button class="btn" id="startBtn">開始遊戲</button>
+    </div>
+  </div>
+  <div id="loading">載入積木圖片中…</div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+  const levelEl = document.getElementById('level');
+  const spdEl = document.getElementById('spd');
+  const hintEl = document.getElementById('hint');
+  const loadingEl = document.getElementById('loading');
+
+  // ── Responsive canvas ──
+  let W, H;
+  function resize() {
+    const container = document.getElementById('game-container');
+    const rect = container.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width;
+    H = rect.height;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ── Constants ──
+  const TARGET = 12;
+  // 積木 5:4 橢圓（寬:高）
+  const BLOCK_H = 64;             // 高度
+  const BLOCK_W = Math.round(BLOCK_H * 5 / 4); // 寬度 = 80
+  const GRAVITY = 0.55;
+  const MAX_FALL_SPEED = 18;
+  const BASE_SPEED = 2.2;
+  const SPEED_INC = 0.28;
+  // 偏移超過此比例就會傾倒（相對積木半寬）
+  const TIP_RATIO = 0.48;
+
+  // 12 張積木圖片檔名（請放在 assets/ 資料夾）
+  const BLOCK_IMAGE_NAMES = [
+    'block1.png',
+    'block2.png',
+    'block3.png',
+    'block4.png',
+    'block5.png',
+    'block6.png',
+    'block7.png',
+    'block8.png',
+    'block9.png',
+    'block10.png',
+    'block11.png',
+    'block12.png'
+  ];
+
+  // 後備顏色（圖片載入失敗時使用）
+  const FALLBACK_COLORS = [
+    '#38bdf8', '#818cf8', '#c084fc', '#f472b6',
+    '#fb7185', '#fb923c', '#fbbf24', '#a3e635',
+    '#34d399', '#2dd4bf', '#22d3ee', '#60a5fa'
+  ];
+
+  // ── Image loading ──
+  const blockImages = [];   // HTMLImageElement or null
+  let imagesReady = false;
+
+  function loadImages() {
+    let loaded = 0;
+    const total = BLOCK_IMAGE_NAMES.length;
+
+    BLOCK_IMAGE_NAMES.forEach((name, i) => {
+      const img = new Image();
+      img.onload = () => {
+        blockImages[i] = img;
+        loaded++;
+        if (loaded === total) onImagesReady();
+      };
+      img.onerror = () => {
+        // 圖片不存在 → 使用顏色後備
+        blockImages[i] = null;
+        loaded++;
+        if (loaded === total) onImagesReady();
+      };
+      // 相對路徑：與 html 同層的 assets 資料夾
+      img.src = 'assets/' + name;
+    });
+  }
+
+  function onImagesReady() {
+    imagesReady = true;
+    loadingEl.classList.add('hidden');
+  }
+
+  loadImages();
+
+  // ── Game state ──
+  let state = 'idle';
+  let blocks = [];
+  let current = null;
+  let cameraY = 0;
+  let targetCamY = 0;
+  let particles = [];
+  let shake = 0;
+  let score = 0;
+  let speedLevel = 1;
+  let lastTime = 0;
+  let hintTimer = 0;
+  let imagePool = [];  // 本局隨機積木圖片順序
+
+  // ── Helpers ──
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  // 洗牌：每局 12 張積木圖片隨機順序出現
+  function shufflePool() {
+    imagePool = [];
+    for (let i = 0; i < TARGET; i++) imagePool.push(i);
+    for (let i = imagePool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [imagePool[i], imagePool[j]] = [imagePool[j], imagePool[i]];
+    }
+  }
+
+  function createBlock(y, imageIndex) {
+    return {
+      x: W / 2,
+      y,
+      w: BLOCK_W,              // 橢圓寬
+      h: BLOCK_H,              // 橢圓高
+      vx: 0,
+      vy: 0,
+      imageIndex,             // 0~11 對應 block1~block12
+      color: FALLBACK_COLORS[imageIndex % FALLBACK_COLORS.length],
+      angle: 0,
+      angVel: 0,
+      settled: false,
+      moving: false,
+      landAnim: 0,            // 落地擠壓動畫 1→0
+      scaleX: 1,
+      scaleY: 1
+    };
+  }
+
+  // ── Start / Restart ──
+  function startGame() {
+    if (!imagesReady) return;
+    blocks = [];
+    particles = [];
+    score = 0;
+    speedLevel = 1;
+    cameraY = 0;
+    targetCamY = 0;
+    shake = 0;
+    state = 'playing';
+    shufflePool();
+
+    // 底部平台（灰色，無圖片）
+    const base = createBlock(H * 0.78, 0);
+    base.w = BLOCK_W + 20;
+    base.h = BLOCK_H + 8;
+    base.settled = true;
+    base.isBase = true;
+    base.color = '#64748b';
+    base.imageIndex = -1; // 不使用圖片
+    blocks.push(base);
+
+    spawnNext();
+    updateHUD();
+    overlay.classList.remove('win-mode');
+    overlay.classList.add('hidden');
+    document.getElementById('hud').style.opacity = '1';
+    hintEl.classList.remove('hidden');
+    hintTimer = 180;
+  }
+
+  function spawnNext() {
+    const stacked = blocks.length - 1; // 不含 base
+    if (stacked >= TARGET) {
+      win();
+      return;
+    }
+    const prev = blocks[blocks.length - 1];
+    // 下一塊出現在上一塊上方（間距約 90px，確保在鏡頭內可見）
+    const gap = 90;
+    const y = prev.y - BLOCK_H - gap;
+    const idx = imagePool[stacked]; // 本局隨機順序
+    current = createBlock(y, idx);
+    current.x = W * 0.18 + Math.random() * W * 0.64;
+    current.vx = (BASE_SPEED + (speedLevel - 1) * SPEED_INC) * (Math.random() > 0.5 ? 1 : -1);
+    current.moving = true;
+    state = 'playing';
+    // 鏡頭對準準備放下的積木：確保它在畫面上方可見
+    // 早期不移動鏡頭；堆高後才上移
+    targetCamY = Math.min(0, y - H * 0.18);
+    updateHUD();
+  }
+
+  function updateHUD() {
+    levelEl.textContent = Math.min(Math.max(0, blocks.length - 1), TARGET);
+    spdEl.textContent = speedLevel;
+  }
+
+  // ── Input ──
+  function onTap(e) {
+    e.preventDefault();
+    if (state === 'playing' && current && current.moving) {
+      dropCurrent();
+    }
+  }
+  canvas.addEventListener('pointerdown', onTap);
+  startBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame();
+  });
+
+  function dropCurrent() {
+    if (!current || !current.moving) return;
+    current.moving = false;
+    current.vy = 0.8;
+    state = 'dropping';
+    hintEl.classList.add('hidden');
+  }
+
+  // ── Physics & Balance（橢圓優化碰撞） ──
+  //
+  // 改進重點：
+  // 1. 垂直：用橢圓下緣 / 上緣（圓弧）而不是外接矩形底邊
+  // 2. 水平：以「支撐寬度」判斷，越偏中心可支撐越大偏移
+  // 3. 平衡：接觸點落在下方橢圓頂部的有效支撐區間內才算穩
+  // 4. 完美落地：中心幾乎對齊時給特效
+
+  // 橢圓在水平位置 localX 處的上緣 y（相對橢圓頂點向下為正）
+  // 橢圓方程 (x/a)^2 + (y/b)^2 = 1，上半：y = -b * sqrt(1 - (x/a)^2)
+  function ellipseTopY(localX, a, b) {
+    const t = Math.abs(localX) / a;
+    if (t >= 1) return null; // 超出橢圓水平範圍
+    return -b * Math.sqrt(1 - t * t);
+  }
+
+  // 下方積木頂部在 world X 處的實際表面高度（world Y）
+  function surfaceYAt(block, worldX) {
+    const localX = worldX - block.x;
+    const a = block.w / 2;
+    const b = block.h / 2;
+    const topLocal = ellipseTopY(localX, a, b);
+    if (topLocal === null) return null;
+    // block.y 是頂部，中心在 block.y + b
+    // 上緣 worldY = centerY + topLocal = block.y + b + topLocal
+    return block.y + b + topLocal;
+  }
+
+  function checkLanding() {
+    if (!current || blocks.length === 0) return;
+    const prev = blocks[blocks.length - 1];
+    const cur = current;
+    if (!prev) return;
+
+    const aCur = cur.w / 2;
+    const bCur = cur.h / 2;
+    const aPrev = prev.w / 2;
+    const bPrev = prev.h / 2;
+
+    // 當前積木底部中心的世界座標
+    const curBottomCenterY = cur.y + cur.h;
+
+    // 粗篩：外接矩形尚未接近就跳過（省效能）
+    if (curBottomCenterY < prev.y - 4 || cur.vy < 0) return;
+
+    // 在「當前積木中心 X」處，取下方積木頂部表面高度
+    const surfY = surfaceYAt(prev, cur.x);
+
+    // 水平完全沒壓到下方橢圓
+    if (surfY === null) {
+      // 若已經掉過下方頂部很多，判定 Miss
+      if (curBottomCenterY > prev.y + bPrev * 0.5) {
+        cur.vy = 2;
+        state = 'falling';
+        setTimeout(() => lose('積木掉下去了！'), 600);
+      }
+      return;
+    }
+
+    // 當前積木底部在中心 X 的實際高度（橢圓下緣）
+    // 下緣 local：+b * sqrt(...)，world = centerY + that = cur.y + b + b*sqrt = cur.y + h 在 x=0
+    // 偏離中心時底部上抬：
+    const localX = 0; // 用中心點近似接觸（休閒手感）
+    const curBottomY = cur.y + cur.h; // 中心正下方最低點
+
+    // 接觸判定：底部碰到或穿過表面
+    if (curBottomY < surfY - 1) return;
+
+    // 吸附：讓當前橢圓底部中心貼在表面上
+    // 理想：cur.y + cur.h = surfY  → cur.y = surfY - cur.h
+    // 但因橢圓頂是弧，中心對齊時 surfY = prev.y（頂點）
+    // 偏離時 surfY 較低（數值較大），會自然「卡」進弧面一點
+    cur.y = surfY - cur.h;
+    cur.vy = 0;
+
+    // ── 平衡判定 ──
+    // 支撐區間：下方橢圓水平半徑的一定比例（TIP_RATIO）
+    // 偏移越大越不穩；完美對齊有容錯
+    const offset = cur.x - prev.x;
+    // 有效支撐半寬：考慮兩橢圓較小者，避免大壓小過度寬容
+    const supportHalf = Math.min(aPrev, aCur) * (TIP_RATIO + 0.15);
+    const maxSafe = supportHalf;
+
+    if (Math.abs(offset) > maxSafe) {
+      tipOver(cur, offset > 0 ? 1 : -1);
+      return;
+    }
+
+    // 成功落地
+    const perfect = Math.abs(offset) < 6;
+    const impact = Math.min(1.2, 0.55 + Math.abs(cur.vy) * 0.06);
+    spawnLandParticles(cur, perfect, impact);
+
+    // 落地擠壓 + 下方積木反彈
+    cur.landAnim = perfect ? 1.0 : 0.75;
+    cur.scaleX = 1 + 0.32 * impact;
+    cur.scaleY = 1 - 0.26 * impact;
+    prev.landAnim = Math.max(prev.landAnim || 0, 0.45 * impact);
+    prev.scaleX = 1 + 0.14 * impact;
+    prev.scaleY = 1 - 0.12 * impact;
+    shake = perfect ? 8 : 4 + impact * 3;
+
+    cur.settled = true;
+    blocks.push(cur);
+    current = null;
+    score++;
+
+    if (blocks.length - 1 >= TARGET) {
+      // 稍等落地動畫播完再進勝利畫面
+      state = 'settling';
+      setTimeout(() => { if (state === 'settling' || state === 'playing') win(); }, 420);
+      return;
+    }
+
+    // 每 3 層加速
+    if ((blocks.length - 1) % 3 === 0) {
+      speedLevel++;
+    }
+
+    // 鏡頭跟隨
+    const topY = blocks[blocks.length - 1].y;
+    targetCamY = Math.min(0, topY - H * 0.42);
+
+    state = 'settling';
+    setTimeout(() => {
+      if (state === 'settling') spawnNext();
+    }, 320);
+  }
+
+  function tipOver(block, dir) {
+    block.angVel = dir * 0.12;
+    block.vx = dir * 3.5;
+    block.vy = -1.5;
+    state = 'tipping';
+    spawnDust(block);
+    setTimeout(() => lose('失去平衡！倒塌了'), 900);
+  }
+
+  // ── Particles ──
+  function spawnLandParticles(b, perfect, impact) {
+    impact = impact || 1;
+    const n = Math.floor((perfect ? 20 : 12) * impact);
+    const halfW = b.w / 2;
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        x: b.x + rand(-halfW, halfW),
+        y: b.y + b.h,
+        vx: rand(-3.2, 3.2) * impact,
+        vy: rand(-6.5, -2) * impact,
+        life: rand(28, 50),
+        maxLife: 50,
+        size: rand(2, 6),
+        color: perfect ? '#fef08a' : b.color
+      });
+    }
+  }
+  function spawnDust(b) {
+    const halfW = b.w / 2;
+    const halfH = b.h / 2;
+    for (let i = 0; i < 14; i++) {
+      particles.push({
+        x: b.x + rand(-halfW, halfW),
+        y: b.y + halfH,
+        vx: rand(-4, 4),
+        vy: rand(-3, 2),
+        life: rand(20, 40),
+        maxLife: 40,
+        size: rand(2, 6),
+        color: '#94a3b8'
+      });
+    }
+  }
+
+  // ── Win / Lose ──
+  // 緊貼裁切完整 12 層塔（含底座），輸出乾淨最終畫面
+  function captureTowerImage() {
+    try {
+      if (blocks.length < 2) return null;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const b of blocks) {
+        minX = Math.min(minX, b.x - b.w / 2);
+        maxX = Math.max(maxX, b.x + b.w / 2);
+        minY = Math.min(minY, b.y);
+        maxY = Math.max(maxY, b.y + b.h);
+      }
+      const pad = 28;
+      minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+      const tw = Math.ceil(maxX - minX);
+      const th = Math.ceil(maxY - minY);
+      if (tw < 8 || th < 8) return null;
+
+      const off = document.createElement('canvas');
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      off.width = tw * dpr;
+      off.height = th * dpr;
+      const octx = off.getContext('2d');
+      octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // 背景漸層
+      const bg = octx.createLinearGradient(0, 0, 0, th);
+      bg.addColorStop(0, '#0f172a');
+      bg.addColorStop(0.45, '#1e293b');
+      bg.addColorStop(1, '#334155');
+      octx.fillStyle = bg;
+      octx.fillRect(0, 0, tw, th);
+
+      // 以塔的座標系繪製所有積木
+      octx.save();
+      octx.translate(-minX, -minY);
+      for (let i = 0; i < blocks.length; i++) {
+        drawBlockTo(octx, blocks[i]);
+      }
+      octx.restore();
+
+      return off.toDataURL('image/png');
+    } catch (e) {
+      console.warn(e);
+      return null;
+    }
+  }
+
+  // 供截圖用的積木繪製（不依賴主 canvas 狀態）
+  function drawBlockTo(c, b) {
+    c.save();
+    const sx = b.scaleX || 1;
+    const sy = b.scaleY || 1;
+    c.translate(b.x, b.y + b.h);
+    c.scale(sx, sy);
+    c.translate(0, -b.h / 2);
+    c.rotate(b.angle || 0);
+    const hw = b.w / 2, hh = b.h / 2;
+    c.fillStyle = 'rgba(0,0,0,0.28)';
+    c.beginPath();
+    c.ellipse(3, 5, hw, hh, 0, 0, Math.PI * 2);
+    c.fill();
+    const img = (b.imageIndex >= 0) ? blockImages[b.imageIndex] : null;
+    if (img && img.complete && img.naturalWidth > 0) {
+      c.beginPath();
+      c.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+      c.clip();
+      c.drawImage(img, -hw, -hh, b.w, b.h);
+    } else {
+      const grad = c.createLinearGradient(-hw, -hh, hw, hh);
+      if (b.isBase) {
+        grad.addColorStop(0, '#475569');
+        grad.addColorStop(1, '#334155');
+      } else {
+        grad.addColorStop(0, lighten(b.color, 22));
+        grad.addColorStop(0.5, b.color);
+        grad.addColorStop(1, darken(b.color, 18));
+      }
+      c.fillStyle = grad;
+      c.beginPath();
+      c.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.22)';
+      c.beginPath();
+      c.ellipse(0, -hh * 0.35, hw * 0.7, hh * 0.35, 0, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.strokeStyle = 'rgba(0,0,0,0.22)';
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+    c.stroke();
+    c.restore();
+  }
+
+  function win() {
+    if (state === 'won' || state === 'lost') return;
+    state = 'won';
+    current = null;
+    // 鏡頭完整框住 12 層塔
+    if (blocks.length > 1) {
+      const topY = blocks[blocks.length - 1].y;
+      const botY = blocks[0].y + blocks[0].h;
+      const towerH = botY - topY;
+      const midY = (topY + botY) / 2;
+      const margin = Math.max(40, (H - towerH) * 0.5);
+      targetCamY = topY - margin;
+      if (towerH > H * 0.82) {
+        targetCamY = midY - H * 0.48;
+      }
+    }
+    document.getElementById('hud').style.opacity = '0';
+    hintEl.classList.add('hidden');
+
+    // 等落地動畫結束後截圖，左側顯示完整 12 層最終畫面
+    overlay.innerHTML = '';
+    overlay.classList.add('win-mode');
+    overlay.classList.add('hidden');
+    setTimeout(() => {
+      if (state !== 'won') return;
+      cameraY = targetCamY;
+      // 重置 scale 讓截圖是正常形狀
+      for (const b of blocks) {
+        b.landAnim = 0;
+        b.scaleX = 1;
+        b.scaleY = 1;
+      }
+      draw();
+      const shot = captureTowerImage();
+      const imgHtml = shot
+        ? `<div class="win-shot-wrap"><img id="winShot" alt="最終塔" src="${shot}"></div>`
+        : '';
+      overlay.innerHTML = `
+        <div class="win-panel">
+          ${imgHtml}
+          <div class="win-card">
+            <div class="result win">完美平衡！</div>
+            <div class="score-line">成功疊起 ${TARGET} 層積木</div>
+            <div class="crop-hint">左側為完整 12 層最終畫面</div>
+            <div class="btn-row">
+              ${shot ? '<button class="btn secondary" id="saveBtn">保存圖片</button>' : ''}
+              <button class="btn" id="restartBtn">再玩一次</button>
+            </div>
+          </div>
+        </div>
+      `;
+      overlay.classList.remove('hidden');
+      document.getElementById('restartBtn').addEventListener('click', startGame);
+      const saveBtn = document.getElementById('saveBtn');
+      if (saveBtn && shot) {
+        saveBtn.addEventListener('click', () => {
+          const a = document.createElement('a');
+          a.href = shot;
+          a.download = '平衡疊疊高-最終塔.png';
+          a.click();
+        });
+      }
+    }, 700);
+  }
+  function lose(msg) {
+    if (state === 'lost' || state === 'won') return;
+    state = 'lost';
+    const stacked = Math.max(0, blocks.length - 1);
+    overlay.innerHTML = `
+      <div class="result lose">${msg}</div>
+      <div class="score-line">疊到第 ${stacked} 層</div>
+      <button class="btn" id="restartBtn">再試一次</button>
+    `;
+    overlay.classList.remove('win-mode');
+    overlay.classList.remove('hidden');
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+  }
+
+  // ── Update ──
+  function update(dt) {
+    cameraY = lerp(cameraY, targetCamY, 0.08);
+
+    if (shake > 0) shake *= 0.85;
+    if (shake < 0.3) shake = 0;
+
+    // 左右移動
+    if (current && current.moving && state === 'playing') {
+      current.x += current.vx;
+      const half = current.w / 2 + 8;
+      if (current.x < half) {
+        current.x = half;
+        current.vx = Math.abs(current.vx);
+      } else if (current.x > W - half) {
+        current.x = W - half;
+        current.vx = -Math.abs(current.vx);
+      }
+    }
+
+    // 下落 / 傾倒
+    if (current && (state === 'dropping' || state === 'falling' || state === 'tipping')) {
+      current.vy = Math.min(current.vy + GRAVITY, MAX_FALL_SPEED);
+      current.y += current.vy;
+      current.x += current.vx || 0;
+      current.angle += current.angVel || 0;
+
+      if (state === 'dropping') {
+        checkLanding();
+      }
+      if (current && current.y > H + 120 && state !== 'lost') {
+        lose('積木掉下去了！');
+      }
+    }
+
+    // 落地擠壓回彈（spring）
+    for (const b of blocks) {
+      if (b.landAnim && b.landAnim > 0.001) {
+        b.landAnim *= 0.82;
+        // 目標 scale 1，用 landAnim 驅動
+        const targetSX = 1 + b.landAnim * 0.28;
+        const targetSY = 1 - b.landAnim * 0.22;
+        b.scaleX = lerp(b.scaleX || 1, targetSX, 0.45);
+        b.scaleY = lerp(b.scaleY || 1, targetSY, 0.45);
+      } else if (b.landAnim !== undefined) {
+        b.landAnim = 0;
+        b.scaleX = lerp(b.scaleX || 1, 1, 0.35);
+        b.scaleY = lerp(b.scaleY || 1, 1, 0.35);
+      }
+    }
+
+    // 粒子
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.15;
+      p.life--;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    if (hintTimer > 0) {
+      hintTimer--;
+      if (hintTimer <= 0) hintEl.classList.add('hidden');
+    }
+  }
+
+  // ── Draw ──
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // 背景小星星
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    for (let i = 0; i < 30; i++) {
+      const sx = (i * 97 + 40) % W;
+      const sy = (i * 53 + 20) % H;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.2, 0, Math.PI * 2);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fill();
+    }
+    ctx.restore();
+
+    const shakeX = shake ? (Math.random() - 0.5) * shake : 0;
+    const shakeY = shake ? (Math.random() - 0.5) * shake : 0;
+
+    ctx.save();
+    ctx.translate(shakeX, shakeY - cameraY);
+
+    for (let i = 0; i < blocks.length; i++) {
+      drawBlock(blocks[i]);
+    }
+    if (current) {
+      drawBlock(current, true);
+    }
+
+    for (const p of particles) {
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawBlock(b, isCurrent) {
+    ctx.save();
+    // 以底部中心為錨點做擠壓，看起來像壓在下方積木上
+    const sx = b.scaleX || 1;
+    const sy = b.scaleY || 1;
+    ctx.translate(b.x, b.y + b.h);
+    ctx.scale(sx, sy);
+    ctx.translate(0, -b.h / 2);
+    ctx.rotate(b.angle || 0);
+
+    const hw = b.w / 2;  // 半寬
+    const hh = b.h / 2;  // 半高
+
+    // 陰影（稍偏移的橢圓）
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(3, 5, hw, hh, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 主體：有圖片就畫圖片，否則用顏色
+    const img = (b.imageIndex >= 0) ? blockImages[b.imageIndex] : null;
+
+    if (img && img.complete && img.naturalWidth > 0) {
+      // 橢圓裁剪後畫圖
+      ctx.beginPath();
+      ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, -hw, -hh, b.w, b.h);
+    } else {
+      // 後備色塊（橢圓漸層）
+      const grad = ctx.createLinearGradient(-hw, -hh, hw, hh);
+      if (b.isBase) {
+        grad.addColorStop(0, '#475569');
+        grad.addColorStop(1, '#334155');
+      } else {
+        grad.addColorStop(0, lighten(b.color, 22));
+        grad.addColorStop(0.5, b.color);
+        grad.addColorStop(1, darken(b.color, 18));
+      }
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 高光（上方小橢圓）
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.beginPath();
+      ctx.ellipse(0, -hh * 0.35, hw * 0.7, hh * 0.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 邊框
+    ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 移動中提示虛線橢圓
+    if (isCurrent && b.moving) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, hw + 5, hh + 5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.restore();
+  }
+
+  function lighten(hex, pct) {
+    const num = parseInt(hex.slice(1), 16);
+    let r = (num >> 16) + pct;
+    let g = ((num >> 8) & 0x00FF) + pct;
+    let b = (num & 0x0000FF) + pct;
+    return `rgb(${Math.min(255, r)},${Math.min(255, g)},${Math.min(255, b)})`;
+  }
+  function darken(hex, pct) {
+    const num = parseInt(hex.slice(1), 16);
+    let r = (num >> 16) - pct;
+    let g = ((num >> 8) & 0x00FF) - pct;
+    let b = (num & 0x0000FF) - pct;
+    return `rgb(${Math.max(0, r)},${Math.max(0, g)},${Math.max(0, b)})`;
+  }
+
+  // ── Main loop ──
+  function loop(ts) {
+    const dt = Math.min((ts - lastTime) / 16.67, 2.5) || 1;
+    lastTime = ts;
+    if (state !== 'idle') update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+})();
+</script>
+</body>
+</html>
