@@ -5,23 +5,92 @@
   <title>經典釣魚遊戲</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
+    /* ============================================================
+       High-Fidelity Claymorphism Design System
+       Soft matte silicone / digital clay · multi-layer shadows
+       ============================================================ */
+    :root {
+      /* Candy palette — soft matte silicone */
+      --clay-bg: #dce6f5;
+      --clay-surface: #f5f8fd;
+      --clay-surface-deep: #e4ebf7;
+      --clay-blue: #6ba3f0;
+      --clay-blue-deep: #4a86d8;
+      --clay-sky: #9ad0ff;
+      --clay-amber: #ffc14d;
+      --clay-amber-deep: #f0a820;
+      --clay-mint: #5ee0a8;
+      --clay-mint-deep: #2fbf7e;
+      --clay-coral: #ff7b8a;
+      --clay-pink: #ff8fb8;
+      --clay-violet: #b49afc;
+      --clay-text: #354560;
+      --clay-text-soft: #6b7c99;
+      --clay-radius: 20px;
+      --clay-radius-lg: 28px;
+      --clay-radius-xl: 36px;
+      --clay-radius-2xl: 18px;
+      --clay-radius-pill: 999px;
+      /* 4-layer high-fidelity clay shadows (top-left light) */
+      --shadow-clay:
+        9px 12px 24px rgba(80, 110, 170, 0.24),
+        3px 4px 8px rgba(80, 110, 170, 0.12),
+        inset 0 -4px 8px rgba(80, 110, 170, 0.12),
+        inset 0 3px 6px rgba(255, 255, 255, 0.88);
+      --shadow-clay-hover:
+        12px 16px 32px rgba(80, 110, 170, 0.30),
+        4px 6px 12px rgba(80, 110, 170, 0.15),
+        inset 0 -4px 8px rgba(80, 110, 170, 0.10),
+        inset 0 4px 8px rgba(255, 255, 255, 0.92);
+      --shadow-clay-pressed:
+        inset 4px 5px 12px rgba(80, 110, 170, 0.30),
+        inset -2px -2px 6px rgba(255, 255, 255, 0.65),
+        1px 2px 4px rgba(80, 110, 170, 0.08);
+      --shadow-clay-float:
+        14px 22px 44px rgba(70, 100, 160, 0.32),
+        5px 8px 16px rgba(70, 100, 160, 0.16),
+        inset 0 -5px 10px rgba(70, 100, 160, 0.08),
+        inset 0 5px 10px rgba(255, 255, 255, 0.95);
+      --shadow-clay-amber:
+        9px 12px 24px rgba(210, 140, 30, 0.30),
+        3px 4px 8px rgba(210, 140, 30, 0.15),
+        inset 0 -4px 8px rgba(170, 100, 15, 0.16),
+        inset 0 3px 6px rgba(255, 242, 200, 0.78);
+      --shadow-clay-mint:
+        9px 12px 24px rgba(35, 160, 100, 0.28),
+        3px 4px 8px rgba(35, 160, 100, 0.13),
+        inset 0 -4px 8px rgba(15, 120, 70, 0.15),
+        inset 0 3px 6px rgba(220, 255, 235, 0.82);
+      --shadow-clay-coral:
+        9px 12px 24px rgba(220, 80, 100, 0.26),
+        3px 4px 8px rgba(220, 80, 100, 0.12),
+        inset 0 -3px 6px rgba(180, 40, 70, 0.12),
+        inset 0 3px 5px rgba(255, 230, 235, 0.8);
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    
-    body { 
-      background: #111; 
+
+    body {
+      background:
+        radial-gradient(ellipse at 20% 15%, rgba(24, 63, 84, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 80%, rgba(58, 89, 107, 0.4) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 50%, rgba(24, 46, 84, 0.2) 0%, transparent 60%),
+        linear-gradient(165deg, #091d29 0%, #112c3b 45%, #183f54 100%);
       overflow: hidden;
-      font-family: 'Noto Sans TC', 'Arial', sans-serif;
+      font-family: 'Noto Sans TC', 'Segoe UI', system-ui, -apple-system, sans-serif;
       width: 100vw;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      color: var(--clay-text);
+      -webkit-font-smoothing: antialiased;
     }
-    
+
     #gameBg {
       position: relative;
       width: 100vw;
@@ -31,41 +100,105 @@
       aspect-ratio: 9 / 16;
       background: #87ceeb;
       overflow: hidden;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+      border-radius: var(--clay-radius-2xl);
+      box-shadow:
+        0 28px 56px rgba(60, 90, 150, 0.38),
+        0 10px 20px rgba(60, 90, 150, 0.20),
+        inset 0 3px 6px rgba(255, 255, 255, 0.45),
+        inset 0 -2px 6px rgba(50, 80, 140, 0.12);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
     }
-    
-    canvas { 
-      background: transparent; 
-      display: block; 
+
+    canvas {
+      background: transparent;
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: contain;
+      border-radius: var(--clay-radius-2xl);
     }
-    
-    #restartBtn, #infoBtn, #paramPanelBtn {
+
+    /* ---------- Top action buttons (clay pills) ---------- */
+    #infoBtn, #paramPanelBtn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 20px;
       margin: 4px;
-      padding: 8px 16px;
-      background: rgba(74, 144, 226, 0.85);
-      color: white;
-      border: none;
-      border-radius: 8px;
+      padding: 11px 15px;
+      min-width: 48px;
+      min-height: 48px;
+      border: 3px solid rgba(255, 255, 255, 0.7);
+      border-radius: var(--clay-radius-pill);
       cursor: pointer;
-      transition: background 0.2s, transform 0.2s;
-      min-width: 40px;
-      min-height: 40px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      color: #fff;
+      font-weight: 800;
+      font-style: italic;
+      font-family: Georgia, 'Times New Roman', serif;
+      background: linear-gradient(155deg, #c4b5fd 0%, var(--clay-violet) 55%, #7c5cbf 100%);
+      box-shadow: var(--shadow-clay);
+      transition: transform 0.18s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.18s ease;
+      -webkit-tap-highlight-color: transparent;
     }
-    #restartBtn:hover, #infoBtn:hover, #paramPanelBtn:hover {
-      background: rgba(53, 122, 189, 0.95);
-      transform: scale(1.05);
+    #infoBtn:hover, #paramPanelBtn:hover {
+      transform: translateY(-4px) scale(1.07);
+      box-shadow: var(--shadow-clay-hover);
+    }
+    #infoBtn:active, #paramPanelBtn:active {
+      transform: scale(0.90);
+      box-shadow: var(--shadow-clay-pressed);
+    }
+
+    /* ---------- Game Start transparent POPUP ---------- */
+    #startModal {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(40, 60, 100, 0.28);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 1500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      cursor: pointer;
+    }
+    #startModal .modal-content {
+      text-align: center;
+      pointer-events: none;
+      background: linear-gradient(165deg, rgba(255,255,255,0.92) 0%, rgba(245,248,253,0.88) 55%, rgba(238,243,251,0.90) 100%);
+      border: 3px solid rgba(255, 255, 255, 0.75);
+    }
+    #startModal .start-howto {
+      text-align: left;
+      font-size: 0.95em;
+      line-height: 1.65;
+      color: var(--clay-text);
+      margin: 8px 0 18px;
+      padding: 12px 14px;
+      background: linear-gradient(160deg, #ffffff 0%, var(--clay-surface) 100%);
+      border-radius: var(--clay-radius);
+      box-shadow:
+        inset 2px 3px 10px rgba(90, 120, 180, 0.10),
+        inset -2px -2px 6px rgba(255, 255, 255, 0.9);
+    }
+    #startModal .start-howto li {
+      margin-bottom: 6px;
+    }
+    #startModal .start-tap-hint {
+      margin-top: 6px;
+      font-size: 1.05em;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--clay-blue-deep);
+      animation: startPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes startPulse {
+      0%, 100% { opacity: 0.55; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.04); }
     }
 
     .btn-row {
@@ -74,109 +207,212 @@
       right: 12px;
       display: flex;
       flex-direction: row;
-      gap: 6px;
+      gap: 10px;
       z-index: 100;
     }
-    
+
     .rank-btn-row {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 16px;
-      margin-top: 20px;
+      gap: 14px;
+      margin-top: 22px;
     }
-    
-    .rank-btn-row button {
+
+    .rank-btn-row button,
+    #gameOverRestartBtn {
       flex: 1;
-      padding: 10px 16px;
-      background: #4a90e2;
-      color: white;
-      border: none;
-      border-radius: 8px;
+      padding: 15px 22px;
+      border: 3px solid rgba(220, 255, 235, 0.85);
+      border-radius: var(--clay-radius-pill);
       cursor: pointer;
+      font-size: 1.08em;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: #fff;
+      background: linear-gradient(155deg, #7eecc0 0%, var(--clay-mint) 40%, var(--clay-mint-deep) 100%);
+      box-shadow: var(--shadow-clay-mint);
+      transition: transform 0.18s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.18s ease;
+      text-shadow: 0 1px 0 rgba(0, 80, 40, 0.2);
     }
-    
-    /* Modal styles */
-    #infoModal, #rankModal {
+    .rank-btn-row button:hover,
+    #gameOverRestartBtn:hover {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow:
+        12px 16px 32px rgba(40, 170, 110, 0.34),
+        4px 6px 12px rgba(40, 170, 110, 0.18),
+        inset 0 -4px 8px rgba(20, 130, 80, 0.14),
+        inset 0 4px 8px rgba(220, 255, 235, 0.88);
+    }
+    .rank-btn-row button:active,
+    #gameOverRestartBtn:active {
+      transform: scale(0.92);
+      box-shadow: var(--shadow-clay-pressed);
+    }
+
+    /* ---------- Modals (clay cards) ---------- */
+    #infoModal, #gameOverModal {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.6);
+      background: rgba(60, 80, 120, 0.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       z-index: 1000;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 16px;
     }
-    
+
     .modal-content {
       position: relative;
-      background: #fff;
-      border-radius: 16px;
-      padding: 24px 20px 20px 20px;
-      width: 85%;
+      background: linear-gradient(165deg, #ffffff 0%, var(--clay-surface) 55%, #eef3fb 100%);
+      border-radius: var(--clay-radius-2xl);
+      padding: 30px 22px 24px;
+      width: 88%;
+      max-width: 360px;
       max-height: 80%;
       overflow-y: auto;
-      font-family: 'Noto Sans TC', 'Arial', sans-serif;
-      color: #222;
+      font-family: 'Noto Sans TC', 'Segoe UI', system-ui, sans-serif;
+      color: var(--clay-text);
       text-align: left;
+      box-shadow: var(--shadow-clay-float);
+      border: 3px solid rgba(255, 255, 255, 0.95);
+      animation: clayPopIn 0.38s cubic-bezier(0.34, 1.45, 0.64, 1) both;
     }
-    
+    @keyframes clayPopIn {
+      0% { opacity: 0; transform: scale(0.88) translateY(18px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
     .modal-close-x {
       position: absolute;
-      top: 10px;
+      top: 14px;
       right: 14px;
-      background: none;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #fff 0%, var(--clay-surface-deep) 100%);
       border: none;
-      font-size: 24px;
-      color: #888;
+      border-radius: 50%;
+      font-size: 20px;
+      color: var(--clay-text-soft);
       cursor: pointer;
       font-weight: bold;
       z-index: 10;
+      box-shadow: var(--shadow-clay);
+      transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1), color 0.15s ease, box-shadow 0.15s ease;
     }
-    
     .modal-close-x:hover {
-      color: #e11;
+      color: var(--clay-coral);
+      transform: translateY(-2px) scale(1.08);
+      box-shadow: var(--shadow-clay-hover);
     }
-    
+    .modal-close-x:active {
+      transform: scale(0.9);
+      box-shadow: var(--shadow-clay-pressed);
+    }
+
     .modal-content h2 {
       margin-top: 0;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
       text-align: center;
-      font-size: 1.3em;
-      color: #0077cc;
+      font-size: 1.5em;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: var(--clay-blue-deep);
+      text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9),
+        0 2px 8px rgba(74, 134, 216, 0.18);
     }
-    
+
+    #gameOverTitle {
+      background: linear-gradient(135deg, var(--clay-blue-deep) 0%, var(--clay-violet) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+
+    #gameOverStats {
+      background: linear-gradient(160deg, #ffffff 0%, var(--clay-surface) 100%);
+      border-radius: var(--clay-radius-lg);
+      padding: 14px 16px !important;
+      box-shadow:
+        inset 2px 3px 10px rgba(90, 120, 180, 0.12),
+        inset -2px -2px 6px rgba(255, 255, 255, 0.9),
+        3px 4px 12px rgba(90, 120, 180, 0.08);
+    }
+    #gameOverStats > div {
+      border-bottom-color: rgba(120, 150, 200, 0.15) !important;
+    }
+    #gameOverStats b {
+      font-size: 1.08em;
+    }
+
+    /* Info modal list clay chips */
+    #infoModalText ol,
+    #infoModalText ul {
+      padding-left: 1.2em;
+    }
+    #infoModalText li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    #infoModalText hr {
+      border: none;
+      height: 3px;
+      border-radius: var(--clay-radius-pill);
+      background: linear-gradient(90deg, transparent, var(--clay-sky), var(--clay-violet), transparent);
+      margin: 14px 0;
+      opacity: 0.7;
+    }
+
+    /* ---------- Joystick (soft clay disc) ---------- */
     #joystick {
       position: absolute;
       left: 20px;
       bottom: max(20px, env(safe-area-inset-bottom));
-      width: 110px;
-      height: 110px;
+      width: 118px;
+      height: 118px;
       z-index: 2000;
       touch-action: none;
     }
-    
+
     #joystick-base {
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.3);
-      border: 2px solid rgba(255,255,255,0.4);
+      background: linear-gradient(160deg, rgba(255,255,255,0.62) 0%, rgba(190,210,240,0.55) 100%);
+      border: 4px solid rgba(255, 255, 255, 0.7);
       border-radius: 50%;
       position: absolute;
-      backdrop-filter: blur(4px);
+      box-shadow:
+        8px 10px 22px rgba(50, 80, 140, 0.30),
+        2px 3px 6px rgba(50, 80, 140, 0.12),
+        inset 0 -5px 12px rgba(70, 100, 160, 0.20),
+        inset 0 5px 10px rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
-    
+
     #joystick-knob {
-      width: 50px;
-      height: 50px;
-      background: linear-gradient(135deg, #4a90e2, #357abd);
-      border: 2px solid rgba(255,255,255,0.6);
+      width: 54px;
+      height: 54px;
+      background: linear-gradient(150deg, #b8dcff 0%, var(--clay-sky) 30%, var(--clay-blue) 65%, var(--clay-blue-deep) 100%);
+      border: 3px solid rgba(255, 255, 255, 0.85);
       border-radius: 50%;
       position: absolute;
-      left: 30px; top: 30px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      transition: left 0.05s, top 0.05s;
+      left: 32px;
+      top: 32px;
+      box-shadow:
+        5px 7px 16px rgba(50, 100, 180, 0.42),
+        inset 0 -4px 8px rgba(30, 70, 140, 0.28),
+        inset 0 4px 6px rgba(210, 235, 255, 0.75);
+      transition: left 0.05s, top 0.05s, transform 0.12s ease;
     }
-    
+
     #joystick-direction {
       position: absolute;
       width: 100%;
@@ -185,244 +421,317 @@
       pointer-events: none;
       z-index: 1;
     }
-    
+
     .direction-indicator {
       position: absolute;
-      width: 14px;
-      height: 14px;
-      background: rgba(255,255,255,0.8);
+      width: 12px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.75);
       border-radius: 50%;
       transform: translate(-50%, -50%);
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity 0.2s, background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
-    
     .direction-indicator.active {
       opacity: 1;
-      background: #4a90e2;
-      box-shadow: 0 0 8px rgba(74,144,226,0.8);
+      background: var(--clay-blue);
+      box-shadow:
+        0 0 10px rgba(107, 163, 240, 0.85),
+        inset 0 1px 2px rgba(255,255,255,0.6);
     }
-    
-    .direction-indicator.up { top: 8px; left: 50%; }
-    .direction-indicator.down { bottom: 8px; left: 50%; }
-    .direction-indicator.left { left: 8px; top: 50%; }
-    .direction-indicator.right { right: 8px; top: 50%; }
-    .direction-indicator.up-left { top: 12px; left: 12px; }
-    .direction-indicator.up-right { top: 12px; right: 12px; }
-    .direction-indicator.down-left { bottom: 12px; left: 12px; }
-    .direction-indicator.down-right { bottom: 12px; right: 12px; }
-    
+    .direction-indicator.up { top: 10px; left: 50%; }
+    .direction-indicator.down { bottom: 10px; left: 50%; }
+    .direction-indicator.left { left: 10px; top: 50%; }
+    .direction-indicator.right { right: 10px; top: 50%; }
+    .direction-indicator.up-left { top: 14px; left: 14px; }
+    .direction-indicator.up-right { top: 14px; right: 14px; }
+    .direction-indicator.down-left { bottom: 14px; left: 14px; }
+    .direction-indicator.down-right { bottom: 14px; right: 14px; }
+
+    /* ---------- Action button (amber clay blob) ---------- */
     #screenButtons {
       position: absolute;
       right: 20px;
       bottom: max(20px, env(safe-area-inset-bottom));
       z-index: 2000;
     }
-    
+
     #screenButtons button {
-      width: 75px;
-      height: 75px;
+      width: 84px;
+      height: 84px;
       border-radius: 50%;
-      font-size: 1.1em;
-      font-weight: bold;
-      background: #ffb300;
-      color: #fff;
-      border: none;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      font-size: 1.05em;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      background: linear-gradient(150deg, #ffe08a 0%, var(--clay-amber) 42%, var(--clay-amber-deep) 100%);
+      color: #5a3a00;
+      border: 4px solid rgba(255, 248, 220, 0.9);
+      box-shadow: var(--shadow-clay-amber);
       cursor: pointer;
+      transition: transform 0.16s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+    }
+    #screenButtons button:hover {
+      transform: translateY(-4px) scale(1.06);
+      box-shadow:
+        12px 16px 28px rgba(210, 140, 30, 0.36),
+        4px 6px 12px rgba(210, 140, 30, 0.18),
+        inset 0 -4px 8px rgba(170, 100, 15, 0.16),
+        inset 0 4px 8px rgba(255, 245, 210, 0.85);
     }
     #screenButtons button:active {
-      transform: scale(0.95);
-      background: #e6a100;
+      transform: scale(0.88);
+      box-shadow:
+        inset 4px 5px 14px rgba(160, 100, 10, 0.32),
+        inset -2px -2px 6px rgba(255, 240, 180, 0.65);
     }
-  
-.rank-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0 auto 10px auto;
-}
-.rank-table th, .rank-table td {
-  padding: 6px 8px;
-  text-align: center;
-  font-size: 0.95em;
-}
-.rank-table th {
-  background: #f0f0ff;
-  color: #0077cc;
-}
-.rank-table tr:nth-child(even) { background: #f9f9f9; }
-.rank-table tr:nth-child(odd) { background: #fff; }
-.rank-table .self-score {
-  color: #e11;
-  font-weight: bold;
-  background: #ffeaea !important;
-}
-#playAgainBtn {
-  background: #0c0;
-  color: #fff;
-  border: 1.5px solid #0c0;
-}
-#playAgainBtn:hover {
-  background: #0a0;
-}
-#clearRankBtn {
-  background: #fff;
-  color: #e11;
-  border: 1.5px solid #e11;
-}
-#clearRankBtn:hover {
-  background: #ffeaea;
-}
 
-#paramPanel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1200;
-  display: none;
-  pointer-events: none;
-}
-.param-side-panel {
-  pointer-events: auto;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,0.98);
-  padding: 20px 16px;
-  overflow-y: auto;
-  box-sizing: border-box;
-  font-family: 'Noto Sans TC', 'Arial', sans-serif;
-  color: #222;
-}
-.param-side-panel h2 {
-  margin-top: 0;
-  margin-bottom: 8px;
-  font-size: 1.2em;
-  color: #0077cc;
-  padding-right: 24px;
-}
-.param-hint {
-  font-size: 0.75em;
-  color: #0a0;
-  background: #eaffea;
-  border: 1px solid #bfe8bf;
-  border-radius: 6px;
-  padding: 6px 8px;
-  margin: 0 0 12px 0;
-  line-height: 1.4;
-}
-.param-sliders {
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
-}
-.param-group {
-  margin-bottom: 10px;
-  border: 1px solid #e2e2e2;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fbfbfc;
-}
-.param-group[data-kind="line"] { border-color: #bcdcf7; }
-.param-group[data-kind="hook"] { border-color: #f7dcae; }
-.param-group summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 8px 10px;
-  font-size: 0.82em;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  user-select: none;
-  color: #fff;
-  background: #4a90e2;
-}
-.param-group[data-kind="hook"] summary { background: #e2984a; }
-.param-group summary::-webkit-details-marker { display: none; }
-.param-group summary::before {
-  content: '▶';
-  font-size: 0.7em;
-  transition: transform 0.15s;
-  flex-shrink: 0;
-}
-.param-group[open] > summary::before { transform: rotate(90deg); }
-.param-group summary .param-group-count {
-  margin-left: auto;
-  font-weight: 400;
-  font-size: 0.85em;
-  opacity: 0.85;
-}
-.param-group-body { padding: 10px 10px 2px 10px; }
-.param-row { margin-bottom: 10px; }
-.param-row-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 2px;
-}
-.param-row-top label { font-size: 0.78em; color: #444; flex: 1; }
-.param-num {
-  width: 70px;
-  font-size: 0.78em;
-  padding: 2px 4px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.param-row input[type="range"] { width: 100%; }
-.param-json-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-.param-json-row label { font-size: 0.78em; color: #444; }
-#paramTextArea {
-  width: 100%;
-  font-family: 'Consolas', 'Menlo', monospace;
-  font-size: 0.75em;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  resize: vertical;
-  box-sizing: border-box;
-}
-.param-btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
-.param-btn-row button {
-  flex: 1 1 auto;
-  padding: 6px 8px;
-  font-size: 0.8em;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  background: #4a90e2;
-  color: #fff;
-  transition: background 0.2s;
-}
-.param-btn-row button:hover { background: #357abd; }
-#resetParamsBtn {
-  background: #fff;
-  color: #e11;
-  border: 1.5px solid #e11 !important;
-}
-#resetParamsBtn:hover { background: #ffeaea; }
-.param-status {
-  min-height: 1.2em;
-  font-size: 0.78em;
-  color: #0a0;
-  margin-top: 6px;
-  text-align: center;
-</style>
+    /* ---------- Param panel (clay sheet) ---------- */
+    #paramPanel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1200;
+      display: none;
+      pointer-events: none;
+    }
+    .param-side-panel {
+      pointer-events: auto;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #f8fafd 0%, var(--clay-surface) 100%);
+      padding: 22px 16px;
+      overflow-y: auto;
+      box-sizing: border-box;
+      font-family: 'Noto Sans TC', 'Segoe UI', system-ui, sans-serif;
+      color: var(--clay-text);
+      border-radius: var(--clay-radius-xl) 0 0 var(--clay-radius-xl);
+      box-shadow: -8px 0 32px rgba(70, 100, 160, 0.2);
+    }
+    .param-side-panel h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1.2em;
+      font-weight: 800;
+      color: var(--clay-blue-deep);
+      padding-right: 28px;
+    }
+    .param-hint {
+      font-size: 0.78em;
+      color: #1a8a55;
+      background: linear-gradient(160deg, #e8fff2 0%, #d4f8e4 100%);
+      border: none;
+      border-radius: var(--clay-radius);
+      padding: 10px 12px;
+      margin: 0 0 14px 0;
+      line-height: 1.45;
+      box-shadow:
+        inset 1px 2px 5px rgba(40, 140, 90, 0.08),
+        2px 3px 8px rgba(40, 140, 90, 0.06);
+    }
+    .param-sliders {
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+    }
+    .param-group {
+      margin-bottom: 12px;
+      border: none;
+      border-radius: var(--clay-radius);
+      overflow: hidden;
+      background: var(--clay-surface);
+      box-shadow: var(--shadow-clay);
+    }
+    .param-group[data-kind="line"] { }
+    .param-group[data-kind="hook"] { }
+    .param-group summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 11px 14px;
+      font-size: 0.84em;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+      color: #fff;
+      background: linear-gradient(160deg, var(--clay-sky) 0%, var(--clay-blue) 100%);
+      border-radius: var(--clay-radius) var(--clay-radius) 0 0;
+    }
+    .param-group[data-kind="hook"] summary {
+      background: linear-gradient(160deg, #ffc97a 0%, var(--clay-amber-deep) 100%);
+    }
+    .param-group[data-kind="sea"] summary {
+      background: linear-gradient(160deg, #7dd3fc 0%, #0ea5e9 100%);
+    }
+    .param-group[data-kind="bowl"] summary {
+      background: linear-gradient(160deg, #fda4af 0%, #f43f5e 100%);
+    }
+    .param-group summary::-webkit-details-marker { display: none; }
+    .param-group summary::before {
+      content: '▶';
+      font-size: 0.7em;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+    .param-group[open] > summary::before { transform: rotate(90deg); }
+    .param-group summary .param-group-count {
+      margin-left: auto;
+      font-weight: 500;
+      font-size: 0.85em;
+      opacity: 0.9;
+      background: rgba(255,255,255,0.25);
+      padding: 2px 8px;
+      border-radius: var(--clay-radius-pill);
+    }
+    .param-group-body { padding: 12px 12px 4px 12px; }
+    .param-row { margin-bottom: 12px; }
+    .param-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .param-row-top label { font-size: 0.78em; color: var(--clay-text-soft); flex: 1; }
+    .param-num {
+      width: 72px;
+      font-size: 0.78em;
+      padding: 5px 8px;
+      border: none;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--clay-text);
+      box-shadow:
+        inset 1px 2px 5px rgba(90, 120, 180, 0.12),
+        0 1px 2px rgba(255,255,255,0.8);
+    }
+    .param-row input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      border-radius: var(--clay-radius-pill);
+      background: linear-gradient(90deg, var(--clay-surface-deep), #d0daf0);
+      box-shadow: inset 1px 2px 4px rgba(90, 120, 180, 0.15);
+      outline: none;
+    }
+    .param-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(150deg, var(--clay-sky), var(--clay-blue-deep));
+      border: 2px solid rgba(255,255,255,0.85);
+      box-shadow:
+        2px 3px 8px rgba(50, 100, 180, 0.35),
+        inset 0 1px 2px rgba(255,255,255,0.7);
+      cursor: pointer;
+    }
+    .param-json-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .param-json-row label { font-size: 0.78em; color: var(--clay-text-soft); }
+    #paramTextArea {
+      width: 100%;
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 0.75em;
+      padding: 10px 12px;
+      border: none;
+      border-radius: var(--clay-radius);
+      resize: vertical;
+      box-sizing: border-box;
+      background: #fff;
+      color: var(--clay-text);
+      box-shadow:
+        inset 2px 3px 8px rgba(90, 120, 180, 0.10),
+        0 1px 2px rgba(255,255,255,0.8);
+    }
+    .param-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .param-btn-row button {
+      flex: 1 1 auto;
+      padding: 10px 12px;
+      font-size: 0.82em;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--clay-radius-pill);
+      cursor: pointer;
+      background: linear-gradient(160deg, var(--clay-sky) 0%, var(--clay-blue) 100%);
+      color: #fff;
+      box-shadow: var(--shadow-clay);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .param-btn-row button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-clay-hover);
+    }
+    .param-btn-row button:active {
+      transform: scale(0.94);
+      box-shadow: var(--shadow-clay-pressed);
+    }
+    #resetParamsBtn {
+      background: linear-gradient(160deg, #fff 0%, #ffe8ea 100%) !important;
+      color: var(--clay-coral) !important;
+      box-shadow:
+        6px 8px 16px rgba(220, 80, 100, 0.18),
+        inset 0 2px 4px rgba(255,255,255,0.9) !important;
+    }
+    #resetParamsBtn:hover {
+      background: linear-gradient(160deg, #fff5f6 0%, #ffd5da 100%) !important;
+    }
+    .param-status {
+      min-height: 1.2em;
+      font-size: 0.78em;
+      color: var(--clay-mint-deep);
+      margin-top: 8px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* Scrollbar soft clay look */
+    .modal-content::-webkit-scrollbar,
+    .param-side-panel::-webkit-scrollbar {
+      width: 8px;
+    }
+    .modal-content::-webkit-scrollbar-thumb,
+    .param-side-panel::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--clay-sky), var(--clay-blue));
+      border-radius: var(--clay-radius-pill);
+    }
+    .modal-content::-webkit-scrollbar-track,
+    .param-side-panel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  </style>
 </head>
 <body>
- 
-    
-    <!-- 設定為 900x1600 (9:16 直式解析度) -->
-     <canvas id="gameCanvas" width="540" height="960"></canvas>  
-   </div>
+  <!-- 設定為 540x960 (9:16 直式解析度) -->
+  <canvas id="gameCanvas" width="540" height="960"></canvas>
+
+  <!-- 遊戲開始畫面（透明 POPUP，點擊畫面開始） -->
+  <div id="startModal">
+    <div class="modal-content">
+      <h2>經典釣魚遊戲</h2>
+      <div class="start-howto">
+        <ol style="padding-left:1.2em; margin:0;">
+          <li>左右移動角色，對準海裡的魚。</li>
+          <li>空白鍵／點擊畫面／釣魚鍵甩竿。</li>
+          <li>把魚拉起來，對準火鍋丟進去得分。</li>
+          <li>元氣會持續下降，釣到好魚可補回；垃圾與壞魚會扣元氣。</li>
+          <li>元氣歸零就結束。</li>
+        </ol>
+      </div>
+      <div class="start-tap-hint">點擊畫面開始遊戲</div>
+    </div>
+  </div>
+
   <!-- 遊戲說明圖層（預設隱藏） -->
   <div id="infoModal" style="display:none;">
     <div class="modal-content">
@@ -433,15 +742,15 @@
       </div>
     </div>
   </div>
-  <!-- 排行榜圖層（預設隱藏） -->
-  <div id="rankModal" style="display:none;">
-    <div class="modal-content" id="rankModalContent">
-      <button id="closeRankModal" class="modal-close-x" title="關閉">×</button>
-      <h2>排行榜</h2>
-      <div id="rankList"></div>
-      <div class="rank-btn-row">
-        <button id="playAgainBtn">再玩一次</button>
-        <button id="clearRankBtn">清除紀錄</button>
+  <!-- 遊戲結束 POPUP（預設隱藏） -->
+  <div id="gameOverModal" style="display:none;">
+    <div class="modal-content" id="gameOverModalContent" style="text-align:center;">
+      <h2 id="gameOverTitle">遊戲結束</h2>
+      <div id="gameOverStats" style="margin:16px 0; font-size:1.05em; line-height:1.9; text-align:left; padding:0 8px;">
+        <!-- 統計內容由 JS 動態填入 -->
+      </div>
+      <div class="rank-btn-row" style="margin-top:18px;">
+        <button id="gameOverRestartBtn">重新開始</button>
       </div>
     </div>
   </div>
@@ -466,9 +775,7 @@
     </div>
   </div>
   <div class="btn-row">
-    <button id="restartBtn" title="重新開始">🔄</button>
-    <button id="infoBtn" title="遊戲說明">ℹ️</button>
-   
+    <button id="infoBtn" title="遊戲說明">i</button>
   </div>
   <div id="joystick" >
     <div id="joystick-base"></div>
@@ -490,10 +797,10 @@
   <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const restartBtn = document.getElementById('restartBtn');
 
 const FISH_COUNT = 20;
 const GAME_TIME = 100; // 以原版節奏為準，這裡當作元氣值上限
+let gameStarted = false; // 開始畫面關閉後才真正開始扣元氣與操作
 // 參考版本（game-0.js）是每秒固定扣 1 點、上限 85，換算節奏後這裡當作「起始扣速」。
 // 另外原版的手感是「玩越久扣越快」：跟元氣高低無關，純粹跟這局已經玩了多久有關。
 const PASSIVE_DRAIN_BASE = GAME_TIME / 85;       // 遊戲剛開始時的扣速（每秒）
@@ -524,6 +831,9 @@ let fishing = false;
 // 調參面板開啟時，暫停元氣（時間）扣除，讓玩家可以放心一直測試參數
 let paramPanelOpen = false;
 let pendingGameOver = false;
+// 遊戲結束統計：收集到的魚種類（用 Set 去重）、垃圾數量
+let collectedFishTypes = new Set();
+let trashCaughtCount = 0;
 // 新增：時間控制變數
 let lastTime = 0;
 let deltaTime = 0;
@@ -954,6 +1264,7 @@ function checkLineCollision() {
 // 呼叫的前提（!fishing && !hookThrowing）交給呼叫端各自的事件判斷式檢查，
 // 這裡只負責「真的要甩竿了」之後，設定好初始物理狀態。
 function startHookCast() {
+  if (!gameStarted || gameOver) return;
   checkLineCollision(); // 檢查碰撞
   fishing = true;
   hookThrowing = true;
@@ -1015,6 +1326,19 @@ function createFish() {
     rewardEnergy = SMALL_FISH_ENERGY;
     fishTier = 'small';
   }
+  // 小黃魚與黃魚各增加 3 種類（variant 0/1/2），用體型與色調區分
+  const fishVariant = (color === "gold") ? Math.floor(Math.random() * 3) : 0;
+  let sizeScale = 1;
+  let animSpeed = 4;
+  if (fishTier === 'small') {
+    // 小黃魚 3 種：體型略小且有差異 (約 0.72 / 0.82 / 0.92)
+    sizeScale = 0.72 + fishVariant * 0.10;
+    animSpeed = 3.6 + fishVariant * 0.4;
+  } else if (fishTier === 'mid') {
+    // 黃魚 3 種：體型接近原本，略有差異 (1.0 / 1.08 / 1.16)
+    sizeScale = 1.0 + fishVariant * 0.08;
+    animSpeed = 3.8 + fishVariant * 0.3;
+  }
   const face = Math.random() < 0.5 ? 'smile' : 'dot';
   // 隨機決定從左還是右進來
   const fromLeft = Math.random() < 0.5;
@@ -1024,6 +1348,10 @@ function createFish() {
   let speed = 0.98 + Math.random() * 0.84;
   if (fishTier === 'mid') speed = 1.4 + Math.random() * 0.91;
   if (fishTier === 'bad') speed = 0.84 + Math.random() * 0.63;
+  // 不同種類速度微調，讓 3 種手感有差異
+  if (color === "gold") {
+    speed *= (0.92 + fishVariant * 0.06);
+  }
   const baseY = Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY();
   return {
     x,
@@ -1040,6 +1368,7 @@ function createFish() {
     flying: false, // 新增：是否已經進入「飛向碗」動畫階段（脫離線段路徑）
     color,
     fishTier,
+    fishVariant, // 0/1/2：小黃魚與黃魚各 3 種類
     rewardScore,
     rewardEnergy,
     face,
@@ -1048,8 +1377,9 @@ function createFish() {
     fadeElapsed: 0, // 新增：淡出動畫已經過的時間（毫秒），用來做「先停留、再淡出」
     // 新增：動畫相關屬性（僅黃魚）
     animTime: 0, // 動畫時間
-    animSpeed: 4, // 動畫速度（0.25秒切換一次）
-    liftAnimTime: 0 // 新增：被吊起時的動畫時間（0.5秒切換一次）
+    animSpeed, // 依種類微調動畫速度
+    liftAnimTime: 0, // 新增：被吊起時的動畫時間（0.5秒切換一次）
+    sizeScale // 體型縮放，用於區分 3 種類
   };
 }
 // 修改 spawnFish 使用 createFish
@@ -1076,8 +1406,12 @@ function createSchoolFish(fromLeft) {
   const dir = fromLeft ? 1 : -1;
   // 「大黃魚」＝一般黃魚 mid 等級的速度公式（1.4 ~ 2.31），這裡直接取同樣公式再乘以 2 倍
   const bigFishSpeed = 1.4 + Math.random() * 0.91;
-  const speed = bigFishSpeed * 2;
+  // 小黃魚群也套用 3 種類：速度與體型微調
+  const fishVariant = Math.floor(Math.random() * 3);
+  const speed = bigFishSpeed * 2 * (0.92 + fishVariant * 0.06);
   const baseY = Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY();
+  // 群游小黃魚 3 種體型：以 0.5 為基準再微調
+  const sizeScale = FISH_SCHOOL_SIZE_SCALE * (0.88 + fishVariant * 0.08);
   return {
     x,
     y: baseY,
@@ -1093,6 +1427,7 @@ function createSchoolFish(fromLeft) {
     flying: false,
     color: "gold",           // 沿用一般黃魚的圖片與動畫
     fishTier: "school",      // 獨立的等級標籤，不影響原本 small/mid/bad 的判斷
+    fishVariant,             // 0/1/2：小黃魚 3 種類
     rewardScore: SMALL_FISH_SCORE,
     rewardEnergy: SMALL_FISH_ENERGY,
     face: Math.random() < 0.5 ? 'smile' : 'dot',
@@ -1100,9 +1435,9 @@ function createSchoolFish(fromLeft) {
     alpha: 1,
     fadeElapsed: 0,
     animTime: 0,
-    animSpeed: 4,
+    animSpeed: 3.6 + fishVariant * 0.4,
     liftAnimTime: 0,
-    sizeScale: FISH_SCHOOL_SIZE_SCALE // 繪製時的縮放比例；一般魚沒有這個屬性時預設當作 1
+    sizeScale // 繪製時的縮放比例
   };
 }
 
@@ -1811,15 +2146,7 @@ function drawPlayer() {
     const potDrawW = pot.w;
     const potDrawH = hotpotImg.naturalHeight * potScale;
     ctx.drawImage(hotpotImg, drawPotX, drawPotY, potDrawW, potDrawH);
-    // 遊戲結束時，把 hotpot_cup.png（鍋蓋）疊在鍋身「上面」，組合成完整鍋子的樣子
-    // 鍋蓋直接用原始尺寸繪製（不隨鍋身縮放）；偏移量已依實際素材尺寸（131x78）等比例校正過
-    if (gameOver && hotpotCupImg.complete && hotpotCupImg.naturalWidth > 0) {
-      const lidDrawW = hotpotCupImg.naturalWidth;
-      const lidDrawH = hotpotCupImg.naturalHeight;
-      const lidX = drawPotX + 13;
-      const lidY = drawPotY - 31 + lidDropOffset;
-      ctx.drawImage(hotpotCupImg, lidX, lidY, lidDrawW, lidDrawH);
-    }
+    // 已停用遊戲結束鍋蓋動畫（改為結束 POPUP），不再繪製鍋蓋
   } else {
     // 圖片尚未載入完成時，顯示原本的向量鍋子作為佔位
     ctx.fillStyle = "#bbb";
@@ -1910,6 +2237,11 @@ function drawFish(fish) {
     ctx.globalAlpha = fish.alpha;
   }
   if (fish.color === 'gold') {
+    // 小黃魚 / 黃魚各 3 種類：用色調偏移區分外觀（不需額外圖片素材）
+    const variant = (typeof fish.fishVariant === 'number') ? fish.fishVariant : 0;
+    const hueOffsets = [0, 22, -18]; // 種類0：原本金黃；種類1：偏橘；種類2：偏檸檬
+    const sats = [1.05, 1.15, 0.95];
+    ctx.filter = `hue-rotate(${hueOffsets[variant]}deg) saturate(${sats[variant]})`;
     let currentImg;
     if (fish.lifting || fish.caught) {
       // 被吊起、以及被吊入碗裡的瞬間都維持這個動畫（yellow_fish4 / yellow_fish5，0.2秒切換一張），不要跳回游泳圖
@@ -1938,8 +2270,10 @@ function drawFish(fish) {
       );
     } else {
       // 尚未載入時，顯示貼近 yellow_fish.png（65x32）尺寸比例的黃色魚形佔位圖
+      // 佔位圖也依種類微調顏色
+      const variantColors = ['gold', '#ffb347', '#ffe066'];
       const hw = REAL_IMG_SIZE.yellowFish.w / 2, hh = REAL_IMG_SIZE.yellowFish.h / 2;
-      ctx.fillStyle = 'gold';
+      ctx.fillStyle = variantColors[variant] || 'gold';
       ctx.beginPath();
       ctx.ellipse(hw * 0.15, 0, hw * 0.75, hh, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -1954,6 +2288,7 @@ function drawFish(fish) {
       ctx.arc(hw * 0.55, -hh * 0.2, 2, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.filter = 'none';
   } else if (fish.color === "#fcf") {
     let currentImg;
     if (fish.lifting || fish.caught) {
@@ -2066,60 +2401,32 @@ function updateHungerBar(hunger) {
 let animationId = null;
 let countdownTimer = null;
 
-// --- 排行榜相關 ---
-const RANK_KEY = 'fishing_ranks';
-function getRanks() {
-  let arr = [];
-  try {
-    arr = JSON.parse(localStorage.getItem(RANK_KEY)) || [];
-  } catch(e) {}
-  return Array.isArray(arr) ? arr : [];
+// --- 遊戲結束 POPUP ---
+function formatPlayTime(seconds) {
+  const s = Math.max(0, Math.floor(seconds));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  if (m > 0) return m + ' 分 ' + r + ' 秒';
+  return r + ' 秒';
 }
-function saveRanks(arr) {
-  localStorage.setItem(RANK_KEY, JSON.stringify(arr));
+function showGameOverModal() {
+  const modal = document.getElementById('gameOverModal');
+  const statsEl = document.getElementById('gameOverStats');
+  if (!modal || !statsEl) return;
+  const fishTypeCount = collectedFishTypes.size;
+  const playTime = formatPlayTime(elapsedGameTime);
+  const rowStyle = 'display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid rgba(120,150,200,0.12);padding:10px 4px;';
+  statsEl.innerHTML =
+    '<div style="' + rowStyle + '"><span style="color:#6b7c99;font-weight:600;">得分</span><b style="color:#4a86d8;font-size:1.15em;">' + score + '</b></div>' +
+    '<div style="' + rowStyle + '"><span style="color:#6b7c99;font-weight:600;">花費時間</span><b style="color:#354560;">' + playTime + '</b></div>' +
+    '<div style="' + rowStyle + '"><span style="color:#6b7c99;font-weight:600;">收集魚種類數</span><b style="color:#7c5cbf;">' + fishTypeCount + '</b></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 4px;"><span style="color:#6b7c99;font-weight:600;">收集垃圾</span><b style="color:#ff7b8a;">' + trashCaughtCount + '</b></div>';
+  modal.style.display = 'flex';
 }
-function addRank(newScore) {
-  let arr = getRanks();
-  arr.push({ score: newScore, time: Date.now() });
-  arr.sort((a, b) => b.score - a.score || a.time - b.time);
-  if (arr.length > 10) arr = arr.slice(0, 10);
-  saveRanks(arr);
-  return arr;
+function hideGameOverModal() {
+  const modal = document.getElementById('gameOverModal');
+  if (modal) modal.style.display = 'none';
 }
-function clearRanks() {
-  localStorage.removeItem(RANK_KEY);
-}
-function showRankModal(thisScore) {
-  const rankModal = document.getElementById('rankModal');
-  const rankList = document.getElementById('rankList');
-  let arr = getRanks();
-  let html = '<table class="rank-table"><thead><tr><th>名次</th><th>分數</th></tr></thead><tbody>';
-  let selfIdx = -1;
-  arr.forEach((r, i) => {
-    let isSelf = (selfIdx === -1 && r.score === thisScore && r.time === arr.find(x => x.score === thisScore && x.time === r.time).time);
-    if (isSelf) selfIdx = i;
-    html += `<tr${isSelf ? ' class="self-score"' : ''}><td${isSelf ? ' style="color:#e11;font-weight:bold;"' : ''}>${i+1}</td><td${isSelf ? ' style="color:#e11;font-weight:bold;"' : ''}>${r.score}</td></tr>`;
-  });
-  html += '</tbody></table>';
-  if (arr.length === 0) html = '<div style="text-align:center;color:#888;">目前沒有紀錄</div>';
-  rankList.innerHTML = html;
-  rankModal.style.display = 'flex';
-}
-document.getElementById('closeRankModal').onclick = function() {
-  document.getElementById('rankModal').style.display = 'none';
-};
-document.getElementById('rankModal').addEventListener('click', function(e) {
-  if (e.target === this) this.style.display = 'none';
-});
-document.getElementById('clearRankBtn').onclick = function() {
-  clearRanks();
-  showRankModal(-1);
-};
-window.addEventListener('keydown', function(e) {
-  if (document.getElementById('rankModal').style.display === 'flex' && (e.key === 'Escape' || e.key === 'Esc')) {
-    document.getElementById('rankModal').style.display = 'none';
-  }
-});
 
 // 魚／垃圾／特殊海洋生物出生時的「最高路徑」高度，跟著海平面高度參數走
 // （海平面調高，這條線跟著往下；海平面調低，這條線跟著往上，魚群活動範圍隨之整體平移）
@@ -2156,113 +2463,157 @@ const tensionSound = new Audio('sound/Data_4.wav');
 let lastTensionSoundTime = 0;
 let tensionSoundInterval = 2000; // 初始2秒
 
-// --- 分數／元氣 HUD，樣式參考原版（藍框白字「分數」＋徽章數字／橘框白字「元氣」＋紅橘漸層量表），
-//           分數在上、元氣量表在下，兩排都是「粗體字＋外框」，取代原本分散在畫面各處的小字 ---
+// --- 分數／元氣 HUD（Claymorphism 風格：軟質圓角膠囊、柔和陰影、糖果漸層量表）---
+function drawRoundedRectPath(x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
 function drawScoreAndEnergyHUD() {
   ctx.save();
   ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
+  ctx.textBaseline = 'middle';
 
-  // 第一排：分數（改用 ui_1.png 圖片標籤，取代原本的文字＋外框畫法）
-  const scoreLabelX = 20, scoreLabelY = 42;
-  const scoreLabelW = scoreLabelImg.naturalWidth || 98;
-  const scoreLabelH = scoreLabelImg.naturalHeight || 28;
-  const scoreLabelImgY = scoreLabelY - scoreLabelH + 4;
-  if (scoreLabelImg.complete && scoreLabelImg.naturalWidth > 0) {
-    ctx.drawImage(scoreLabelImg, scoreLabelX, scoreLabelImgY, scoreLabelW, scoreLabelH);
-  } else {
-    // 圖片還沒載入完成時的備用畫法（白字＋藍色文字外框）
-    ctx.font = "bold 30px Arial";
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = "#1a6dff";
-    ctx.fillStyle = "#fff";
-    ctx.strokeText("分數", scoreLabelX, scoreLabelY);
-    ctx.fillText("分數", scoreLabelX, scoreLabelY);
-  }
-
-  // 分數數字：改用 0~9 數字圖片依序拼接繪製，取代原本的文字＋外框畫法
+  // —— 分數膠囊 ——
   const scoreText = String(score);
-  const scoreNumX = scoreLabelX + scoreLabelW + 10;
-  const allDigitsLoaded = scoreDigitImgs.every(function(img) { return img.complete && img.naturalWidth > 0; });
-  if (allDigitsLoaded) {
-    const digitH = 33;
-    const digitY = scoreLabelY - digitH + 4;
-    let dx = scoreNumX;
-    for (let i = 0; i < scoreText.length; i++) {
-      const d = parseInt(scoreText[i], 10);
-      const img = scoreDigitImgs[d];
-      const dw = img.naturalWidth;
-      ctx.drawImage(img, dx, digitY, dw, digitH);
-      dx += dw + 1; // 數字間留 1px 小間距
-    }
-  } else {
-    // 圖片還沒載入完成時的備用畫法（白字＋綠色文字外框）
-    ctx.font = "bold 30px Arial";
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = "#2ecc40";
-    ctx.fillStyle = "#fff";
-    ctx.strokeText(scoreText, scoreNumX, scoreLabelY);
-    ctx.fillText(scoreText, scoreNumX, scoreLabelY);
-  }
+  ctx.font = 'bold 22px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+  const scoreNumW = ctx.measureText(scoreText).width;
+  const scorePadX = 14;
+  const scoreLabelW = 48;
+  const scoreBoxW = scorePadX + scoreLabelW + 8 + scoreNumW + scorePadX;
+  const scoreBoxH = 36;
+  const scoreBoxX = 14;
+  const scoreBoxY = 14;
 
-  // 第二排：元氣（改用 ui_2.png 圖片標籤，取代原本的文字＋外框畫法）
-  const gaugeLabelX = 20, gaugeLabelY = 88;
-  const gaugeLabelW = energyLabelImg.naturalWidth || 217;
-  const gaugeLabelH = energyLabelImg.naturalHeight || 26;
-  const gaugeLabelImgY = gaugeLabelY - gaugeLabelH + 4;
-  if (energyLabelImg.complete && energyLabelImg.naturalWidth > 0) {
-    ctx.drawImage(energyLabelImg, gaugeLabelX, gaugeLabelImgY, gaugeLabelW, gaugeLabelH);
-  } else {
-    // 圖片還沒載入完成時的備用畫法（白字＋橘色文字外框）
-    ctx.font = "bold 26px Arial";
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = "#ff8c1a";
-    ctx.fillStyle = "#fff";
-    ctx.strokeText("元氣", gaugeLabelX, gaugeLabelY);
-    ctx.fillText("元氣", gaugeLabelX, gaugeLabelY);
-  }
+  // 外層陰影（模擬 clay shadow）
+  ctx.shadowColor = 'rgba(80, 110, 170, 0.28)';
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetX = 4;
+  ctx.shadowOffsetY = 6;
+  drawRoundedRectPath(scoreBoxX, scoreBoxY, scoreBoxW, scoreBoxH, 18);
+  const scoreGrad = ctx.createLinearGradient(scoreBoxX, scoreBoxY, scoreBoxX, scoreBoxY + scoreBoxH);
+  scoreGrad.addColorStop(0, '#ffffff');
+  scoreGrad.addColorStop(0.55, '#f5f8fd');
+  scoreGrad.addColorStop(1, '#e4ebf7');
+  ctx.fillStyle = scoreGrad;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  // 內高光邊
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = 2;
+  drawRoundedRectPath(scoreBoxX + 1, scoreBoxY + 1, scoreBoxW - 2, scoreBoxH - 2, 16);
+  ctx.stroke();
 
-  const barX = gaugeLabelX + gaugeLabelW + 10, barY = 68;
-  // 量表大小直接採用圖片本身的原始尺寸，不做拉伸變形（圖片還沒載入完成時先用預設 398x22 頂著）
-  const barW = energyGaugeImg.naturalWidth || 398;
-  const barH = energyGaugeImg.naturalHeight || 22;
-  // 底色（量表沒有量的部分，深紅棕色，貼近原版量表底色）
-  ctx.fillStyle = '#7a2b12';
-  ctx.fillRect(barX, barY, barW, barH);
-  // 進度（改用 energy.png 圖片鋪滿量表，跟隨 displayTimeLeft 補間動畫）
+  // 「分數」標籤小膠囊
+  const tagX = scoreBoxX + 8;
+  const tagY = scoreBoxY + 6;
+  const tagW = 42;
+  const tagH = 24;
+  drawRoundedRectPath(tagX, tagY, tagW, tagH, 12);
+  const tagGrad = ctx.createLinearGradient(tagX, tagY, tagX + tagW, tagY + tagH);
+  tagGrad.addColorStop(0, '#9ad0ff');
+  tagGrad.addColorStop(0.5, '#6ba3f0');
+  tagGrad.addColorStop(1, '#4a86d8');
+  ctx.fillStyle = tagGrad;
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 13px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('分數', tagX + tagW / 2, tagY + tagH / 2 + 1);
+
+  // 分數數字
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 22px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+  ctx.fillStyle = '#354560';
+  ctx.fillText(scoreText, tagX + tagW + 10, scoreBoxY + scoreBoxH / 2 + 1);
+
+  // —— 元氣列 ——
+  const energyBoxX = 14;
+  const energyBoxY = 58;
+  const energyBoxW = Math.min(canvas.width - 28, 360);
+  const energyBoxH = 34;
+
+  ctx.shadowColor = 'rgba(80, 110, 170, 0.26)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetX = 3;
+  ctx.shadowOffsetY = 5;
+  drawRoundedRectPath(energyBoxX, energyBoxY, energyBoxW, energyBoxH, 17);
+  const energyBgGrad = ctx.createLinearGradient(energyBoxX, energyBoxY, energyBoxX, energyBoxY + energyBoxH);
+  energyBgGrad.addColorStop(0, '#ffffff');
+  energyBgGrad.addColorStop(0.55, '#f5f8fd');
+  energyBgGrad.addColorStop(1, '#e4ebf7');
+  ctx.fillStyle = energyBgGrad;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = 2;
+  drawRoundedRectPath(energyBoxX + 1, energyBoxY + 1, energyBoxW - 2, energyBoxH - 2, 15);
+  ctx.stroke();
+
+  // 「元氣」標籤
+  const eTagX = energyBoxX + 8;
+  const eTagY = energyBoxY + 5;
+  const eTagW = 42;
+  const eTagH = 24;
+  drawRoundedRectPath(eTagX, eTagY, eTagW, eTagH, 12);
+  const eTagGrad = ctx.createLinearGradient(eTagX, eTagY, eTagX + eTagW, eTagY + eTagH);
+  eTagGrad.addColorStop(0, '#ffe08a');
+  eTagGrad.addColorStop(0.45, '#ffc14d');
+  eTagGrad.addColorStop(1, '#f0a820');
+  ctx.fillStyle = eTagGrad;
+  ctx.fill();
+  ctx.fillStyle = '#5a3a00';
+  ctx.font = 'bold 13px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('元氣', eTagX + eTagW / 2, eTagY + eTagH / 2 + 1);
+
+  // 量表軌道
+  const barX = eTagX + eTagW + 10;
+  const barY = energyBoxY + 9;
+  const barH = 16;
+  const barW = energyBoxW - (barX - energyBoxX) - 48;
+  drawRoundedRectPath(barX, barY, barW, barH, 8);
+  ctx.fillStyle = '#d5deef';
+  ctx.fill();
+  // 內凹陰影
+  ctx.save();
+  drawRoundedRectPath(barX, barY, barW, barH, 8);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(80, 110, 170, 0.12)';
+  ctx.fillRect(barX, barY, barW, 4);
+
+  // 進度（糖果漸層：mint → sky → amber，依剩餘比例）
   let percent = Math.max(0, Math.min(1, displayTimeLeft / GAME_TIME));
   let fillW = Math.max(0, barW * percent);
-  if (fillW > 0 && energyGaugeImg.complete && energyGaugeImg.naturalWidth > 0) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(barX, barY, fillW, barH);
-    ctx.clip();
-    // 圖片以原始大小繪製，不拉伸不變形，只用裁切露出目前元氣比例的寬度
-    ctx.drawImage(energyGaugeImg, barX, barY, barW, barH);
-    ctx.restore();
-  } else {
-    // 圖片還沒載入完成時的備用畫法（紅-橙-黃漸層）
-    let grad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
-    grad.addColorStop(0, '#f00');
-    grad.addColorStop(0.25, '#ff8000');
-    grad.addColorStop(0.6, '#ffe600');
-    grad.addColorStop(1, '#ffe600');
-    ctx.fillStyle = grad;
-    ctx.fillRect(barX, barY, fillW, barH);
+  if (fillW > 0) {
+    drawRoundedRectPath(barX, barY, fillW, barH, 8);
+    const fillGrad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
+    fillGrad.addColorStop(0, '#5ee0a8');
+    fillGrad.addColorStop(0.35, '#6ba3f0');
+    fillGrad.addColorStop(0.7, '#ffc14d');
+    fillGrad.addColorStop(1, '#ff7b8a');
+    ctx.fillStyle = fillGrad;
+    ctx.fill();
+    // 頂部高光
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillRect(barX + 2, barY + 2, Math.max(0, fillW - 4), 4);
   }
-  // 外框（改細一點，不要太粗）
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(barX, barY, barW, barH);
-  // 目前數值疊在量表右側，方便玩家看到精確數字
-  ctx.font = "bold 16px Arial";
+  ctx.restore();
+
+  // 數值
   ctx.textAlign = 'right';
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillStyle = "#fff";
+  ctx.font = 'bold 14px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+  ctx.fillStyle = '#354560';
   const energyText = String(Math.ceil(timeLeft));
-  ctx.strokeText(energyText, barX + barW - 10, barY + barH - 7);
-  ctx.fillText(energyText, barX + barW - 10, barY + barH - 7);
+  ctx.fillText(energyText, energyBoxX + energyBoxW - 12, energyBoxY + energyBoxH / 2 + 1);
 
   ctx.restore();
 }
@@ -2288,7 +2639,7 @@ function gameLoop(currentTime) {
     if (!Array.isArray(fishes)) fishes = [];
     if (!Array.isArray(trashes)) trashes = [];
     
-    if (!gameOver && !bowlSinking && !paramPanelOpen) {
+    if (gameStarted && !gameOver && !bowlSinking && !paramPanelOpen) {
       elapsedGameTime += deltaTime / 1000; // 累計這一局已經進行的時間
       const passiveDrain = Math.min(
         PASSIVE_DRAIN_MAX,
@@ -2362,7 +2713,8 @@ function gameLoop(currentTime) {
     ctx.stroke();
     ctx.restore();
 
-    // 控制主角與大魚左右移動
+    // 控制主角與大魚左右移動（開始畫面關閉後才可操作）
+    if (gameStarted) {
     if (keyState.left) {
       bigFish.x -= 6 * timeScale;
       playerDir = -1;
@@ -2370,6 +2722,7 @@ function gameLoop(currentTime) {
     if (keyState.right) {
       bigFish.x += 6 * timeScale;
       playerDir = 1;
+    }
     }
     if (bigFish.x < bigFish.w/2) bigFish.x = bigFish.w/2;
     if (bigFish.x > canvas.width - bigFish.w/2) bigFish.x = canvas.width - bigFish.w/2;
@@ -2396,7 +2749,7 @@ function gameLoop(currentTime) {
     // 釣魚線起點、鉤子都跟著 bigFish.x
 
     // 控制魚鉤上下移動（慣性/拉力）
-    if (!fishing && !hookThrowing) {
+    if (gameStarted && !fishing && !hookThrowing) {
       const HOOK_ACCEL = LINE_PARAMS.hookAccel; // 按下上下鍵時的加速度
       const HOOK_MAX_VEL = LINE_PARAMS.hookMaxVel; // 速度上限，避免無限加速造成飄浮感
 
@@ -2732,6 +3085,7 @@ function gameLoop(currentTime) {
           if (inPot) {
             // 只有真的掉進碗裡才會扣元氣
             trash.hit = true;
+            trashCaughtCount++;
             // 新增：進入漸層消失動畫（不要立刻消失，讓玩家先看清楚真的釣到了）
             trash.fadeOut = true;
             trash.alpha = 1;
@@ -2833,6 +3187,10 @@ function gameLoop(currentTime) {
         let inPot = isEnteringPotFromAbove(specialSeaCreature.x, specialSeaCreature.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
         if (inPot && timeLeft > 0 && !gameOver) {
           specialSeaCreature.caught = true;
+          // 記錄收集到的魚種類（魷魚／章魚／海參）
+          if (specialSeaCreature.type === 'squid') collectedFishTypes.add('squid');
+          else if (specialSeaCreature.type === 'octopus') collectedFishTypes.add('octopus');
+          else if (specialSeaCreature.type === 'seacucumber') collectedFishTypes.add('seacucumber');
           // 新增：記錄相對於碗的偏移量，讓特殊生物在淡出期間跟著碗一起移動
           specialSeaCreature.caughtOffsetX = specialSeaCreature.x - bowlX;
           specialSeaCreature.caughtOffsetY = specialSeaCreature.y - bowlY;
@@ -2936,6 +3294,16 @@ function gameLoop(currentTime) {
           let inPot = isEnteringPotFromAbove(fish.x, fish.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
           if (inPot && timeLeft > 0 && !gameOver) {
             fish.caught = true;
+            // 記錄收集到的魚種類（小黃魚3種 / 黃魚3種 / 壞魚）
+            if (fish.color === "#fcf") {
+              collectedFishTypes.add('bad');
+            } else if (fish.fishTier === 'school') {
+              collectedFishTypes.add('small_' + (typeof fish.fishVariant === 'number' ? fish.fishVariant : 0));
+            } else if (fish.fishTier === 'small') {
+              collectedFishTypes.add('small_' + (typeof fish.fishVariant === 'number' ? fish.fishVariant : 0));
+            } else if (fish.fishTier === 'mid') {
+              collectedFishTypes.add('mid_' + (typeof fish.fishVariant === 'number' ? fish.fishVariant : 0));
+            }
             // 新增：記錄相對於碗的偏移量，讓魚在淡出期間跟著碗一起移動，
             // 不然碗會左右漂移、上下彈跳，魚卻卡在原地不動，看起來就像從碗裡跑出去
             fish.caughtOffsetX = fish.x - bowlX;
@@ -3082,33 +3450,23 @@ function gameLoop(currentTime) {
       ctx.font = "36px Arial";
       ctx.fillStyle = "#0c0";
       ctx.fillText("分數: " + score, 320, 360);
-      // --- 動畫結束，顯示排行榜 ---
+      // 碗下沉動畫已停用（改為遊戲結束 POPUP），此區塊僅保留相容，不再顯示排行榜
       if (bowlY >= bowlSinkTargetY) {
-        bowlY = bowlSinkTargetY; // 鎖定在水底
-        // 新增：播放碗沉到底音效
-        bowlSinkSound.currentTime = 0;
-        bowlSinkSound.play();
-        setTimeout(() => {
-          let arr = addRank(score);
-          showRankModal(score);
-        }, 400);
+        bowlY = bowlSinkTargetY;
         return;
       }
       animationId = requestAnimationFrame(gameLoop);
       return;
     }
-    // 遊戲結束
-    // --- 修改：只有沒垃圾動畫時才 gameOver ---
+    // 遊戲結束：不再播放鍋蓋／碗下沉動畫、不顯示排行榜，改為直接跳出結束 POPUP
     let trashAnimating = trashes.some(trash => trash.lifting);
-    if (timeLeft <= 0 && !gameOver && !trashAnimating && !pendingGameOver) {
+    if (gameStarted && timeLeft <= 0 && !gameOver && !trashAnimating && !pendingGameOver) {
       gameOver = true;
-      displayTimeLeft = 0; // 修正：同步顯示歸零
-      restartBtn.style.display = "block";
-      // --- 修改：先播放「鍋蓋蓋下來」的動畫，鍋子先停止移動，蓋緊後才開始下沉 ---
-      lidDropping = true;
-      lidDropOffset = LID_DROP_START_OFFSET;
+      displayTimeLeft = 0;
+      lidDropping = false;
+      bowlSinking = false;
+      showGameOverModal();
       animationId = requestAnimationFrame(gameLoop);
-      // 排行榜會在下沉動畫真正結束後才顯示（見下方 bowlSinking 動畫結束處）
       return;
     }
     animationId = requestAnimationFrame(gameLoop);
@@ -3239,29 +3597,29 @@ function resizeGameCanvas() {
 window.addEventListener('resize', resizeGameCanvas);
 resizeGameCanvas();
 
-// 重新開始
-restartBtn.addEventListener("click", () => {
-  // 停止前一輪動畫和計時
+// 重新開始（由遊戲結束 POPUP 呼叫；已移除右上角 🔄 按鈕）
+function doRestartGame() {
   if (animationId) cancelAnimationFrame(animationId);
   if (countdownTimer) clearTimeout(countdownTimer);
+  hideGameOverModal();
   score = 0;
   timeLeft = GAME_TIME;
   displayTimeLeft = GAME_TIME;
-  elapsedGameTime = 0; // 重設扣速加速的計時
+  elapsedGameTime = 0;
   gameOver = false;
-  restartBtn.style.display = "none";
-  // 重置時間控制變數
+  gameStarted = true;
+  collectedFishTypes = new Set();
+  trashCaughtCount = 0;
   lastTime = 0;
   deltaTime = 0;
   spawnFish();
   spawnTrash();
-  initLinePoints(); // 重新初始化魚線點
+  initLinePoints();
   hookY = LINE_PARAMS.hookRestY;
   hookVelY = 0;
   hookTargetY = LINE_PARAMS.hookRestY;
   hookVelX = 0;
-  hookAutoSinking = false; // 重新開始時重置自動下沉狀態
-  // 重置拉竿物理狀態，避免重新開始時卡在上一輪的甩竿/落下狀態
+  hookAutoSinking = false;
   fishing = false;
   hookThrowing = false;
   hookThrowPhase = 'loop';
@@ -3271,25 +3629,27 @@ restartBtn.addEventListener("click", () => {
   hookFallVelX = 0;
   hookFallVelY = 0;
   specialSeaCreature = null;
-if (specialSeaCreatureTimer) clearTimeout(specialSeaCreatureTimer);
-scheduleSpecialSeaCreature();
-if (fishSchoolTimer) clearTimeout(fishSchoolTimer);
-if (fishSchoolBatchTimer) clearInterval(fishSchoolBatchTimer);
-scheduleFishSchool();
+  if (specialSeaCreatureTimer) clearTimeout(specialSeaCreatureTimer);
+  scheduleSpecialSeaCreature();
+  if (fishSchoolTimer) clearTimeout(fishSchoolTimer);
+  if (fishSchoolBatchTimer) clearInterval(fishSchoolBatchTimer);
+  scheduleFishSchool();
   resizeGameCanvas();
-  // --- 新增：重設鍋子位置與動畫狀態 ---
   bowlY = pot.y;
   bowlX = pot.x;
   bowlXDir = 1;
   bowlSinking = false;
   bowlSinkTargetY = null;
   bowlY_vel = 0;
-  bowlImpulseY = 0; // 重置碗下沉衝擊
-  lidDropping = false; // 重置鍋蓋動畫狀態
+  bowlImpulseY = 0;
+  lidDropping = false;
   lidDropOffset = 0;
-  pendingGameOver = false; // 重置 pendingGameOver
+  pendingGameOver = false;
+  catAnimFrame = 0;
+  catAnimTimer = 0;
+  catWasMoving = false;
   animationId = requestAnimationFrame(gameLoop);
-});
+}
 // 新增：遊戲說明按鈕
 const infoBtn = document.getElementById('infoBtn');
 const infoModal = document.getElementById('infoModal');
@@ -3309,8 +3669,8 @@ infoBtn.addEventListener('click', () => {
     <div style="font-size:1.1em;">
       <b>【目前版本規則】</b><br>
       <ul style="padding-left: 1.2em;">
-        <li><b>小黃魚</b><br>分數：+100 分<br>元氣：+5</li>
-        <li><b>黃魚</b><br>分數：+200 分<br>元氣：+10</li>
+        <li><b>小黃魚（3 種類）</b><br>分數：+100 分<br>元氣：+5<br><span style="font-size:0.9em;color:#666;">體型與色調略有差異</span></li>
+        <li><b>黃魚（3 種類）</b><br>分數：+200 分<br>元氣：+10<br><span style="font-size:0.9em;color:#666;">體型與色調略有差異</span></li>
         <li><b>魷魚</b><br>分數：+400 分<br>元氣：+20</li>
         <li><b>章魚</b><br>分數：+400 分<br>元氣：+20</li>
         <li><b>海參</b><br>分數：+20 分<br>元氣：+1</li>
@@ -3334,23 +3694,45 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// 新增：排行榜內再玩一次按鈕
-const playAgainBtn = document.getElementById('playAgainBtn');
-if (playAgainBtn) {
-  playAgainBtn.onclick = function() {
-    document.getElementById('rankModal').style.display = 'none';
-    // 觸發 restartBtn 的 click 事件
-    restartBtn.click();
+// 遊戲結束 POPUP「重新開始」按鈕
+const gameOverRestartBtn = document.getElementById('gameOverRestartBtn');
+if (gameOverRestartBtn) {
+  gameOverRestartBtn.onclick = function() {
+    hideGameOverModal();
+    doRestartGame();
   };
 }
-// 新增：排行榜顯示時按空白鍵可再玩一次
+// 遊戲結束 POPUP 顯示時按空白鍵可重新開始
 window.addEventListener('keydown', function(e) {
-  const rankModal = document.getElementById('rankModal');
-  if (rankModal && rankModal.style.display === 'flex' && e.code === 'Space') {
+  const gameOverModal = document.getElementById('gameOverModal');
+  if (gameOverModal && gameOverModal.style.display === 'flex' && e.code === 'Space') {
     e.preventDefault();
-    if (playAgainBtn) playAgainBtn.click();
+    if (gameOverRestartBtn) gameOverRestartBtn.click();
   }
 });
+
+// === 開始畫面：點擊畫面開始遊戲 ===
+(function() {
+  const startModal = document.getElementById('startModal');
+  function beginGame() {
+    if (gameStarted) return;
+    gameStarted = true;
+    if (startModal) startModal.style.display = 'none';
+  }
+  if (startModal) {
+    startModal.addEventListener('click', beginGame);
+    startModal.addEventListener('touchstart', function(e) {
+      beginGame();
+      e.preventDefault();
+    }, { passive: false });
+  }
+  window.addEventListener('keydown', function(e) {
+    if (!gameStarted && (e.code === 'Space' || e.code === 'Enter')) {
+      e.preventDefault();
+      beginGame();
+    }
+  });
+})();
 
 // === 虛擬搖桿與螢幕按鈕 ===
 (function() {
