@@ -257,7 +257,7 @@
       background: rgba(60, 80, 120, 0.45);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
-      z-index: 1300;
+      z-index: 1000;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -377,7 +377,7 @@
       bottom: max(20px, env(safe-area-inset-bottom));
       width: 118px;
       height: 118px;
-      z-index: 1200;
+      z-index: 2000;
       touch-action: none;
     }
 
@@ -454,7 +454,7 @@
       position: absolute;
       right: 20px;
       bottom: max(20px, env(safe-area-inset-bottom));
-      z-index: 1100;
+      z-index: 2000;
     }
 
     #screenButtons button {
@@ -811,16 +811,242 @@ let elapsedGameTime = 0; // 這一局已經進行的時間（秒），用來讓�
 // 修正前只淡出約 0.4 秒就整個消失，很容易讓人以為沒釣到，這裡拉長總時長
 const CATCH_FADE_HOLD_MS = 550;      // 釣到後維持完全顯示的時間（毫秒）
 const CATCH_FADE_DURATION_MS = 850;  // 開始淡出之後，淡出所花的時間（毫秒）
-const TRASH_PENALTY = 12;
+const TRASH_PENALTY = 12;          // can / boots 預設扣元氣
+const TRASH_WATERMELON_PENALTY = 30; // 西瓜扣元氣
 const BAD_FISH_PENALTY = 8;
-const SMALL_FISH_SCORE = 100;   // 小黃魚
+const SMALL_FISH_SCORE = 100;   // 小魚 A/B/C
 const SMALL_FISH_ENERGY = 5;
-const MID_FISH_SCORE = 200;     // 黃魚
+const MID_FISH_SCORE = 200;     // 魚 A/B/C
 const MID_FISH_ENERGY = 10;
-const BIG_FISH_SCORE = 400;     // 魷魚／章魚
+const BIG_FISH_SCORE = 400;     // 魷魚／章魚／海龜
 const BIG_FISH_ENERGY = 20;
-const SEA_CUCUMBER_SCORE = 20;  // 海參（獨立最低分級距，不跟小黃魚共用）
+const SEA_CUCUMBER_SCORE = 20;  // 海參
 const SEA_CUCUMBER_ENERGY = 1;
+const JELLYFISH_SCORE = 300;    // 水母
+const JELLYFISH_ENERGY = 0;
+
+// ============================================================
+// 輕量粒子系統（物件池，避免頻繁 new / splice）
+// ============================================================
+const PARTICLE_MAX = 420;
+const particles = new Array(PARTICLE_MAX);
+const particlePool = [];
+for (let i = 0; i < PARTICLE_MAX; i++) {
+  particles[i] = null;
+  particlePool.push({
+    alive: false,
+    x: 0, y: 0, vx: 0, vy: 0,
+    life: 0, maxLife: 1,
+    size: 2, sizeEnd: 0,
+    r: 255, g: 255, b: 255, a: 1,
+    gravity: 0, drag: 1,
+    kind: 'dot' // dot | star
+  });
+}
+function allocParticle() {
+  return particlePool.length ? particlePool.pop() : null;
+}
+function freeParticle(p) {
+  p.alive = false;
+  particlePool.push(p);
+}
+function spawnParticle(opts) {
+  const p = allocParticle();
+  if (!p) return null;
+  p.alive = true;
+  p.x = opts.x || 0;
+  p.y = opts.y || 0;
+  p.vx = opts.vx || 0;
+  p.vy = opts.vy || 0;
+  p.maxLife = opts.life || 0.6;
+  p.life = p.maxLife;
+  p.size = opts.size != null ? opts.size : 3;
+  p.sizeEnd = opts.sizeEnd != null ? opts.sizeEnd : p.size * 0.2;
+  p.r = opts.r != null ? opts.r : 255;
+  p.g = opts.g != null ? opts.g : 255;
+  p.b = opts.b != null ? opts.b : 255;
+  p.a = opts.a != null ? opts.a : 1;
+  p.gravity = opts.gravity != null ? opts.gravity : 0;
+  p.drag = opts.drag != null ? opts.drag : 0.98;
+  p.kind = opts.kind || 'dot';
+  // 放入活躍槽
+  for (let i = 0; i < PARTICLE_MAX; i++) {
+    if (!particles[i]) { particles[i] = p; break; }
+  }
+  return p;
+}
+function emitBurst(x, y, count, conf) {
+  conf = conf || {};
+  for (let i = 0; i < count; i++) {
+    const ang = conf.angle != null
+      ? conf.angle + (Math.random() - 0.5) * (conf.spread || Math.PI)
+      : Math.random() * Math.PI * 2;
+    const spd = (conf.speedMin || 40) + Math.random() * ((conf.speedMax || 120) - (conf.speedMin || 40));
+    spawnParticle({
+      x: x + (conf.jitter || 0) * (Math.random() - 0.5),
+      y: y + (conf.jitter || 0) * (Math.random() - 0.5),
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
+      life: (conf.lifeMin || 0.35) + Math.random() * ((conf.lifeMax || 0.8) - (conf.lifeMin || 0.35)),
+      size: (conf.sizeMin || 2) + Math.random() * ((conf.sizeMax || 5) - (conf.sizeMin || 2)),
+      sizeEnd: conf.sizeEnd,
+      r: conf.r, g: conf.g, b: conf.b, a: conf.a,
+      gravity: conf.gravity, drag: conf.drag, kind: conf.kind
+    });
+  }
+}
+// —— 各事件特效 ——
+function fxPotCatch(x, y, good) {
+  // 進鍋：水花 + 星光
+  emitBurst(x, y, good ? 14 : 8, {
+    angle: -Math.PI / 2, spread: Math.PI * 1.2,
+    speedMin: 50, speedMax: 160,
+    lifeMin: 0.3, lifeMax: 0.7,
+    sizeMin: 2, sizeMax: 5, sizeEnd: 0.5,
+    r: 180, g: 230, b: 255, a: 0.9,
+    gravity: 280, drag: 0.96
+  });
+  if (good) {
+    emitBurst(x, y, 10, {
+      spread: Math.PI * 2,
+      speedMin: 30, speedMax: 110,
+      lifeMin: 0.4, lifeMax: 0.9,
+      sizeMin: 2, sizeMax: 4, sizeEnd: 0,
+      r: 255, g: 220, b: 80, a: 1,
+      gravity: 40, drag: 0.94, kind: 'star'
+    });
+  }
+}
+function fxHookSplash(x, y) {
+  // 甩竿入水：小水珠向上噴
+  emitBurst(x, y, 16, {
+    angle: -Math.PI / 2, spread: Math.PI * 0.9,
+    speedMin: 60, speedMax: 180,
+    lifeMin: 0.25, lifeMax: 0.55,
+    sizeMin: 1.5, sizeMax: 4, sizeEnd: 0.3,
+    r: 200, g: 240, b: 255, a: 0.85,
+    gravity: 420, drag: 0.97
+  });
+  emitBurst(x, y, 6, {
+    angle: -Math.PI / 2, spread: Math.PI * 0.5,
+    speedMin: 20, speedMax: 60,
+    lifeMin: 0.4, lifeMax: 0.8,
+    sizeMin: 3, sizeMax: 7, sizeEnd: 1,
+    r: 160, g: 210, b: 240, a: 0.35,
+    gravity: 60, drag: 0.98
+  });
+}
+function fxEnergyPenalty(x, y, amount) {
+  // 扣元氣：紅色向下飄
+  const n = Math.min(18, 6 + Math.floor(Math.abs(amount) / 4));
+  emitBurst(x, y, n, {
+    angle: Math.PI / 2, spread: Math.PI * 0.7,
+    speedMin: 20, speedMax: 70,
+    lifeMin: 0.5, lifeMax: 1.1,
+    sizeMin: 2, sizeMax: 5, sizeEnd: 0.5,
+    r: 255, g: 70, b: 90, a: 0.95,
+    gravity: 90, drag: 0.97
+  });
+}
+function fxStarBurst(x, y) {
+  // 星星觸發魚群：金色閃光擴散
+  emitBurst(x, y, 28, {
+    spread: Math.PI * 2,
+    speedMin: 40, speedMax: 200,
+    lifeMin: 0.45, lifeMax: 1.0,
+    sizeMin: 2, sizeMax: 6, sizeEnd: 0,
+    r: 255, g: 210, b: 60, a: 1,
+    gravity: 20, drag: 0.93, kind: 'star'
+  });
+  emitBurst(x, y, 12, {
+    spread: Math.PI * 2,
+    speedMin: 10, speedMax: 50,
+    lifeMin: 0.3, lifeMax: 0.6,
+    sizeMin: 6, sizeMax: 14, sizeEnd: 0,
+    r: 255, g: 240, b: 160, a: 0.5,
+    gravity: 0, drag: 0.9
+  });
+}
+// 海洋背景漂流粒子（氣泡／浮塵）
+let oceanDriftTimer = 0;
+function maintainOceanDrift(dt) {
+  oceanDriftTimer += dt;
+  // 維持約 35 個背景粒子，不足就補
+  let aliveDrift = 0;
+  for (let i = 0; i < PARTICLE_MAX; i++) {
+    const p = particles[i];
+    if (p && p.alive && p._ocean) aliveDrift++;
+  }
+  while (aliveDrift < 35) {
+    const fromBottom = Math.random() < 0.55;
+    const p = spawnParticle({
+      x: Math.random() * (canvas.width || 540),
+      y: fromBottom ? (canvas.height || 960) + Math.random() * 40 : Math.random() * (canvas.height || 960),
+      vx: (Math.random() - 0.5) * 12,
+      vy: fromBottom ? -(8 + Math.random() * 18) : (Math.random() - 0.5) * 6,
+      life: 4 + Math.random() * 6,
+      size: 1 + Math.random() * 2.5,
+      sizeEnd: 0.5,
+      r: 200, g: 230, b: 255, a: 0.25 + Math.random() * 0.25,
+      gravity: fromBottom ? -4 : 0,
+      drag: 0.995
+    });
+    if (p) { p._ocean = true; aliveDrift++; }
+    else break;
+  }
+}
+function updateParticles(dt) {
+  const w = canvas.width || 540;
+  const h = canvas.height || 960;
+  for (let i = 0; i < PARTICLE_MAX; i++) {
+    const p = particles[i];
+    if (!p || !p.alive) continue;
+    p.vy += p.gravity * dt;
+    p.vx *= Math.pow(p.drag, dt * 60);
+    p.vy *= Math.pow(p.drag, dt * 60);
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    if (p.life <= 0 || p.y < -40 || p.y > h + 40 || p.x < -40 || p.x > w + 40) {
+      particles[i] = null;
+      freeParticle(p);
+    }
+  }
+  maintainOceanDrift(dt);
+}
+function drawParticles() {
+  ctx.save();
+  for (let i = 0; i < PARTICLE_MAX; i++) {
+    const p = particles[i];
+    if (!p || !p.alive) continue;
+    const t = Math.max(0, Math.min(1, p.life / p.maxLife));
+    const size = p.sizeEnd + (p.size - p.sizeEnd) * t;
+    const alpha = p.a * t;
+    if (size <= 0.2 || alpha <= 0.02) continue;
+    ctx.globalAlpha = alpha;
+    if (p.kind === 'star') {
+      ctx.fillStyle = 'rgb(' + p.r + ',' + p.g + ',' + p.b + ')';
+      const r = size;
+      ctx.beginPath();
+      for (let k = 0; k < 4; k++) {
+        const a = -Math.PI / 2 + k * Math.PI / 2;
+        const a2 = a + Math.PI / 4;
+        if (k === 0) ctx.moveTo(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r);
+        else ctx.lineTo(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r);
+        ctx.lineTo(p.x + Math.cos(a2) * r * 0.35, p.y + Math.sin(a2) * r * 0.35);
+      }
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgb(' + p.r + ',' + p.g + ',' + p.b + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
 
 let fishes = [];
 let score = 0;
@@ -1326,17 +1552,13 @@ function createFish() {
     rewardEnergy = SMALL_FISH_ENERGY;
     fishTier = 'small';
   }
-  // 小黃魚與黃魚各增加 3 種類（variant 0/1/2），用體型與色調區分
+  // 小魚 A／B／C、魚 A／B／C（variant 0/1/2）→ 各自獨立圖片，不再靠色調區分
   const fishVariant = (color === "gold") ? Math.floor(Math.random() * 3) : 0;
-  let sizeScale = 1;
+  let sizeScale = 1; // 以各種類原圖尺寸為準
   let animSpeed = 4;
   if (fishTier === 'small') {
-    // 小黃魚 3 種：體型略小且有差異 (約 0.72 / 0.82 / 0.92)
-    sizeScale = 0.72 + fishVariant * 0.10;
     animSpeed = 3.6 + fishVariant * 0.4;
   } else if (fishTier === 'mid') {
-    // 黃魚 3 種：體型接近原本，略有差異 (1.0 / 1.08 / 1.16)
-    sizeScale = 1.0 + fishVariant * 0.08;
     animSpeed = 3.8 + fishVariant * 0.3;
   }
   const face = Math.random() < 0.5 ? 'smile' : 'dot';
@@ -1390,62 +1612,124 @@ function spawnFish() {
   }
 }
 
-// --- 新增：小黃魚群（週期性大量小魚）相關設定 ---
+// --- 小黃魚群（週期性大量小魚）---
+// 優化重點：同批共享游向／速度帶／波段，進場錯開 X，Y 集中在窄帶，看起來像「成群游過」而不是各自亂竄
 const FISH_SCHOOL_INTERVAL = 35000;       // 每隔幾毫秒觸發一次小黃魚群（35 秒）
-const FISH_SCHOOL_BATCH_SIZE = 30;        // 每一批生成幾隻小黃魚
-const FISH_SCHOOL_BATCH_INTERVAL = 500;   // 每批之間間隔幾毫秒（0.5 秒生成一批）
-const FISH_SCHOOL_BATCH_COUNT = 10;       // 一輪總共生成幾批（10 批 x 30 隻 = 共 300 隻）
-const FISH_SCHOOL_SIZE_SCALE = 0.5;       // 小黃魚體型＝正常黃魚的一半
-let fishSchoolTimer = null;      // 35 秒倒數計時器
-let fishSchoolBatchTimer = null; // 每批之間 0.5 秒的計時器
+const FISH_SCHOOL_BATCH_SIZE = 24;        // 每一批隻數（略降以減輕繪製壓力）
+const FISH_SCHOOL_BATCH_INTERVAL = 550;   // 每批間隔
+const FISH_SCHOOL_BATCH_COUNT = 8;        // 一輪批次數（約 192 隻／輪，比原本 300 更穩）
+const FISH_SCHOOL_SIZE_SCALE = 0.5;       // 體型＝正常魚約一半
+const FISH_SCHOOL_BAND_H = 110;           // 同一批魚的垂直活動帶高度（越小越緊密）
+const FISH_SCHOOL_X_SPREAD = 140;         // 同批進場時沿游向錯開的最大距離
+const FISH_SCHOOL_MAX_ALIVE = 160;        // 畫面中魚群成員上限，避免堆積過卡
+let fishSchoolTimer = null;
+let fishSchoolBatchTimer = null;
+// 每一批共用的「群組參數」，讓同批看起來像同一群
+let schoolBatchId = 0;
 
-// 建立小黃魚群裡的一隻魚：固定從左邊或右邊進場（不像一般魚是隨機挑邊），
-// 速度是「大黃魚」（也就是一般黃魚 mid 等級）的兩倍，體型縮小成一半。
-function createSchoolFish(fromLeft) {
-  const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN; // 畫面外
+function createSchoolFish(fromLeft, batchMeta, indexInBatch, batchSize) {
   const dir = fromLeft ? 1 : -1;
-  // 「大黃魚」＝一般黃魚 mid 等級的速度公式（1.4 ~ 2.31），這裡直接取同樣公式再乘以 2 倍
-  const bigFishSpeed = 1.4 + Math.random() * 0.91;
-  // 小黃魚群也套用 3 種類：速度與體型微調
+  // 沿游向錯開：不要同一幀疊成一堵牆，而是斜向魚流
+  const laneT = batchSize > 1 ? (indexInBatch / (batchSize - 1)) : 0.5;
+  const xOffset = laneT * FISH_SCHOOL_X_SPREAD;
+  const x = fromLeft
+    ? (-SPAWN_MARGIN - xOffset)
+    : (canvas.width + SPAWN_MARGIN + xOffset);
+
+  // 速度：以批次基準速為中心，只做很小抖動 → 前後不會散開太快
+  const speedJitter = 0.92 + Math.random() * 0.16;
+  const speed = batchMeta.baseSpeed * speedJitter;
+
+  // Y：集中在本批「魚群帶」內，再微幅分層（上中下三層），形成立體魚流
+  const layer = indexInBatch % 3; // 0/1/2
+  const layerOffset = (layer - 1) * (FISH_SCHOOL_BAND_H * 0.28);
+  const baseY = batchMeta.bandCenterY + layerOffset
+    + (Math.random() - 0.5) * (FISH_SCHOOL_BAND_H * 0.35);
+
   const fishVariant = Math.floor(Math.random() * 3);
-  const speed = bigFishSpeed * 2 * (0.92 + fishVariant * 0.06);
-  const baseY = Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY();
-  // 群游小黃魚 3 種體型：以 0.5 為基準再微調
-  const sizeScale = FISH_SCHOOL_SIZE_SCALE * (0.88 + fishVariant * 0.08);
+  const sizeScale = FISH_SCHOOL_SIZE_SCALE * (0.9 + fishVariant * 0.05);
+
+  // 波段：共享主相位 + 極小個體差，上下浮動幾乎同步（成群感）
+  const bobPhase = batchMeta.bobPhase + (Math.random() - 0.5) * 0.35 + layer * 0.2;
+  const bobSpeed = batchMeta.bobSpeed * (0.95 + Math.random() * 0.1);
+  const bobAmplitude = batchMeta.bobAmplitude * (0.85 + Math.random() * 0.3);
+
+  // 游動幀：同批共享 animTime 基準，再錯開一點，避免齊刷刷換幀
+  const animTime = batchMeta.animSeed + laneT * 0.4 + Math.random() * 0.15;
+
   return {
     x,
     y: baseY,
     baseY,
-    bobPhase: Math.random() * Math.PI * 2,
-    bobSpeed: 0.5 + Math.random() * 0.9,
-    bobAmplitude: 12 + Math.random() * 20,
+    bobPhase,
+    bobSpeed,
+    bobAmplitude,
     bobTime: 0,
     speed,
     dir,
     caught: false,
     lifting: false,
     flying: false,
-    color: "gold",           // 沿用一般黃魚的圖片與動畫
-    fishTier: "school",      // 獨立的等級標籤，不影響原本 small/mid/bad 的判斷
-    fishVariant,             // 0/1/2：小黃魚 3 種類
+    color: "gold",
+    fishTier: "school",
+    fishVariant,
     rewardScore: SMALL_FISH_SCORE,
     rewardEnergy: SMALL_FISH_ENERGY,
     face: Math.random() < 0.5 ? 'smile' : 'dot',
     fadeOut: false,
     alpha: 1,
     fadeElapsed: 0,
-    animTime: 0,
-    animSpeed: 3.6 + fishVariant * 0.4,
+    animTime,
+    // 魚群用較慢換幀，減少「每隻各自狂閃」的雜訊感，也略省繪圖負擔
+    animSpeed: 2.4 + fishVariant * 0.25,
     liftAnimTime: 0,
-    sizeScale // 繪製時的縮放比例
+    sizeScale,
+    schoolBatchId: batchMeta.id,
+    // 魚群專用：水平微幅正弦（與 bob 不同相位），讓路徑有輕微蛇行
+    schoolWobblePhase: batchMeta.bobPhase + Math.PI * 0.5 + laneT,
+    schoolWobbleAmp: 6 + Math.random() * 8
   };
 }
 
-// 產生「一批」小黃魚：前一半從左邊出現、後一半從右邊出現
+// 產生一批：整批同一方向，形成一道魚流（不是左右對衝）
 function spawnFishSchoolBatch() {
-  const half = Math.floor(FISH_SCHOOL_BATCH_SIZE / 2);
+  // 超過上限時先清掉已游出／最舊的魚群成員，避免陣列無限膨脹
+  let schoolCount = 0;
+  for (let i = 0; i < fishes.length; i++) {
+    if (fishes[i].fishTier === 'school' && !fishes[i].lifting && !fishes[i].caught) schoolCount++;
+  }
+  if (schoolCount >= FISH_SCHOOL_MAX_ALIVE) {
+    // 丟掉最前面若干隻未在吊起中的 school 魚
+    let needDrop = schoolCount - FISH_SCHOOL_MAX_ALIVE + FISH_SCHOOL_BATCH_SIZE;
+    for (let i = 0; i < fishes.length && needDrop > 0; i++) {
+      const f = fishes[i];
+      if (f.fishTier === 'school' && !f.lifting && !f.caught && !f.fadeOut) {
+        f.removeMe = true;
+        needDrop--;
+      }
+    }
+    fishes = fishes.filter(f => !f.removeMe);
+  }
+
+  schoolBatchId++;
+  const fromLeft = Math.random() < 0.5;
+  const top = getFishTopY();
+  const bottom = getFishBottomY();
+  const usable = Math.max(40, bottom - top - FISH_SCHOOL_BAND_H);
+  const bandCenterY = top + FISH_SCHOOL_BAND_H * 0.5 + Math.random() * usable;
+
+  const batchMeta = {
+    id: schoolBatchId,
+    baseSpeed: (1.4 + Math.random() * 0.7) * 2.1, // 略快於一般魚，整批一致
+    bandCenterY,
+    bobPhase: Math.random() * Math.PI * 2,
+    bobSpeed: 1.1 + Math.random() * 0.5,
+    bobAmplitude: 10 + Math.random() * 8,
+    animSeed: Math.random() * 3
+  };
+
   for (let i = 0; i < FISH_SCHOOL_BATCH_SIZE; i++) {
-    fishes.push(createSchoolFish(i < half));
+    fishes.push(createSchoolFish(fromLeft, batchMeta, i, FISH_SCHOOL_BATCH_SIZE));
   }
 }
 
@@ -1491,20 +1775,68 @@ bootImg.src = 'img/boots.png';
 // 新增：預載罐頭圖片
 const canImg = new Image();
 canImg.src = 'img/can.png';
-// 新增：預載黃色魚圖片
+// 新增：預載黃色魚圖片（通用備援動畫）
 const yellowFishImg = new Image();
 yellowFishImg.src = 'img/yellow_fish.png';
-// 新增：預載黃色魚圖片2
 const yellowFishImg2 = new Image();
 yellowFishImg2.src = 'img/yellow_fish2.png';
-// 新增：預載黃色魚圖片3
 const yellowFishImg3 = new Image();
 yellowFishImg3.src = 'img/yellow_fish3.png';
-// 新增：預載黃色魚被吊起圖片4、5（吊起動畫，0.5秒切換一張）
 const yellowFishImg4 = new Image();
 yellowFishImg4.src = 'img/yellow_fish4.png';
 const yellowFishImg5 = new Image();
 yellowFishImg5.src = 'img/yellow_fish5.png';
+
+// 小魚 A／B／C、魚 A／B／C 各一組獨立素材
+// 命名規則（請把額外圖片放在 img/）：
+//   小魚：small_fish_a.png ~ small_fish_a5.png、small_fish_b…、small_fish_c…
+//   魚：  fish_a.png ~ fish_a5.png、fish_b…、fish_c…
+// 至少放 1 張（xxx.png）即可顯示；2/3 為游動幀、4/5 為吊起幀（沒有則自動回退）
+function loadFishAnimSet(prefix) {
+  const frames = [];
+  for (let i = 1; i <= 5; i++) {
+    const img = new Image();
+    // 第 1 幀：prefix.png；其餘：prefix2.png … prefix5.png
+    img.src = i === 1 ? ('img/' + prefix + '.png') : ('img/' + prefix + i + '.png');
+    frames.push(img);
+  }
+  return frames; // [0]=游1, [1]=游2, [2]=游3, [3]=吊1, [4]=吊2
+}
+const SMALL_FISH_VARIANT_KEYS = ['small_fish_a', 'small_fish_b', 'small_fish_c'];
+const MID_FISH_VARIANT_KEYS = ['fish_a', 'fish_b', 'fish_c'];
+const smallFishAnimSets = SMALL_FISH_VARIANT_KEYS.map(loadFishAnimSet);
+const midFishAnimSets = MID_FISH_VARIANT_KEYS.map(loadFishAnimSet);
+const defaultYellowAnimSet = [yellowFishImg, yellowFishImg2, yellowFishImg3, yellowFishImg4, yellowFishImg5];
+
+function getGoldFishAnimSet(fish) {
+  const variant = (typeof fish.fishVariant === 'number') ? fish.fishVariant : 0;
+  const idx = Math.max(0, Math.min(2, variant));
+  if (fish.fishTier === 'small' || fish.fishTier === 'school') {
+    return smallFishAnimSets[idx] || defaultYellowAnimSet;
+  }
+  if (fish.fishTier === 'mid') {
+    return midFishAnimSets[idx] || defaultYellowAnimSet;
+  }
+  return defaultYellowAnimSet;
+}
+
+// 從一組動畫裡挑出「已成功載入」的圖；缺幀時往回退到同組可用幀或通用黃魚
+function pickAnimFrame(set, frameIndex, fallbackSet) {
+  const tryList = [];
+  if (set && set[frameIndex]) tryList.push(set[frameIndex]);
+  if (set) {
+    for (let i = 0; i < set.length; i++) tryList.push(set[i]);
+  }
+  if (fallbackSet) {
+    if (fallbackSet[frameIndex]) tryList.push(fallbackSet[frameIndex]);
+    for (let i = 0; i < fallbackSet.length; i++) tryList.push(fallbackSet[i]);
+  }
+  for (let i = 0; i < tryList.length; i++) {
+    const img = tryList[i];
+    if (img && img.complete && img.naturalWidth > 0) return img;
+  }
+  return null;
+}
 // 新增：預載紫色魚圖片
 const purpleFishImg = new Image();
 purpleFishImg.src = 'img/purple_fish.png';
@@ -1545,7 +1877,7 @@ hotpotCupImg.src = 'img/hotpot_cup.png';
 const squidImg = new Image();
 squidImg.src = 'img/squid.png';
 
-// 新增：預載海膽圖片
+// 新增：預載海膽圖片（舊素材保留，若檔案仍在可作備援）
 const seaUrchinImg = new Image();
 seaUrchinImg.src = 'img/seaurchin.png';
 
@@ -1555,8 +1887,7 @@ octopusImg.src = 'img/octopus.png';
 
 // 新增：預載海參圖片
 const seaCucumberImg = new Image();
-seaCucumberImg.src = 'img/seacucumber.png'; // 對應實際檔名 seacucumber.png（先前這裡混進了看不見的零寬空白字元，導致實際請求的檔名跟真正的檔案對不上，已清除）
-// 添加圖片載入錯誤處理
+seaCucumberImg.src = 'img/seacucumber.png';
 seaCucumberImg.onerror = function() {
   console.error('海參圖片載入失敗:', seaCucumberImg.src);
 };
@@ -1566,14 +1897,23 @@ seaCucumberImg.onload = function() {
 
 // 新增：預載海參圖片2
 const seaCucumberImg2 = new Image();
-seaCucumberImg2.src = 'img/seacucumber2.png'; // 對應實際檔名 seacucumber2.png（無底線）
-// 添加圖片載入錯誤處理
+seaCucumberImg2.src = 'img/seacucumber2.png';
 seaCucumberImg2.onerror = function() {
   console.error('海參圖片2載入失敗:', seaCucumberImg2.src);
 };
 seaCucumberImg2.onload = function() {
   console.log('海參圖片2載入成功');
 };
+
+// 新增：海龜／水母／星星／西瓜（額外素材）
+const turtleImg = new Image();
+turtleImg.src = 'img/turtle.png';
+const jellyfishImg = new Image();
+jellyfishImg.src = 'img/jellyfish.png';
+const starImg = new Image();
+starImg.src = 'img/star.png';
+const watermelonImg = new Image();
+watermelonImg.src = 'img/watermelon.png';
 
 // 新增：元氣量表填色用的圖片（はらへり條紋圖，取代原本的紅橘漸層）
 const energyGaugeImg = new Image();
@@ -1598,10 +1938,14 @@ energyLabelImg.src = 'img/ui_2.png';
 const REAL_IMG_SIZE = {
   boot: { w: 54, h: 60 },        // img/boots.png（雨鞋）
   can: { w: 45, h: 66 },         // img/can.png（罐頭）
-  seaurchin: { w: 66, h: 60 },   // img/seaurchin.png（海膽）
+  seaurchin: { w: 66, h: 60 },   // img/seaurchin.png（海膽，舊）
+  watermelon: { w: 56, h: 48 },  // img/watermelon.png（西瓜）
   squid: { w: 132, h: 66 },      // img/squid.png（魷魚）
   octopus: { w: 70, h: 41 },     // img/octopus.png（章魚）
-  seacucumber: { w: 42, h: 13 }, // img/sea​​cucumber.png（海參，較窄的那張）
+  turtle: { w: 90, h: 60 },      // img/turtle.png（海龜）
+  jellyfish: { w: 70, h: 80 },   // img/jellyfish.png（水母）
+  star: { w: 48, h: 48 },        // img/star.png（星星）
+  seacucumber: { w: 42, h: 13 }, // img/seacucumber.png（海參）
   yellowFish: { w: 65, h: 32 },  // img/yellow_fish.png（黃魚）
   purpleFish: { w: 65, h: 32 }   // img/purple_fish.png（紫魚）
 };
@@ -1628,8 +1972,12 @@ function getCatchHalfSize(kind, padScaleX, padScaleY) {
     case 'can': size = getImgDrawSize(canImg, 'can'); break;
     case 'bottle': size = getImgDrawSize(bootImg, 'boot'); break;
     case 'seaurchin': size = getImgDrawSize(seaUrchinImg, 'seaurchin'); break;
+    case 'watermelon': size = getImgDrawSize(watermelonImg, 'watermelon'); break;
     case 'squid': size = getImgDrawSize(squidImg, 'squid'); break;
     case 'octopus': size = getImgDrawSize(octopusImg, 'octopus'); break;
+    case 'turtle': size = getImgDrawSize(turtleImg, 'turtle'); break;
+    case 'jellyfish': size = getImgDrawSize(jellyfishImg, 'jellyfish'); break;
+    case 'star': size = getImgDrawSize(starImg, 'star'); break;
     case 'seacucumber': size = getImgDrawSize(seaCucumberImg, 'seacucumber'); break;
     case 'yellowFish': size = getImgDrawSize(yellowFishImg, 'yellowFish'); break;
     case 'purpleFish': size = getImgDrawSize(purpleFishImg, 'purpleFish'); break;
@@ -1712,23 +2060,40 @@ let specialSeaCreature = null; // 取代 squid
 let specialSeaCreatureTimer = null;
 const SPECIAL_CREATURE_INTERVAL = 8000; // 原版節奏比較稀疏，降低特殊目標頻率
 function createSpecialSeaCreature() {
-  // 隨機生成魷魚、章魚或海參
-  const types = ['squid', 'octopus', 'seacucumber'];
-  const type = types[Math.floor(Math.random() * types.length)];
+  // 隨機生成：魷魚／章魚／海龜／海參／水母／星星
+  // 星星較稀有；海參較常見偏低；水母中等
+  const roll = Math.random();
+  let type;
+  if (roll < 0.08) type = 'star';
+  else if (roll < 0.22) type = 'jellyfish';
+  else if (roll < 0.38) type = 'seacucumber';
+  else if (roll < 0.55) type = 'turtle';
+  else if (roll < 0.78) type = 'octopus';
+  else type = 'squid';
+
   const fromLeft = Math.random() < 0.5;
   const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
   const dir = fromLeft ? 1 : -1;
   let speed = 2.2 + Math.random() * 1.5;
-  let animSpeed = 2; // 預設動畫速度
+  let animSpeed = 2;
   if (type === 'squid') {
     speed += 0.5;
     animSpeed = 2.5;
   } else if (type === 'octopus') {
     speed += 0.2;
     animSpeed = 2;
+  } else if (type === 'turtle') {
+    speed = 1.6 + Math.random() * 0.9;
+    animSpeed = 1.6;
+  } else if (type === 'jellyfish') {
+    speed = 1.3 + Math.random() * 0.8;
+    animSpeed = 1.8;
+  } else if (type === 'star') {
+    speed = 1.8 + Math.random() * 1.0;
+    animSpeed = 2.2;
   } else if (type === 'seacucumber') {
-    speed = 1.5 + Math.random() * 1.0; // 海參速度較慢
-    animSpeed = 2; // 海參動畫速度
+    speed = 1.5 + Math.random() * 1.0;
+    animSpeed = 2;
   }
   return {
     type,
@@ -1738,7 +2103,7 @@ function createSpecialSeaCreature() {
     dir,
     caught: false,
     lifting: false,
-    flying: false, // 新增：是否已經進入「飛向碗」動畫階段
+    flying: false,
     flyT: 0,
     fadeOut: false,
     alpha: 1,
@@ -1798,24 +2163,38 @@ function drawSpecialSeaCreature(creature) {
   if (!creature.lifting && !creature.caught) {
     creature.animTime += deltaTime / 1000; // 轉換為秒
   }
-  let currentImg;
+  let currentImg = null;
   if (creature.type === 'squid') {
     currentImg = squidImg;
   } else if (creature.type === 'octopus') {
     currentImg = octopusImg;
+  } else if (creature.type === 'turtle') {
+    currentImg = turtleImg;
+  } else if (creature.type === 'jellyfish') {
+    currentImg = jellyfishImg;
+  } else if (creature.type === 'star') {
+    currentImg = starImg;
   } else {
-    // 預設 sea cucumber 動畫
     const useSecondImage = Math.floor(creature.animTime * creature.animSpeed) % 2 === 1;
     currentImg = useSecondImage ? seaCucumberImg2 : seaCucumberImg;
   }
   if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
-    ctx.drawImage(
-      currentImg,
-      -currentImg.naturalWidth / 2,
-      -currentImg.naturalHeight / 2
-    );
+    // 星星輕微旋轉閃爍
+    if (creature.type === 'star') {
+      const spin = (creature.animTime || 0) * 1.5;
+      ctx.rotate(spin);
+      const pulse = 1 + Math.sin((creature.animTime || 0) * 4) * 0.08;
+      const w = currentImg.naturalWidth * pulse;
+      const h = currentImg.naturalHeight * pulse;
+      ctx.drawImage(currentImg, -w / 2, -h / 2, w, h);
+    } else {
+      ctx.drawImage(
+        currentImg,
+        -currentImg.naturalWidth / 2,
+        -currentImg.naturalHeight / 2
+      );
+    }
   } else if (creature.type === 'squid') {
-    // 佔位圖形：對應 squid.png（132x66，橢圓身體＋左側一叢細長觸手）
     const hw = REAL_IMG_SIZE.squid.w / 2, hh = REAL_IMG_SIZE.squid.h / 2;
     ctx.fillStyle = '#c9cdd3';
     ctx.beginPath();
@@ -1834,7 +2213,6 @@ function drawSpecialSeaCreature(creature) {
     ctx.arc(hw * 0.4, -hh * 0.15, 3, 0, Math.PI * 2);
     ctx.fill();
   } else if (creature.type === 'octopus') {
-    // 佔位圖形：對應 octopus.png（70x41，圓頭＋下方波浪狀觸手）
     const hw = REAL_IMG_SIZE.octopus.w / 2, hh = REAL_IMG_SIZE.octopus.h / 2;
     ctx.fillStyle = '#b7bec7';
     ctx.beginPath();
@@ -1854,8 +2232,56 @@ function drawSpecialSeaCreature(creature) {
     ctx.beginPath();
     ctx.arc(hw * 0.3, -hh * 0.35, 2.5, 0, Math.PI * 2);
     ctx.fill();
+  } else if (creature.type === 'turtle') {
+    const hw = REAL_IMG_SIZE.turtle.w / 2, hh = REAL_IMG_SIZE.turtle.h / 2;
+    ctx.fillStyle = '#4a9e6e';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, hw * 0.7, hh * 0.65, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#3a7a55';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, hw * 0.45, hh * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5bbf80';
+    ctx.beginPath();
+    ctx.arc(hw * 0.55, -hh * 0.1, hh * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(hw * 0.7, -hh * 0.15, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (creature.type === 'jellyfish') {
+    const hw = REAL_IMG_SIZE.jellyfish.w / 2, hh = REAL_IMG_SIZE.jellyfish.h / 2;
+    ctx.fillStyle = 'rgba(180, 140, 255, 0.85)';
+    ctx.beginPath();
+    ctx.ellipse(0, -hh * 0.25, hw * 0.7, hh * 0.45, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(150, 100, 230, 0.7)';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    for (let i = -3; i <= 3; i++) {
+      const tx = i * (hw * 0.18);
+      ctx.beginPath();
+      ctx.moveTo(tx, -hh * 0.05);
+      ctx.quadraticCurveTo(tx + (i % 2 === 0 ? 4 : -4), hh * 0.4, tx * 0.7, hh * 0.85);
+      ctx.stroke();
+    }
+  } else if (creature.type === 'star') {
+    const r = REAL_IMG_SIZE.star.w / 2;
+    ctx.fillStyle = '#ffd24a';
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+      const a2 = a + Math.PI / 5;
+      const outer = r;
+      const inner = r * 0.42;
+      if (i === 0) ctx.moveTo(Math.cos(a) * outer, Math.sin(a) * outer);
+      else ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
+      ctx.lineTo(Math.cos(a2) * inner, Math.sin(a2) * inner);
+    }
+    ctx.closePath();
+    ctx.fill();
   } else {
-    // 佔位圖形：對應海參圖片（sea​​cucumber.png 系列，細長膠囊狀身體）
     const key = (currentImg === seaCucumberImg2) ? 'seacucumber2' : 'seacucumber';
     const w = (key === 'seacucumber2') ? 39 : REAL_IMG_SIZE.seacucumber.w;
     const h = (key === 'seacucumber2') ? 19 : REAL_IMG_SIZE.seacucumber.h;
@@ -1879,8 +2305,8 @@ function drawSpecialSeaCreature(creature) {
   ctx.restore();
 }
 function createTrash() {
-  // 加入海膽類型
-  const types = ['can', 'bottle', 'seaurchin'];
+  // 垃圾：罐頭、雨鞋、西瓜（西瓜扣元氣較重）
+  const types = ['can', 'bottle', 'watermelon'];
   const type = types[Math.floor(Math.random() * types.length)];
   const fromLeft = Math.random() < 0.5;
   const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
@@ -1973,8 +2399,32 @@ function drawTrash(trash) {
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
+  } else if (trash.type === 'watermelon') {
+    // 西瓜
+    if (watermelonImg.complete && watermelonImg.naturalWidth > 0) {
+      ctx.drawImage(
+        watermelonImg,
+        -watermelonImg.naturalWidth / 2,
+        -watermelonImg.naturalHeight / 2
+      );
+    } else {
+      const hw = REAL_IMG_SIZE.watermelon.w / 2, hh = REAL_IMG_SIZE.watermelon.h / 2;
+      ctx.fillStyle = '#2ecc71';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, hw, hh * 0.9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#27ae60';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, hw * 0.55, hh * 0.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, hw * 0.35, hh * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   } else if (trash.type === 'seaurchin') {
-    // 顯示海膽圖片
+    // 舊海膽備援
     if (seaUrchinImg.complete && seaUrchinImg.naturalWidth > 0) {
       ctx.drawImage(
         seaUrchinImg,
@@ -1982,7 +2432,6 @@ function drawTrash(trash) {
         -seaUrchinImg.naturalHeight / 2
       );
     } else {
-      // 圖片尚未載入時，顯示貼近 seaurchin.png（66x60）外形的佔位圖形：深灰圓球＋放射狀尖刺
       const hw = REAL_IMG_SIZE.seaurchin.w / 2, hh = REAL_IMG_SIZE.seaurchin.h / 2;
       const r = Math.min(hw, hh) * 0.55;
       ctx.strokeStyle = '#3a3a3a';
@@ -2237,40 +2686,39 @@ function drawFish(fish) {
     ctx.globalAlpha = fish.alpha;
   }
   if (fish.color === 'gold') {
-    // 小黃魚 / 黃魚各 3 種類：用色調偏移區分外觀（不需額外圖片素材）
+    // 小魚 A／B／C、魚 A／B／C：優先使用各種類獨立素材；缺圖時回退到通用黃魚動畫
     const variant = (typeof fish.fishVariant === 'number') ? fish.fishVariant : 0;
-    const hueOffsets = [0, 22, -18]; // 種類0：原本金黃；種類1：偏橘；種類2：偏檸檬
-    const sats = [1.05, 1.15, 0.95];
-    ctx.filter = `hue-rotate(${hueOffsets[variant]}deg) saturate(${sats[variant]})`;
-    let currentImg;
+    const animSet = getGoldFishAnimSet(fish);
+    let currentImg = null;
     if (fish.lifting || fish.caught) {
-      // 被吊起、以及被吊入碗裡的瞬間都維持這個動畫（yellow_fish4 / yellow_fish5，0.2秒切換一張），不要跳回游泳圖
       if (typeof fish.liftAnimTime !== 'number') fish.liftAnimTime = 0;
-      fish.liftAnimTime += deltaTime / 1000; // 轉換為秒
-      const liftFrame = Math.floor(fish.liftAnimTime * 5) % 2; // 0.2秒切換一次，2張圖循環
-      currentImg = (liftFrame === 0) ? yellowFishImg4 : yellowFishImg5;
+      fish.liftAnimTime += deltaTime / 1000;
+      const liftFrame = Math.floor(fish.liftAnimTime * 5) % 2;
+      currentImg = pickAnimFrame(animSet, 3 + liftFrame, defaultYellowAnimSet);
     } else {
-      // 更新動畫時間（僅黃魚游動時）
       if (!fish.caught) {
-        fish.animTime += deltaTime / 1000; // 轉換為秒
+        fish.animTime += deltaTime / 1000;
       }
-      // 根據動畫時間決定使用哪張圖片（0.25秒切換一次）
-      const animFrame = Math.floor(fish.animTime * fish.animSpeed) % 3; // 3張圖片循環
-      if (animFrame === 0) currentImg = yellowFishImg;
-      else if (animFrame === 1) currentImg = yellowFishImg2;
-      else currentImg = yellowFishImg3;
+      // 魚群：較慢換幀 + 優先用已快取的單幀，減少每隻每幀掃描整組圖
+      const animFrame = Math.floor(fish.animTime * fish.animSpeed) % 3;
+      if (fish.fishTier === 'school' && fish._cachedSwimImg && fish._cachedSwimFrame === animFrame) {
+        currentImg = fish._cachedSwimImg;
+      } else {
+        currentImg = pickAnimFrame(animSet, animFrame, defaultYellowAnimSet);
+        if (fish.fishTier === 'school' && currentImg) {
+          fish._cachedSwimImg = currentImg;
+          fish._cachedSwimFrame = animFrame;
+        }
+      }
     }
 
-    // 用黃色魚圖片（原尺寸，置中）
-    if (currentImg.complete && currentImg.naturalWidth > 0) {
+    if (currentImg) {
       ctx.drawImage(
         currentImg,
         -currentImg.naturalWidth / 2,
         -currentImg.naturalHeight / 2
       );
     } else {
-      // 尚未載入時，顯示貼近 yellow_fish.png（65x32）尺寸比例的黃色魚形佔位圖
-      // 佔位圖也依種類微調顏色
       const variantColors = ['gold', '#ffb347', '#ffe066'];
       const hw = REAL_IMG_SIZE.yellowFish.w / 2, hh = REAL_IMG_SIZE.yellowFish.h / 2;
       ctx.fillStyle = variantColors[variant] || 'gold';
@@ -2288,7 +2736,6 @@ function drawFish(fish) {
       ctx.arc(hw * 0.55, -hh * 0.2, 2, 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.filter = 'none';
   } else if (fish.color === "#fcf") {
     let currentImg;
     if (fish.lifting || fish.caught) {
@@ -2939,6 +3386,7 @@ function gameLoop(currentTime) {
           hookVelY = hookFallVelY; // 保留碰水當下的下沉動量，讓鉤子自然接著往下沉，而不是瞬間停住
           hookVelX = hookFallVelX * 0.3;
           hookAutoSinking = true; // 進入「自動下沉到海底」狀態，直到碰底或玩家操作為止
+          fxHookSplash(hookDrawX, waterYHere); // 入水濺花
         }
       }
     } else {
@@ -2999,29 +3447,33 @@ function gameLoop(currentTime) {
     // 畫魚
     for (let fish of fishes) {
       if (!fish.caught) {
-        fish.x += fish.speed * fish.dir * timeScale;
-        // 新增：讓魚一邊游一邊隨機上下浮動（被釣起／正在下沉回海裡的魚不套用，
-        // 不然這裡改掉的 y 會蓋掉「跟著釣線／鉤子移動」或「下沉動畫」用的座標，導致魚吊不起來）
-        if (!fish.lifting && !fish.falling) {
+        // 魚群：水平略加正弦蛇行，路徑更有群游感（一般魚維持直線）
+        if (fish.fishTier === 'school' && !fish.lifting && !fish.falling) {
           fish.bobTime = (fish.bobTime || 0) + deltaTime / 1000;
+          const wobble = Math.sin(fish.bobTime * 1.3 + (fish.schoolWobblePhase || 0)) * (fish.schoolWobbleAmp || 0);
+          fish.x += (fish.speed * fish.dir + wobble * 0.04 * fish.dir) * timeScale;
           fish.y = fish.baseY + Math.sin(fish.bobTime * fish.bobSpeed + fish.bobPhase) * fish.bobAmplitude;
+        } else {
+          fish.x += fish.speed * fish.dir * timeScale;
+          if (!fish.lifting && !fish.falling) {
+            fish.bobTime = (fish.bobTime || 0) + deltaTime / 1000;
+            fish.y = fish.baseY + Math.sin(fish.bobTime * fish.bobSpeed + fish.bobPhase) * fish.bobAmplitude;
+          }
         }
-        // 如果游出畫面：
-        // - 一般魚：直接原地重生成一條新魚（維持畫面上魚的總數固定）
-        // - 小黃魚群的魚：游出畫面就直接消失、不再補新的，
-        //   這樣一群魚游完之後就會恢復成只有一般魚，並乾淨地等待下一次 35 秒倒數
+        // 游出畫面：一般魚重生；魚群成員直接移除
         if ((fish.dir === 1 && fish.x > canvas.width + SPAWN_MARGIN) || (fish.dir === -1 && fish.x < -SPAWN_MARGIN)) {
           if (fish.fishTier === 'school') {
             fish.removeMe = true;
-            continue; // 不畫也不補新魚，直接跳過
+            continue;
           }
           Object.assign(fish, createFish());
         }
       } else if (fish.fadeOut) {
-        // 已經被釣中、正在淡出：跟著碗一起移動，不要卡死在畫面固定座標上
         fish.x = bowlX + (fish.caughtOffsetX || 0);
         fish.y = bowlY + (fish.caughtOffsetY || 0);
       }
+      // 畫面外不畫（仍更新位置），減輕魚群高峰時的繪製量
+      if (fish.x < -SPAWN_MARGIN - 20 || fish.x > canvas.width + SPAWN_MARGIN + 20) continue;
       drawFish(fish);
     }
     // 把游出畫面的小黃魚群成員從陣列中移除，避免牠們一直留在 fishes 裡佔用數量
@@ -3097,8 +3549,12 @@ function gameLoop(currentTime) {
             penaltySound.currentTime = 0;
             setTimeout(() => penaltySound.play(), 1000); // 延遲1秒播放
             if (timeLeft > 0 && !gameOver) {
-              timeLeft = Math.max(0, timeLeft - TRASH_PENALTY);
+              // 西瓜扣元氣較重，其餘（can / boots）用預設值
+              const penalty = (trash.type === 'watermelon') ? TRASH_WATERMELON_PENALTY : TRASH_PENALTY;
+              timeLeft = Math.max(0, timeLeft - penalty);
+              fxEnergyPenalty(trash.x, trash.y, penalty);
             }
+            fxPotCatch(trash.x, trash.y, false);
             trash.lifting = false;
             trash.everAboveWater = false;
           }
@@ -3187,32 +3643,38 @@ function gameLoop(currentTime) {
         let inPot = isEnteringPotFromAbove(specialSeaCreature.x, specialSeaCreature.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
         if (inPot && timeLeft > 0 && !gameOver) {
           specialSeaCreature.caught = true;
-          // 記錄收集到的魚種類（魷魚／章魚／海參）
-          if (specialSeaCreature.type === 'squid') collectedFishTypes.add('squid');
-          else if (specialSeaCreature.type === 'octopus') collectedFishTypes.add('octopus');
-          else if (specialSeaCreature.type === 'seacucumber') collectedFishTypes.add('seacucumber');
+          // 記錄收集到的種類
+          collectedFishTypes.add(specialSeaCreature.type);
           // 新增：記錄相對於碗的偏移量，讓特殊生物在淡出期間跟著碗一起移動
           specialSeaCreature.caughtOffsetX = specialSeaCreature.x - bowlX;
           specialSeaCreature.caughtOffsetY = specialSeaCreature.y - bowlY;
-          // 分數比例：魷魚／章魚 400、黃魚 200、小黃魚 100、海參 20（元氣依同比例縮放）
-          if (specialSeaCreature.type === 'squid') {
+          // 分數／元氣依種類
+          if (specialSeaCreature.type === 'squid' || specialSeaCreature.type === 'octopus' || specialSeaCreature.type === 'turtle') {
             score += BIG_FISH_SCORE;
             timeLeft = Math.min(GAME_TIME, timeLeft + BIG_FISH_ENERGY);
-          } else if (specialSeaCreature.type === 'octopus') {
-            score += BIG_FISH_SCORE;
-            timeLeft = Math.min(GAME_TIME, timeLeft + BIG_FISH_ENERGY);
+            playRandomFoodSound();
+            fxPotCatch(specialSeaCreature.x, specialSeaCreature.y, true);
           } else if (specialSeaCreature.type === 'seacucumber') {
             score += SEA_CUCUMBER_SCORE;
             timeLeft = Math.min(GAME_TIME, timeLeft + SEA_CUCUMBER_ENERGY);
+            playRandomFoodSound();
+            fxPotCatch(specialSeaCreature.x, specialSeaCreature.y, true);
+          } else if (specialSeaCreature.type === 'jellyfish') {
+            score += JELLYFISH_SCORE;
+            // 水母不補元氣
+            playRandomFoodSound();
+            fxPotCatch(specialSeaCreature.x, specialSeaCreature.y, true);
+          } else if (specialSeaCreature.type === 'star') {
+            // 星星：觸發一次小魚群（不額外加分）
+            collectedFishTypes.add('star');
+            spawnFishSchoolBatch();
+            playRandomCatchSound();
+            fxStarBurst(specialSeaCreature.x, specialSeaCreature.y);
           }
           // 進入漸層消失動畫
           specialSeaCreature.fadeOut = true;
           specialSeaCreature.alpha = 1;
           specialSeaCreature.fadeElapsed = 0;
-          // 新增：只有特殊生物進入fadeOut時才播放食物音效
-          if (specialSeaCreature.type === 'squid' || specialSeaCreature.type === 'octopus' || specialSeaCreature.type === 'seacucumber') {
-            playRandomFoodSound();
-          }
           // 下一隻特殊生物計時
           scheduleSpecialSeaCreature();
           // 消失（等淡出動畫完全播完再清除，時長跟其他物品一致）
@@ -3254,6 +3716,10 @@ function gameLoop(currentTime) {
         specialSeaCreature.falling = false;
       }
     }
+
+    // 粒子：更新 + 繪製（在 HUD 之下、遊戲物件之上）
+    updateParticles(deltaTime / 1000);
+    drawParticles();
 
     // 分數與元氣 HUD（樣式參考原版：分數在上、元氣量表在下）
     // 補間動畫：讓 displayTimeLeft 慢慢趨近 timeLeft
@@ -3314,8 +3780,11 @@ function gameLoop(currentTime) {
             if (fish.color === "gold") {
               score += fish.rewardScore;
               timeLeft = Math.min(GAME_TIME, timeLeft + fish.rewardEnergy);
+              fxPotCatch(fish.x, fish.y, true);
             } else if (fish.color === "#fcf") {
               timeLeft = Math.max(0, timeLeft + fish.rewardEnergy);
+              fxEnergyPenalty(fish.x, fish.y, BAD_FISH_PENALTY);
+              fxPotCatch(fish.x, fish.y, false);
             }
             // 立刻生成新魚（小黃魚群的魚被釣到後不補新魚，牠們只在魚群批次裡出現，
             // 釣完/游完就消失，等下一次 35 秒倒數才會有下一批）
@@ -3660,22 +4129,27 @@ infoBtn.addEventListener('click', () => {
   infoModal.style.display = 'flex';
   infoModalText.innerHTML = `
     <ol style="padding-left: 1.2em;">
-      <li>方向鍵移動，空白鍵或點擊畫面甩竿。</li>
-      <li>現在改成更接近原版的「元氣條」玩法，元氣會持續下降。</li>
-      <li>一般魚給小幅分數與元氣，壞魚和垃圾會扣元氣。</li>
-      <li>元氣歸零就結束，可隨時再玩一次。</li>
+      <li>左右移動角色，對準海裡的目標。</li>
+      <li>空白鍵／點擊畫面／釣魚鍵甩竿，把東西丟進火鍋。</li>
+      <li>元氣會持續下降；好魚可補回，垃圾與壞魚會扣元氣。</li>
+      <li>元氣歸零就結束。</li>
     </ol>
     <hr style="margin: 12px 0;">
-    <div style="font-size:1.1em;">
-      <b>【目前版本規則】</b><br>
+    <div style="font-size:1.05em;">
+      <b>【分數／元氣】</b><br>
       <ul style="padding-left: 1.2em;">
-        <li><b>小黃魚（3 種類）</b><br>分數：+100 分<br>元氣：+5<br><span style="font-size:0.9em;color:#666;">體型與色調略有差異</span></li>
-        <li><b>黃魚（3 種類）</b><br>分數：+200 分<br>元氣：+10<br><span style="font-size:0.9em;color:#666;">體型與色調略有差異</span></li>
-        <li><b>魷魚</b><br>分數：+400 分<br>元氣：+20</li>
-        <li><b>章魚</b><br>分數：+400 分<br>元氣：+20</li>
-        <li><b>海參</b><br>分數：+20 分<br>元氣：+1</li>
-        <li><b>紫色魚</b><br>分數：不變<br><span style="color:#e11;"><b>元氣：-8</b></span></li>
-        <li><b>垃圾</b><br>分數：不變<br><span style="color:#e11;"><b>元氣：-12</b></span></li>
+        <li><b>小魚 A／B／C</b>　分數 +100　元氣 +5</li>
+        <li><b>魚 A／B／C</b>　分數 +200　元氣 +10</li>
+        <li><b>魷魚</b>　分數 +400　元氣 +20</li>
+        <li><b>章魚</b>　分數 +400　元氣 +20</li>
+        <li><b>海龜</b>　分數 +400　元氣 +20</li>
+        <li><b>海參</b>　分數 +20　元氣 +1</li>
+        <li><b>水母</b>　分數 +300　元氣 0</li>
+        <li><b>星星</b>　觸發一次小魚群</li>
+        <li><b>紫色魚</b>　分數不變　<span style="color:#e11;"><b>元氣 -8</b></span></li>
+        <li><b>垃圾 can</b>　分數不變　<span style="color:#e11;"><b>元氣 -12</b></span></li>
+        <li><b>垃圾 boots</b>　分數不變　<span style="color:#e11;"><b>元氣 -12</b></span></li>
+        <li><b>垃圾西瓜</b>　分數不變　<span style="color:#e11;"><b>元氣 -30</b></span></li>
       </ul>
     </div>
   `;
