@@ -755,7 +755,7 @@
         <ol style="padding-left:1.2em; margin:0;">
           <li>左右移動角色，對準海裡的魚。</li>
           <li>空白鍵／點擊畫面／釣魚鍵甩竿。</li>
-          <li>把魚拉起來，對準火鍋丟進去得分。</li>
+          <li>把魚拉起來，對準雲丟進去得分。</li>
           <li>元氣會持續下降，釣到好魚可補回；垃圾與壞魚會扣元氣。</li>
           <li>元氣歸零就結束。</li>
         </ol>
@@ -777,7 +777,7 @@
   <!-- 遊戲結束 POPUP（預設隱藏） -->
   <div id="gameOverModal" style="display:none;">
     <div class="modal-content" id="gameOverModalContent" style="text-align:center;">
-      <h2 id="gameOverTitle">遊戲結束</h2>
+      <h2>遊戲結束</h2>
       <div id="gameOverStats" style="margin:16px 0; font-size:1.05em; line-height:1.9; text-align:left; padding:0 8px;">
         <!-- 統計內容由 JS 動態填入 -->
       </div>
@@ -1093,7 +1093,7 @@ const SMALL_FISH_SCORE = 100;   // 小魚 A/B/C（小魚群）
 const SMALL_FISH_ENERGY = 5;
 const MID_FISH_SCORE = 200;     // 魚 A/B/C（普通魚群）
 const MID_FISH_ENERGY = 8;
-const SHI_FISH_SCORE = 220;     // 屎屎魚（普通魚群 2%）
+const SHI_FISH_SCORE = 220;     // 屎屎魚（普通魚群 5%）
 const SHI_FISH_ENERGY = 10;
 const BIRD_FISH_SCORE = 250;    // 鳥仔魚（普通魚群 5%）
 const BIRD_FISH_ENERGY = 10;
@@ -1124,7 +1124,103 @@ const THEME_SPECIAL_INTERVAL_30 = 30000; // 餃子／心心／狗狗／熊仔
 const COMBO_SCORE_WINDOW_MS = 1000;
 const COMBO_SCORE_THRESHOLD_1000 = 1000; // 章魚／海龜
 const COMBO_SCORE_THRESHOLD_1500 = 1500; // 榴槤魚
-const MOLAMOLA_ENERGY_THRESHOLD = 45;    // Molamola：元氣 < 45
+const MOLAMOLA_ENERGY_THRESHOLD = 50;    // Molamola：元氣 < 50
+
+// ============================================================
+// 日／夜循環（依本局 elapsedGameTime）
+// DAY_NIGHT_HALF_SEC：白天或夜晚各持續秒數；完整一輪 = 2 * half
+// ============================================================
+const DAY_NIGHT_HALF_SEC = 40;
+/** @returns {'day'|'night'} */
+function getTimeOfDay() {
+  const cycle = Math.floor(elapsedGameTime / DAY_NIGHT_HALF_SEC);
+  return (cycle % 2 === 0) ? 'day' : 'night';
+}
+function isDaytime() { return getTimeOfDay() === 'day'; }
+function isNighttime() { return getTimeOfDay() === 'night'; }
+
+/** 魚種／物件允許出現時段：'all' | 'day' | 'night' */
+const APPEAR_TIME = {
+  // 普通／小魚
+  mid: 'all',
+  school: 'all',
+  // 普通池特殊
+  urchin: 'night',
+  watermelon: 'all',
+  fish_shi: 'night',
+  fish_bird: 'day',
+  // 主題特別
+  fish_cloud: 'day',
+  fish_dumpling: 'day',
+  fish_heart: 'all',
+  fish_dog: 'day',
+  fish_bear: 'night',
+  // combo / energy
+  octopus: 'night',
+  turtle: 'day',
+  fish_durian: 'day',
+  molamola: 'all',
+  fish_monster: 'all',
+  // 垃圾全日
+  can: 'all',
+  bottle: 'all',
+  boots: 'all'
+};
+
+function canAppearNow(typeOrKind) {
+  const rule = APPEAR_TIME[typeOrKind];
+  if (!rule || rule === 'all') return true;
+  return rule === getTimeOfDay();
+}
+
+/** 0 = 白天，1 = 夜晚；交界約 4 秒漸變 */
+function dayNightBlend() {
+  const half = DAY_NIGHT_HALF_SEC;
+  const edge = 4;
+  const t = elapsedGameTime % (half * 2);
+  // [0, half) day → 0；[half, 2half) night → 1
+  if (t < half - edge) return 0;
+  if (t < half + edge) return Math.max(0, Math.min(1, (t - (half - edge)) / (edge * 2)));
+  if (t < half * 2 - edge) return 1;
+  return Math.max(0, Math.min(1, 1 - (t - (half * 2 - edge)) / (edge * 2)));
+}
+
+/** 日夜提示 chip 尺寸（供特別魚提示對齊） */
+const TOD_HUD = { x: 14, w: 72, h: 26, gap: 8 };
+/** 元氣量表下方的列 Y（與 drawHUD 內 energyBox 對齊） */
+function getHudSubRowY() {
+  return 58 + 34 + 6; // energyBoxY + energyBoxH + gap
+}
+
+function drawTimeOfDayHud() {
+  if (!gameStarted || gameOver) return;
+  const night = isNighttime();
+  const label = night ? '夜晚' : '白天';
+  const icon = night ? '☾' : '☀';
+  const x = TOD_HUD.x;
+  const y = getHudSubRowY();
+  const w = TOD_HUD.w;
+  const h = TOD_HUD.h;
+  ctx.save();
+  ctx.fillStyle = night ? 'rgba(30,40,80,0.75)' : 'rgba(255,255,255,0.82)';
+  const r = 13;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = night ? '#c8d6ff' : '#4a86d8';
+  ctx.font = '600 12px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(icon + ' ' + label, x + 10, y + h / 2 + 0.5);
+  ctx.restore();
+}
+
+
 const MONSTER_ENERGY_THRESHOLD = 35;     // 水怪：元氣 < 35
 
 // 1 秒內得分：≥1000 → 章魚／海龜；≥1500 → 榴槤
@@ -2025,39 +2121,48 @@ function startHookCast() {
 // 這樣視覺上就一定是「從左邊或右邊游進來 / 游出去」，不會有一出生就已經半個身體在畫面內的「憑空出現」感。
 const SPAWN_MARGIN = 90;
 function createFish() {
-  // 普通魚群機率：
-  // 海膽 5%／西瓜 10%／屎屎 2%／鳥仔 5%／其餘為魚 A/B/C
-  const roll = Math.random();
-  let color = "gold";
-  let rewardScore = MID_FISH_SCORE;
-  let rewardEnergy = MID_FISH_ENERGY;
-  let fishTier = 'mid';
-  let fishKind = 'mid'; // mid | urchin | watermelon | fish_shi | fish_bird
-  if (roll < 0.05) {
-    color = "urchin";
-    rewardScore = URCHIN_SCORE;
-    rewardEnergy = URCHIN_ENERGY;
-    fishTier = 'urchin';
-    fishKind = 'urchin';
-  } else if (roll < 0.15) {
-    color = "watermelon";
-    rewardScore = WATERMELON_FISH_SCORE;
-    rewardEnergy = WATERMELON_FISH_ENERGY;
-    fishTier = 'watermelon';
-    fishKind = 'watermelon';
-  } else if (roll < 0.17) {
-    color = "theme";
-    rewardScore = SHI_FISH_SCORE;
-    rewardEnergy = SHI_FISH_ENERGY;
-    fishTier = 'theme_mid';
-    fishKind = 'fish_shi';
-  } else if (roll < 0.22) {
-    color = "theme";
-    rewardScore = BIRD_FISH_SCORE;
-    rewardEnergy = BIRD_FISH_ENERGY;
-    fishTier = 'theme_mid';
-    fishKind = 'fish_bird';
+  // 普通魚群機率（再依日／夜過濾）
+  // 海膽 5%（晚）／西瓜 10%／屎屎 5%（晚）／鳥仔 5%（日）／其餘魚 A/B/C
+  const pool = [];
+  function addOpt(kind, w, apply) {
+    if (!canAppearNow(kind)) return;
+    pool.push({ w: w, apply: apply });
   }
+  addOpt('urchin', 5, function() {
+    return { color: 'urchin', rewardScore: URCHIN_SCORE, rewardEnergy: URCHIN_ENERGY, fishTier: 'urchin', fishKind: 'urchin' };
+  });
+  addOpt('watermelon', 10, function() {
+    return { color: 'watermelon', rewardScore: WATERMELON_FISH_SCORE, rewardEnergy: WATERMELON_FISH_ENERGY, fishTier: 'watermelon', fishKind: 'watermelon' };
+  });
+  addOpt('fish_shi', 5, function() {
+    return { color: 'theme', rewardScore: SHI_FISH_SCORE, rewardEnergy: SHI_FISH_ENERGY, fishTier: 'theme_mid', fishKind: 'fish_shi' };
+  });
+  addOpt('fish_bird', 5, function() {
+    return { color: 'theme', rewardScore: BIRD_FISH_SCORE, rewardEnergy: BIRD_FISH_ENERGY, fishTier: 'theme_mid', fishKind: 'fish_bird' };
+  });
+  // 剩餘權重給普通魚 A/B/C
+  let used = 0;
+  for (let i = 0; i < pool.length; i++) used += pool[i].w;
+  const midW = Math.max(1, 100 - used);
+  pool.push({
+    w: midW,
+    apply: function() {
+      return { color: 'gold', rewardScore: MID_FISH_SCORE, rewardEnergy: MID_FISH_ENERGY, fishTier: 'mid', fishKind: 'mid' };
+    }
+  });
+  let total = 0;
+  for (let i = 0; i < pool.length; i++) total += pool[i].w;
+  let roll = Math.random() * total;
+  let picked = pool[pool.length - 1].apply();
+  for (let i = 0; i < pool.length; i++) {
+    roll -= pool[i].w;
+    if (roll <= 0) { picked = pool[i].apply(); break; }
+  }
+  let color = picked.color;
+  let rewardScore = picked.rewardScore;
+  let rewardEnergy = picked.rewardEnergy;
+  let fishTier = picked.fishTier;
+  let fishKind = picked.fishKind;
   const fishVariant = (fishTier === 'mid') ? Math.floor(Math.random() * 3) : 0;
   let sizeScale = 1;
   let animSpeed = 4;
@@ -2648,19 +2753,17 @@ let specialSeaCreature = null;
 //   energy    → 元氣低於門檻時，週期檢查 + 迫切度機率
 // ============================================================
 const SPECIAL_SPAWN_DEFS = [
-  // —— 主題：各自間隔 ——
-  { type: 'fish_cloud',    name: '雲雲魚', score: CLOUD_FISH_SCORE,    energy: CLOUD_FISH_ENERGY,    mode: 'interval', intervalSec: 20, firstSec: [8, 16],  jitter: 0.15, priority: 40 },
-  { type: 'fish_dog',      name: '狗狗魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 28, firstSec: [12, 22], jitter: 0.15, priority: 32 },
-  { type: 'fish_dumpling', name: '餃子魚', score: DUMPLING_FISH_SCORE, energy: DUMPLING_FISH_ENERGY, mode: 'interval', intervalSec: 30, firstSec: [14, 24], jitter: 0.15, priority: 30 },
-  { type: 'fish_heart',    name: '心心魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 34, firstSec: [18, 28], jitter: 0.15, priority: 30 },
-  { type: 'fish_bear',     name: '熊仔魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 38, firstSec: [20, 32], jitter: 0.15, priority: 28 },
-  // —— Combo（分數觸發，僅作定義／抽選池）——
-  { type: 'octopus',       name: '章魚',   score: OCTOPUS_SCORE,       energy: OCTOPUS_ENERGY,       mode: 'combo', comboTier: 1000, priority: 80 },
-  { type: 'turtle',        name: '海龜',   score: TURTLE_SCORE,        energy: TURTLE_ENERGY,        mode: 'combo', comboTier: 1000, priority: 80 },
-  { type: 'fish_durian',   name: '榴槤魚', score: DURIAN_SCORE,        energy: DURIAN_ENERGY,        mode: 'combo', comboTier: 1500, priority: 85 },
-  // —— 低元氣救援 ——
-  { type: 'molamola',      name: 'Molamola', score: MOLAMOLA_SCORE,   energy: MOLAMOLA_ENERGY,      mode: 'energy', energyBelow: MOLAMOLA_ENERGY_THRESHOLD, checkEverySec: 2.5, priority: 90 },
-  { type: 'fish_monster',  name: '水怪魚', score: MONSTER_SCORE,       energy: MONSTER_ENERGY,       mode: 'energy', energyBelow: MONSTER_ENERGY_THRESHOLD, checkEverySec: 3.0, priority: 100 }
+  // appear: 'day' | 'night' | 'all'
+  { type: 'fish_cloud',    name: '雲雲魚', score: CLOUD_FISH_SCORE,    energy: CLOUD_FISH_ENERGY,    mode: 'interval', intervalSec: 20, firstSec: [8, 16],  jitter: 0.15, priority: 40, appear: 'day' },
+  { type: 'fish_dog',      name: '狗狗魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 30, firstSec: [12, 22], jitter: 0.15, priority: 32, appear: 'day' },
+  { type: 'fish_dumpling', name: '餃子魚', score: DUMPLING_FISH_SCORE, energy: DUMPLING_FISH_ENERGY, mode: 'interval', intervalSec: 30, firstSec: [14, 24], jitter: 0.15, priority: 30, appear: 'day' },
+  { type: 'fish_heart',    name: '心心魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 30, firstSec: [16, 26], jitter: 0.15, priority: 30, appear: 'all' },
+  { type: 'fish_bear',     name: '熊仔魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 30, firstSec: [18, 28], jitter: 0.15, priority: 28, appear: 'night' },
+  { type: 'octopus',       name: '章魚',   score: OCTOPUS_SCORE,       energy: OCTOPUS_ENERGY,       mode: 'combo', comboTier: 1000, priority: 80, appear: 'night' },
+  { type: 'turtle',        name: '海龜',   score: TURTLE_SCORE,        energy: TURTLE_ENERGY,        mode: 'combo', comboTier: 1000, priority: 80, appear: 'day' },
+  { type: 'fish_durian',   name: '榴槤魚', score: DURIAN_SCORE,        energy: DURIAN_ENERGY,        mode: 'combo', comboTier: 1500, priority: 85, appear: 'day' },
+  { type: 'molamola',      name: 'Molamola', score: MOLAMOLA_SCORE,   energy: MOLAMOLA_ENERGY,      mode: 'energy', energyBelow: MOLAMOLA_ENERGY_THRESHOLD, checkEverySec: 2.5, priority: 90, appear: 'all' },
+  { type: 'fish_monster',  name: '水怪魚', score: MONSTER_SCORE,       energy: MONSTER_ENERGY,       mode: 'energy', energyBelow: MONSTER_ENERGY_THRESHOLD, checkEverySec: 3.0, priority: 100, appear: 'all' }
 ];
 
 function specialDefsByMode(mode) {
@@ -2718,9 +2821,10 @@ const SPECIAL_HOOK_REACTIONS = {
   fish_bear:     { mode: 'heavy',    dodgeChance: 0.1,  catchScale: 1.05, struggleMs: 0,    slipChance: 0.28, fleeRadius: 0,   hitsNeeded: 1 },
   octopus:       { mode: 'struggle', dodgeChance: 0.2,  catchScale: 0.95, struggleMs: 2800, slipChance: 0.22, fleeRadius: 70,  hitsNeeded: 1 },
   turtle:        { mode: 'heavy',    dodgeChance: 0.12, catchScale: 1.1,  struggleMs: 0,    slipChance: 0.32, fleeRadius: 0,   hitsNeeded: 1 },
-  fish_durian:   { mode: 'resist',   dodgeChance: 0.25, catchScale: 0.75, struggleMs: 0,    slipChance: 0.18, fleeRadius: 60,  hitsNeeded: 2 },
-  fish_monster:  { mode: 'resist',   dodgeChance: 0.3,  catchScale: 0.7,  struggleMs: 3200, slipChance: 0.25, fleeRadius: 100, hitsNeeded: 2 },
-  molamola:      { mode: 'flee',     dodgeChance: 0.15, catchScale: 1.15, struggleMs: 0,    slipChance: 0.1,  fleeRadius: 140, hitsNeeded: 1 }
+  // 榴槤／水怪／Mola：降低難度（較好鉤、較少逃）
+  fish_durian:   { mode: 'catch',    dodgeChance: 0.08, catchScale: 1.05, struggleMs: 0,    slipChance: 0.08, fleeRadius: 30,  hitsNeeded: 1 },
+  fish_monster:  { mode: 'heavy',    dodgeChance: 0.1,  catchScale: 1.0,  struggleMs: 0,    slipChance: 0.12, fleeRadius: 40,  hitsNeeded: 1 },
+  molamola:      { mode: 'catch',    dodgeChance: 0.05, catchScale: 1.25, struggleMs: 0,    slipChance: 0.05, fleeRadius: 50,  hitsNeeded: 1 }
 };
 const SPECIAL_HOOK_DEFAULT = { mode: 'catch', dodgeChance: 0.1, catchScale: 1, struggleMs: 0, slipChance: 0.1, fleeRadius: 0, hitsNeeded: 1 };
 
@@ -2899,7 +3003,15 @@ function makeSpecialCreature(def) {
     struggleElapsed: 0,
     slipChance: 0,
     reactMode: (SPECIAL_HOOK_REACTIONS[def.type] || SPECIAL_HOOK_DEFAULT).mode,
-    heavySink: 0
+    heavySink: 0,
+    // 徘徊次數：到達邊緣時若還有剩餘則掉頭再游，給玩家多 2～3 次機會
+    // 0 = 游出即消失（一般特別魚）；2～3 = 可來回多趟
+    passesLeft: (function() {
+      if (def.type === 'molamola') return 2 + Math.floor(Math.random() * 2);      // 2～3
+      if (def.type === 'fish_monster') return 2 + Math.floor(Math.random() * 2);  // 2～3
+      if (def.type === 'fish_durian') return 2 + Math.floor(Math.random() * 2);   // 2～3
+      return 0;
+    })()
   };
 }
 
@@ -3100,20 +3212,21 @@ function drawSpecialAlert() {
   if (!specialAlert) return;
   const t = Math.max(0, specialAlert.life / specialAlert.maxLife);
   const fade = t > 0.85 ? (1 - t) / 0.15 : (t < 0.2 ? t / 0.2 : 1);
-  const y = 102;
-  const x = 14;
-  const w = Math.min(canvas.width - 28, 360);
-  const h = 28;
+  // 與日夜提示同一列：日夜在左，出現提示在其右側
+  const y = getHudSubRowY();
+  const h = TOD_HUD.h;
+  const x = TOD_HUD.x + TOD_HUD.w + TOD_HUD.gap;
+  const w = Math.min(canvas.width - x - 14, 280);
   ctx.save();
   ctx.globalAlpha = Math.max(0, Math.min(1, fade)) * 0.95;
-  drawRoundedRectPath(x, y, w, h, 14);
+  drawRoundedRectPath(x, y, w, h, 13);
   const g = ctx.createLinearGradient(x, y, x + w, y);
   g.addColorStop(0, 'rgba(74, 134, 216, 0.92)');
   g.addColorStop(1, 'rgba(124, 92, 191, 0.92)');
   ctx.fillStyle = g;
   ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.font = '500 13px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+  ctx.font = '500 12px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(specialAlert.text, x + w / 2, y + h / 2 + 1);
@@ -3185,7 +3298,8 @@ function specialTypeBusy(type) {
 
 function trySpawnComboSpecial(tier) {
   if (!gameStarted || gameOver) return;
-  const pool = (tier >= 1500) ? COMBO_SPECIAL_TYPES_1500 : COMBO_SPECIAL_TYPES_1000;
+  const raw = (tier >= 1500) ? COMBO_SPECIAL_TYPES_1500 : COMBO_SPECIAL_TYPES_1000;
+  const pool = raw.filter(function(d) { return canAppearNow(d.type); });
   if (!pool.length) return;
   const def = pickWeightedSpecial(pool) || pool[0];
   if (specialTypeBusy(def.type)) return;
@@ -3243,7 +3357,11 @@ function updateSpecialSpawns(dtSec) {
       continue;
     }
     if (t < nextAt) continue;
-    // 到點：若同種忙碌則只延後，不丟事件
+    // 非此時段：延後到半個日夜段後再試
+    if (!canAppearNow(def.type)) {
+      specialSpawn.nextAt[def.type] = t + Math.min(def.intervalSec || 20, DAY_NIGHT_HALF_SEC * 0.45);
+      continue;
+    }
     if (specialTypeBusy(def.type)) {
       specialSpawn.nextAt[def.type] = t + (specialSpawn.typeCooldownSec || 6);
       continue;
@@ -3272,6 +3390,10 @@ function updateSpecialSpawns(dtSec) {
       continue;
     }
     if (specialTypeBusy(def.type)) continue;
+    if (def.appear && def.appear !== 'all' && !canAppearNow(def.type)) {
+      specialSpawn.waitMs[def.type] = 0;
+      continue;
+    }
 
     specialSpawn.waitMs[def.type] = (specialSpawn.waitMs[def.type] || 0) + every * 1000;
     const p = energyChanceFor(def, specialSpawn.waitMs[def.type]);
@@ -4205,7 +4327,8 @@ function drawScoreAndEnergyHUD() {
 
   ctx.restore();
 
-  // 特別魚出現提示（量表下方）
+  // 元氣量表下方：左＝日夜提示，右＝特別魚出現提示
+  drawTimeOfDayHud();
   drawSpecialAlert();
 }
 
@@ -4322,6 +4445,70 @@ function gameLoop(currentTime) {
       ctx.fillRect(0, seaY, canvas.width, canvas.height - seaY);
     }
 
+    // --- 日／夜氛圍（天空遮罩 + 簡易月亮／太陽）---
+    {
+      const night = dayNightBlend();
+      if (night > 0.02) {
+        ctx.save();
+        const seaY = LINE_PARAMS.seaSurfaceY;
+        // 夜空遮罩
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, 'rgba(8, 16, 48,' + (0.55 * night) + ')');
+        g.addColorStop(0.35, 'rgba(12, 28, 64,' + (0.42 * night) + ')');
+        g.addColorStop(0.55, 'rgba(10, 40, 70,' + (0.28 * night) + ')');
+        g.addColorStop(1, 'rgba(5, 20, 40,' + (0.18 * night) + ')');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // 星星（固定種子感：用固定座標）
+        if (night > 0.35) {
+          ctx.globalAlpha = Math.min(1, (night - 0.35) / 0.4) * 0.9;
+          ctx.fillStyle = '#fff';
+          const stars = [[40,50],[90,30],[140,70],[200,40],[260,25],[320,60],[380,35],[60,90],[180,55],[300,80],[350,45],[120,20]];
+          for (let si = 0; si < stars.length; si++) {
+            const sx = stars[si][0] % canvas.width;
+            const sy = stars[si][1];
+            if (sy < seaY - 10) {
+              ctx.beginPath();
+              ctx.arc(sx, sy, (si % 3 === 0) ? 1.6 : 1.1, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          ctx.globalAlpha = 1;
+        }
+        // 月亮
+        if (night > 0.25) {
+          ctx.globalAlpha = Math.min(1, (night - 0.2) / 0.5);
+          const mx = canvas.width * 0.78, my = Math.min(seaY * 0.35, 90);
+          ctx.fillStyle = '#f5f0d8';
+          ctx.beginPath();
+          ctx.arc(mx, my, 18, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(8,16,48,' + (0.55 * night) + ')';
+          ctx.beginPath();
+          ctx.arc(mx + 7, my - 4, 15, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        ctx.restore();
+      } else {
+        // 白天太陽
+        ctx.save();
+        const seaY = LINE_PARAMS.seaSurfaceY;
+        const mx = canvas.width * 0.82, my = Math.min(seaY * 0.32, 80);
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = '#ffe08a';
+        ctx.beginPath();
+        ctx.arc(mx, my, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.arc(mx, my, 26, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+    }
+
     // --- 畫波浪海平面 ---
     ctx.save();
     ctx.beginPath();
@@ -4333,7 +4520,7 @@ function gameLoop(currentTime) {
     ctx.lineTo(canvas.width, 0);
     ctx.lineTo(0, 0);
     ctx.closePath();
-    ctx.fillStyle = '#b3e0ff';
+    ctx.fillStyle = (dayNightBlend() > 0.5) ? '#1a3050' : '#b3e0ff';
     ctx.globalAlpha = 0.18;
     ctx.fill();
     ctx.globalAlpha = 1;
@@ -4803,10 +4990,25 @@ function gameLoop(currentTime) {
       if (!sc.caught && !sc.lifting && !sc.falling) {
         updateSpecialFleeFromHook(sc, deltaTime / 1000);
         updateSpecialSwim(sc, deltaTime / 1000, timeScale);
-        if ((sc.dir === 1 && sc.x > canvas.width + SPAWN_MARGIN) ||
-            (sc.dir === -1 && sc.x < -SPAWN_MARGIN)) {
-          specialSeaCreatures.splice(si, 1);
-          continue;
+        // 碰到左右邊界：若還有徘徊次數 → 掉頭再游；否則離場
+        const offRight = sc.dir === 1 && sc.x > canvas.width + SPAWN_MARGIN;
+        const offLeft = sc.dir === -1 && sc.x < -SPAWN_MARGIN;
+        if (offRight || offLeft) {
+          if ((sc.passesLeft || 0) > 0) {
+            sc.passesLeft -= 1;
+            sc.dir *= -1;
+            // 夾回邊界內，避免同一幀連續觸發
+            if (offRight) sc.x = canvas.width + SPAWN_MARGIN - 2;
+            else sc.x = -SPAWN_MARGIN + 2;
+            // 換深度，路線不那麼呆板
+            const top = getFishTopY() + 20;
+            const bot = getFishBottomY() - 20;
+            sc.baseY = top + Math.random() * Math.max(10, bot - top);
+            sc.burstBoost = Math.max(sc.burstBoost || 0, 0.25);
+          } else {
+            specialSeaCreatures.splice(si, 1);
+            continue;
+          }
         }
       } else if (sc.caught && sc.fadeOut) {
         sc.x = bowlX + (sc.caughtOffsetX || 0);
@@ -5409,30 +5611,30 @@ infoBtn.addEventListener('click', () => {
   infoModal.style.display = 'flex';
   infoModalText.innerHTML =
     '<ol style="padding-left:1.2em;font-weight:400;font-size:0.92em;line-height:1.55;">' +
-      '<li>左右移動，甩竿把東西丟進火鍋。</li>' +
+      '<li>左右移動，甩竿把東西丟進雲。</li>' +
       '<li>元氣持續下降；好魚補回，垃圾／海膽／西瓜魚會扣。</li>' +
       '<li>1 秒內 +1000 出章魚／海龜；+1500 出榴槤魚。</li>' +
-      '<li>元氣&lt;45 → Molamola；元氣&lt;35 → 水怪魚。</li>' +
+      '<li>元氣&lt;50 → Molamola；元氣&lt;35 → 水怪魚。</li>' +
     '</ol>' +
     '<hr style="margin:12px 0;">' +
     '<div style="font-weight:500;color:#4a86d8;margin-bottom:6px;font-size:0.92em;">分數／元氣</div>' +
-    infoFishRow('img/small_fish_a.png', '小魚群', '+100／+5') +
-    infoFishRow('img/fish_a.png', '普通魚群', '+200／+8') +
-    infoFishRow('img/fish_shi.png', '屎屎魚（普通 2%）', '+220／+10') +
-    infoFishRow('img/fish_bird.png', '鳥仔魚（普通 5%）', '+250／+10') +
-    infoFishRow('img/seaurchin.png', '海膽（5%）', '+100／<span style="color:#e11;">-8</span>') +
-    infoFishRow('img/fish_watermelon.png', '西瓜魚（10%）', '<span style="color:#e11;">-20／-8</span>') +
-    infoFishRow('img/fish_cloud.png', '雲雲魚 · 約20秒', '+300／+12') +
-    infoFishRow('img/fish_dumpling.png', '餃子魚 · 約30秒', '+300／+12') +
-    infoFishRow('img/fish_heart.png', '心心魚 · 約30秒', '+350／+15') +
-    infoFishRow('img/fish_dog.png', '狗狗魚 · 約30秒', '+350／+15') +
-    infoFishRow('img/fish_bear.png', '熊仔魚 · 約30秒', '+350／+15') +
-    infoFishRow('img/molamola.png', 'Molamola（元氣&lt;45）', '+100／+50') +
-    infoFishRow('img/fish_monster.png', '水怪魚（元氣&lt;35）', '+800／+100') +
-    infoFishRow('img/octopus.png', '章魚（1秒+1000）', '+400／+20') +
-    infoFishRow('img/turtle.png', '海龜（1秒+1000）', '+400／+30') +
-    infoFishRow('img/fish_durian.png', '榴槤魚（1秒+1500）', '+500／+30') +
-    infoFishRow('img/can.png', '垃圾 · 約20秒', '0／<span style="color:#e11;">-30</span>');
+    infoFishRow('img/small_fish_a.png', '小魚群 · 全日', '+100／+5') +
+    infoFishRow('img/fish_a.png', '普通魚群 · 全日', '+200／+8') +
+    infoFishRow('img/fish_shi.png', '屎屎魚（5%）· 晚', '+220／+10') +
+    infoFishRow('img/fish_bird.png', '鳥仔魚（5%）· 日', '+250／+10') +
+    infoFishRow('img/seaurchin.png', '海膽（5%）· 晚', '+100／<span style="color:#e11;">-8</span>') +
+    infoFishRow('img/fish_watermelon.png', '西瓜魚（10%）· 全日', '<span style="color:#e11;">-20／-8</span>') +
+    infoFishRow('img/fish_cloud.png', '雲雲魚 · 約20秒 · 日', '+300／+12') +
+    infoFishRow('img/fish_dumpling.png', '餃子魚 · 約30秒 · 日', '+300／+12') +
+    infoFishRow('img/fish_heart.png', '心心魚 · 約30秒 · 全日', '+350／+15') +
+    infoFishRow('img/fish_dog.png', '狗狗魚 · 約30秒 · 日', '+350／+15') +
+    infoFishRow('img/fish_bear.png', '熊仔魚 · 約30秒 · 晚', '+350／+15') +
+    infoFishRow('img/molamola.png', 'Molamola（元氣&lt;50）· 全日', '+100／+50') +
+    infoFishRow('img/fish_monster.png', '水怪魚（元氣&lt;35）· 全日', '+800／+100') +
+    infoFishRow('img/octopus.png', '章魚（1秒+1000）· 晚', '+400／+20') +
+    infoFishRow('img/turtle.png', '海龜（1秒+1000）· 日', '+400／+30') +
+    infoFishRow('img/fish_durian.png', '榴槤魚（1秒+1500）· 日', '+500／+30') +
+    infoFishRow('img/can.png', '垃圾 · 全日', '0／<span style="color:#e11;">-30</span>');
 });
 closeInfoModal.addEventListener('click', () => {
   infoModal.style.display = 'none';
