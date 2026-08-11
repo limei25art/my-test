@@ -1940,20 +1940,18 @@ function checkLineCollision() {
       }
     }
   }
-  // 檢查特別魚碰撞（最多 2 隻）
+  // 檢查特別魚碰撞（最多 2 隻）— 依種類反應不同
   for (let si = 0; si < specialSeaCreatures.length; si++) {
     const sc = specialSeaCreatures[si];
-    if (!sc || sc.lifting || sc.caught) continue;
+    if (!sc || sc.lifting || sc.caught || sc.falling) continue;
+    if (sc.reactCooldown > 0) continue;
+    const rx = getSpecialHookReaction(sc.type);
+    const scale = rx.catchScale || 1;
     const specialHalf = getCatchHalfSize(sc.type, LINE_PARAMS.hookCatchPadScaleXSpecial, LINE_PARAMS.hookCatchPadScaleYSpecial);
-    if (Math.abs(sc.x - bigFish.x) < specialHalf.hw && Math.abs(sc.y - hookY) < specialHalf.hh) {
-      sc.lifting = true;
-      sc.flying = false;
-      sc.flyT = 0;
-      sc.flyOffsetX = (Math.random() - 0.5) * 30;
-      sc.hookLineIndex = LINE_POINTS - 1;
-      sc.hookLineT = 0;
-      sc.prevLiftY = sc.y;
-      playRandomCatchSound();
+    const hw = specialHalf.hw * scale;
+    const hh = specialHalf.hh * scale;
+    if (Math.abs(sc.x - bigFish.x) < hw && Math.abs(sc.y - hookY) < hh) {
+      tryHookSpecial(sc, LINE_POINTS - 1, 0);
       continue;
     }
     for (let i = 0; i < linePoints.length - 1; i++) {
@@ -1966,16 +1964,10 @@ function checkLineCollision() {
       t = Math.max(0, Math.min(1, t));
       let px = x1 + t * dx, py = y1 + t * dy;
       let dist = Math.hypot(sc.x - px, sc.y - py);
-      if (dist < LINE_PARAMS.lineCollisionDist) {
-        sc.lifting = true;
-        sc.flying = false;
-        sc.flyT = 0;
-        sc.flyOffsetX = (Math.random() - 0.5) * 30;
-        sc.hookLineIndex = i;
-        sc.hookLineT = t;
-        sc.prevLiftY = sc.y;
-        lineCollisions[i] = true;
-        playRandomCatchSound();
+      // resist／dodge：線碰撞也略收緊
+      const lineDist = LINE_PARAMS.lineCollisionDist * (scale < 1 ? scale : 1);
+      if (dist < lineDist) {
+        if (tryHookSpecial(sc, i, t)) lineCollisions[i] = true;
         break;
       }
     }
@@ -2676,26 +2668,268 @@ const specialSpawn = {
   recentTypes: []
 };
 
+// 特別魚游泳風格（依種類不同動作）
+// pattern: glide 平穩｜bob 上下彈｜dart 衝刺蛇行｜serpentine 扭動｜pulse 心跳縮放｜drift 漂浮｜burst 間歇加速
+const SPECIAL_SWIM_STYLES = {
+  fish_cloud:     { pattern: 'drift',      speedMin: 1.1, speedMax: 1.7, bobAmp: 18, bobSpeed: 0.7, wobbleAmp: 6,  wobbleFreq: 0.9, tiltAmp: 0.08, scalePulse: 0.04, animSpeed: 1.4 },
+  fish_dumpling:  { pattern: 'bob',        speedMin: 1.4, speedMax: 2.0, bobAmp: 22, bobSpeed: 1.6, wobbleAmp: 4,  wobbleFreq: 1.2, tiltAmp: 0.12, scalePulse: 0.03, animSpeed: 2.2 },
+  fish_heart:     { pattern: 'pulse',      speedMin: 1.5, speedMax: 2.1, bobAmp: 14, bobSpeed: 1.3, wobbleAmp: 5,  wobbleFreq: 1.4, tiltAmp: 0.10, scalePulse: 0.10, animSpeed: 2.6 },
+  fish_dog:       { pattern: 'dart',       speedMin: 2.0, speedMax: 2.8, bobAmp: 10, bobSpeed: 2.0, wobbleAmp: 14, wobbleFreq: 2.4, tiltAmp: 0.18, scalePulse: 0.02, animSpeed: 3.0 },
+  fish_bear:      { pattern: 'glide',      speedMin: 1.3, speedMax: 1.9, bobAmp: 12, bobSpeed: 0.9, wobbleAmp: 3,  wobbleFreq: 0.8, tiltAmp: 0.06, scalePulse: 0.02, animSpeed: 1.6 },
+  octopus:        { pattern: 'serpentine', speedMin: 1.8, speedMax: 2.6, bobAmp: 16, bobSpeed: 1.5, wobbleAmp: 22, wobbleFreq: 1.8, tiltAmp: 0.28, scalePulse: 0.05, animSpeed: 2.4 },
+  turtle:         { pattern: 'glide',      speedMin: 1.0, speedMax: 1.6, bobAmp: 8,  bobSpeed: 0.6, wobbleAmp: 2,  wobbleFreq: 0.5, tiltAmp: 0.04, scalePulse: 0.015,animSpeed: 1.2 },
+  fish_durian:    { pattern: 'burst',      speedMin: 1.6, speedMax: 2.3, bobAmp: 11, bobSpeed: 1.4, wobbleAmp: 8,  wobbleFreq: 1.5, tiltAmp: 0.14, scalePulse: 0.04, animSpeed: 2.0 },
+  fish_monster:   { pattern: 'bob',        speedMin: 1.1, speedMax: 1.7, bobAmp: 20, bobSpeed: 0.85,wobbleAmp: 10, wobbleFreq: 1.0, tiltAmp: 0.16, scalePulse: 0.06, animSpeed: 1.5 },
+  molamola:       { pattern: 'drift',      speedMin: 0.85,speedMax: 1.35,bobAmp: 24, bobSpeed: 0.55,wobbleAmp: 4,  wobbleFreq: 0.6, tiltAmp: 0.05, scalePulse: 0.035,animSpeed: 1.0 }
+};
+const SPECIAL_SWIM_DEFAULT = { pattern: 'glide', speedMin: 1.5, speedMax: 2.2, bobAmp: 12, bobSpeed: 1.0, wobbleAmp: 6, wobbleFreq: 1.2, tiltAmp: 0.1, scalePulse: 0.03, animSpeed: 2 };
+
+// 特別魚遇鉤反應（提高難度）
+// catch=正常上鉤｜dodge=接觸時有機率閃掉並衝刺｜flee=靠近就掉頭加速｜
+// struggle=上鉤後需在時限內拉出水面否則脫鉤｜resist=判定縮小＋需連續碰兩次｜heavy=上鉤但易脫落／下沉
+const SPECIAL_HOOK_REACTIONS = {
+  fish_cloud:    { mode: 'catch',    dodgeChance: 0,    catchScale: 1.0,  struggleMs: 0,    slipChance: 0.05, fleeRadius: 0,   hitsNeeded: 1 },
+  fish_dumpling: { mode: 'catch',    dodgeChance: 0.08, catchScale: 1.0,  struggleMs: 0,    slipChance: 0.08, fleeRadius: 0,   hitsNeeded: 1 },
+  fish_heart:    { mode: 'catch',    dodgeChance: 0.05, catchScale: 0.95, struggleMs: 0,    slipChance: 0.06, fleeRadius: 0,   hitsNeeded: 1 },
+  fish_dog:      { mode: 'dodge',    dodgeChance: 0.45, catchScale: 0.9,  struggleMs: 0,    slipChance: 0.12, fleeRadius: 90,  hitsNeeded: 1 },
+  fish_bear:     { mode: 'heavy',    dodgeChance: 0.1,  catchScale: 1.05, struggleMs: 0,    slipChance: 0.28, fleeRadius: 0,   hitsNeeded: 1 },
+  octopus:       { mode: 'struggle', dodgeChance: 0.2,  catchScale: 0.95, struggleMs: 2800, slipChance: 0.22, fleeRadius: 70,  hitsNeeded: 1 },
+  turtle:        { mode: 'heavy',    dodgeChance: 0.12, catchScale: 1.1,  struggleMs: 0,    slipChance: 0.32, fleeRadius: 0,   hitsNeeded: 1 },
+  fish_durian:   { mode: 'resist',   dodgeChance: 0.25, catchScale: 0.75, struggleMs: 0,    slipChance: 0.18, fleeRadius: 60,  hitsNeeded: 2 },
+  fish_monster:  { mode: 'resist',   dodgeChance: 0.3,  catchScale: 0.7,  struggleMs: 3200, slipChance: 0.25, fleeRadius: 100, hitsNeeded: 2 },
+  molamola:      { mode: 'flee',     dodgeChance: 0.15, catchScale: 1.15, struggleMs: 0,    slipChance: 0.1,  fleeRadius: 140, hitsNeeded: 1 }
+};
+const SPECIAL_HOOK_DEFAULT = { mode: 'catch', dodgeChance: 0.1, catchScale: 1, struggleMs: 0, slipChance: 0.1, fleeRadius: 0, hitsNeeded: 1 };
+
+function getSpecialHookReaction(type) {
+  return SPECIAL_HOOK_REACTIONS[type] || SPECIAL_HOOK_DEFAULT;
+}
+
+/** 嘗試鉤住特別魚：依反應模式可能閃避／累積命中／直接上鉤 */
+function tryHookSpecial(sc, hookLineIndex, hookLineT) {
+  if (!sc || sc.lifting || sc.caught || sc.falling || sc.reactCooldown > 0) return false;
+  const rx = getSpecialHookReaction(sc.type);
+
+  // resist：需累積 hitsNeeded 次有效碰撞
+  sc.hookHits = (sc.hookHits || 0) + 1;
+  if (sc.hookHits < (rx.hitsNeeded || 1)) {
+    // 受驚加速／微閃
+    sc.burstBoost = Math.max(sc.burstBoost || 0, 0.7);
+    sc.reactCooldown = 0.35;
+    sc.drawTilt = (Math.random() - 0.5) * 0.4;
+    if (typeof sfx === 'function') sfx('score_small', { throttleMs: 120 });
+    return false;
+  }
+
+  // dodge／一般：有機率閃避
+  if (Math.random() < (rx.dodgeChance || 0)) {
+    triggerSpecialDodge(sc);
+    return false;
+  }
+
+  // 成功上鉤
+  sc.lifting = true;
+  sc.flying = false;
+  sc.flyT = 0;
+  sc.flyOffsetX = (Math.random() - 0.5) * 30;
+  sc.hookLineIndex = (typeof hookLineIndex === 'number') ? hookLineIndex : (LINE_POINTS - 1);
+  sc.hookLineT = (typeof hookLineT === 'number') ? hookLineT : 0;
+  sc.prevLiftY = sc.y;
+  sc.hookHits = 0;
+  sc.struggleMs = rx.struggleMs || 0;
+  sc.struggleElapsed = 0;
+  sc.slipChance = rx.slipChance || 0;
+  sc.reactMode = rx.mode;
+  // heavy：略往下沉一點，增加拉竿難度感
+  if (rx.mode === 'heavy') {
+    sc.heavySink = 0.35 + Math.random() * 0.25;
+  } else {
+    sc.heavySink = 0;
+  }
+  playRandomCatchSound();
+  return true;
+}
+
+function triggerSpecialDodge(sc) {
+  if (!sc) return;
+  sc.reactCooldown = 0.55 + Math.random() * 0.25;
+  sc.hookHits = 0;
+  // 掉頭或加速逃離
+  if (Math.random() < 0.55) sc.dir *= -1;
+  sc.burstBoost = Math.max(sc.burstBoost || 0, 1.2);
+  sc.baseY = Math.max(getFishTopY() + 20, Math.min(getFishBottomY() - 20, sc.baseY + (Math.random() - 0.5) * 50));
+  sc.drawTilt = sc.dir * 0.35;
+  if (typeof sfx === 'function') sfx('splash', { throttleMs: 150 });
+}
+
+/** 靠近鉤子時的主動逃跑（flee / 部分種類） */
+function updateSpecialFleeFromHook(sc, dtSec) {
+  if (!sc || sc.lifting || sc.caught || sc.falling) return;
+  const rx = getSpecialHookReaction(sc.type);
+  if (!rx.fleeRadius || rx.fleeRadius <= 0) return;
+  if (typeof hookDrawX !== 'number' || typeof hookY !== 'number') return;
+  const dx = sc.x - hookDrawX;
+  const dy = sc.y - hookY;
+  const dist = Math.hypot(dx, dy);
+  if (dist > rx.fleeRadius || dist < 1) return;
+  // 越近越急
+  const urgency = 1 - dist / rx.fleeRadius;
+  if (rx.mode === 'flee' || rx.mode === 'dodge' || rx.mode === 'resist') {
+    // 遠離鉤子的水平方向
+    const away = dx === 0 ? (sc.dir) : Math.sign(dx);
+    if (away !== 0 && Math.sign(sc.dir) !== away && urgency > 0.35) {
+      sc.dir = away;
+    }
+    sc.burstBoost = Math.max(sc.burstBoost || 0, urgency * 1.1);
+    sc.baseY += Math.sign(dy || 1) * urgency * 18 * dtSec;
+    sc.baseY = Math.max(getFishTopY() + 10, Math.min(getFishBottomY() - 10, sc.baseY));
+  }
+}
+
 function makeSpecialCreature(def) {
   const fromLeft = Math.random() < 0.5;
   const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
   const dir = fromLeft ? 1 : -1;
-  let speed = 1.8 + Math.random() * 1.2;
-  if (def.type === 'octopus') speed = 2.2 + Math.random() * 1.0;
-  if (def.type === 'turtle') speed = 1.5 + Math.random() * 0.8;
-  if (def.type === 'fish_monster') speed = 1.4 + Math.random() * 0.7;
-  if (def.type === 'molamola') speed = 1.2 + Math.random() * 0.6;
+  const style = SPECIAL_SWIM_STYLES[def.type] || SPECIAL_SWIM_DEFAULT;
+  const speed = style.speedMin + Math.random() * (style.speedMax - style.speedMin);
+  const baseY = Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY();
   return {
     type: def.type,
     name: def.name || def.type,
     rewardScore: def.score,
     rewardEnergy: def.energy,
-    x, y: Math.random() * Math.max(0, getFishBottomY() - getFishTopY()) + getFishTopY(),
-    speed, dir,
+    x,
+    y: baseY,
+    baseY: baseY,
+    speed: speed,
+    baseSpeed: speed,
+    dir: dir,
     caught: false, lifting: false, flying: false, flyT: 0,
     fadeOut: false, alpha: 1, fadeElapsed: 0,
-    animTime: 0, animSpeed: 2
+    animTime: Math.random() * 10,
+    animSpeed: style.animSpeed,
+    // 游泳參數
+    swimPattern: style.pattern,
+    bobAmp: style.bobAmp * (0.85 + Math.random() * 0.3),
+    bobSpeed: style.bobSpeed * (0.9 + Math.random() * 0.2),
+    bobPhase: Math.random() * Math.PI * 2,
+    wobbleAmp: style.wobbleAmp,
+    wobbleFreq: style.wobbleFreq * (0.9 + Math.random() * 0.2),
+    wobblePhase: Math.random() * Math.PI * 2,
+    tiltAmp: style.tiltAmp,
+    scalePulse: style.scalePulse,
+    // burst / dart 用
+    burstT: Math.random() * 3,
+    burstBoost: 0,
+    // 繪製用（每幀更新）
+    drawTilt: 0,
+    drawScale: 1,
+    // 遇鉤反應狀態
+    hookHits: 0,
+    reactCooldown: 0,
+    struggleMs: 0,
+    struggleElapsed: 0,
+    slipChance: 0,
+    reactMode: (SPECIAL_HOOK_REACTIONS[def.type] || SPECIAL_HOOK_DEFAULT).mode,
+    heavySink: 0
   };
+}
+
+/** 特別魚自由游泳：依 pattern 更新位置與繪製姿態 */
+function updateSpecialSwim(sc, dtSec, timeScale) {
+  if (!sc || sc.caught || sc.lifting || sc.falling) return;
+  sc.animTime = (sc.animTime || 0) + dtSec * (sc.animSpeed || 2);
+
+  const t = sc.animTime;
+  const phase = sc.bobPhase || 0;
+  const wPhase = sc.wobblePhase || 0;
+  let vx = sc.baseSpeed != null ? sc.baseSpeed : sc.speed;
+  let bobY = 0;
+  let wobbleX = 0;
+  let tilt = 0;
+  let scale = 1;
+
+  // 間歇加速（durian / dart）
+  if (sc.swimPattern === 'burst' || sc.swimPattern === 'dart') {
+    sc.burstT = (sc.burstT || 0) - dtSec;
+    if (sc.burstT <= 0) {
+      sc.burstBoost = (sc.swimPattern === 'dart') ? 0.9 : 0.65;
+      sc.burstT = 1.2 + Math.random() * (sc.swimPattern === 'dart' ? 1.2 : 2.2);
+    }
+    if (sc.burstBoost > 0) {
+      sc.burstBoost = Math.max(0, sc.burstBoost - dtSec * 1.4);
+    }
+    vx *= (1 + sc.burstBoost);
+  }
+
+  switch (sc.swimPattern) {
+    case 'drift':
+      // 緩慢漂浮：大弧上下 + 微左右
+      bobY = Math.sin(t * sc.bobSpeed + phase) * sc.bobAmp
+           + Math.sin(t * sc.bobSpeed * 0.37 + phase * 1.7) * sc.bobAmp * 0.25;
+      wobbleX = Math.sin(t * sc.wobbleFreq + wPhase) * sc.wobbleAmp * 0.35;
+      tilt = Math.sin(t * sc.bobSpeed * 0.8 + phase) * sc.tiltAmp;
+      scale = 1 + Math.sin(t * 1.1 + phase) * sc.scalePulse;
+      vx *= 0.92 + 0.08 * Math.sin(t * 0.5 + phase);
+      break;
+    case 'bob':
+      // 彈跳感上下
+      bobY = Math.sin(t * sc.bobSpeed + phase) * sc.bobAmp;
+      // 接近谷底時略快
+      if (Math.cos(t * sc.bobSpeed + phase) > 0) vx *= 1.08;
+      wobbleX = Math.sin(t * sc.wobbleFreq + wPhase) * sc.wobbleAmp * 0.4;
+      tilt = Math.cos(t * sc.bobSpeed + phase) * sc.tiltAmp;
+      scale = 1 + Math.abs(Math.sin(t * sc.bobSpeed + phase)) * sc.scalePulse;
+      break;
+    case 'pulse':
+      // 心跳式縮放為主
+      bobY = Math.sin(t * sc.bobSpeed + phase) * sc.bobAmp * 0.7;
+      wobbleX = Math.sin(t * sc.wobbleFreq + wPhase) * sc.wobbleAmp * 0.5;
+      tilt = Math.sin(t * sc.wobbleFreq * 0.7 + wPhase) * sc.tiltAmp;
+      // 雙峰心跳
+      {
+        const beat = t * 2.8 + phase;
+        const p = Math.pow(Math.max(0, Math.sin(beat)), 8) + 0.45 * Math.pow(Math.max(0, Math.sin(beat + 0.35)), 8);
+        scale = 1 + p * sc.scalePulse * 2.2;
+      }
+      break;
+    case 'dart':
+      // 快速蛇行
+      bobY = Math.sin(t * sc.bobSpeed + phase) * sc.bobAmp;
+      wobbleX = Math.sin(t * sc.wobbleFreq + wPhase) * sc.wobbleAmp;
+      tilt = Math.cos(t * sc.wobbleFreq + wPhase) * sc.tiltAmp;
+      scale = 1 + (sc.burstBoost || 0) * 0.06;
+      break;
+    case 'serpentine':
+      // 章魚式大扭動
+      bobY = Math.sin(t * sc.bobSpeed + phase) * sc.bobAmp
+           + Math.sin(t * sc.bobSpeed * 2.1 + phase) * sc.bobAmp * 0.2;
+      wobbleX = Math.sin(t * sc.wobbleFreq + wPhase) * sc.wobbleAmp;
+      tilt = Math.sin(t * sc.wobbleFreq + wPhase) * sc.tiltAmp
+           + Math.sin(t * sc.wobbleFreq * 2 + wPhase) * sc.tiltAmp * 0.3;
+      scale = 1 + Math.sin(t * 2.2 + phase) * sc.scalePulse;
+      break;
+    case 'burst':
+      bobY = Math.sin(t * sc.bobSpeed + phase) * sc.bobAmp;
+      wobbleX = Math.sin(t * sc.wobbleFreq + wPhase) * sc.wobbleAmp * 0.6;
+      tilt = Math.sin(t * sc.bobSpeed + phase) * sc.tiltAmp;
+      scale = 1 + (sc.burstBoost || 0) * 0.08 + Math.sin(t * 2 + phase) * sc.scalePulse;
+      break;
+    case 'glide':
+    default:
+      bobY = Math.sin(t * sc.bobSpeed + phase) * sc.bobAmp;
+      wobbleX = Math.sin(t * sc.wobbleFreq + wPhase) * sc.wobbleAmp * 0.45;
+      tilt = Math.sin(t * sc.bobSpeed * 0.9 + phase) * sc.tiltAmp;
+      scale = 1 + Math.sin(t * 1.2 + phase) * sc.scalePulse;
+      break;
+  }
+
+  sc.speed = vx;
+  sc.x += (vx * sc.dir + wobbleX * 0.08 * sc.dir) * timeScale;
+  if (typeof sc.baseY !== 'number') sc.baseY = sc.y;
+  sc.y = sc.baseY + bobY;
+  sc.drawTilt = tilt;
+  sc.drawScale = scale;
 }
 
 function specialOccupiesSlot(c) {
@@ -2972,7 +3206,12 @@ function updateTrashSpawn() {
 function drawSpecialSeaCreature(creature) {
   ctx.save();
   ctx.translate(creature.x, creature.y);
-  ctx.scale(creature.dir, 1);
+  // 游動時套用傾斜／微縮放；上鉤／進鍋保持正向
+  const free = !creature.lifting && !creature.caught && !creature.falling;
+  const tilt = free ? (creature.drawTilt || 0) : 0;
+  const scl = free ? (creature.drawScale || 1) : 1;
+  ctx.rotate(tilt * creature.dir);
+  ctx.scale(creature.dir * scl, scl);
   if (creature.fadeOut) {
     creature.fadeElapsed = (creature.fadeElapsed || 0) + deltaTime;
     if (creature.fadeElapsed < CATCH_FADE_HOLD_MS) {
@@ -2982,9 +3221,6 @@ function drawSpecialSeaCreature(creature) {
       creature.alpha = Math.max(0, 1 - progress);
     }
     ctx.globalAlpha = creature.alpha;
-  }
-  if (!creature.lifting && !creature.caught) {
-    creature.animTime += deltaTime / 1000;
   }
   const currentImg = specialImgMap[creature.type] || null;
   if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
@@ -4440,8 +4676,14 @@ function gameLoop(currentTime) {
       const sc = specialSeaCreatures[si];
       if (!sc) { specialSeaCreatures.splice(si, 1); continue; }
 
-      if (!sc.caught && !sc.lifting) {
-        sc.x += sc.speed * sc.dir * timeScale;
+      if (sc.reactCooldown > 0) {
+        sc.reactCooldown -= deltaTime / 1000;
+        if (sc.reactCooldown < 0) sc.reactCooldown = 0;
+      }
+
+      if (!sc.caught && !sc.lifting && !sc.falling) {
+        updateSpecialFleeFromHook(sc, deltaTime / 1000);
+        updateSpecialSwim(sc, deltaTime / 1000, timeScale);
         if ((sc.dir === 1 && sc.x > canvas.width + SPAWN_MARGIN) ||
             (sc.dir === -1 && sc.x < -SPAWN_MARGIN)) {
           specialSeaCreatures.splice(si, 1);
@@ -4454,23 +4696,67 @@ function gameLoop(currentTime) {
 
       // 上鉤跟隨
       if (sc.lifting && !sc.caught) {
+        // struggle：時限內未拉出水面 → 脫鉤逃跑
+        if (sc.struggleMs > 0) {
+          sc.struggleElapsed = (sc.struggleElapsed || 0) + deltaTime;
+          // 掙扎視覺：左右微抖
+          sc.drawTilt = Math.sin(sc.struggleElapsed * 0.04) * 0.35;
+          if (sc.struggleElapsed >= sc.struggleMs) {
+            // 脫鉤
+            sc.lifting = false;
+            sc.hookLineIndex = null;
+            sc.hookLineT = 0;
+            sc.everAboveWater = false;
+            sc.struggleElapsed = 0;
+            sc.hookHits = 0;
+            sc.reactCooldown = 0.8;
+            sc.burstBoost = 1.3;
+            if (Math.random() < 0.5) sc.dir *= -1;
+            sc.baseY = sc.y;
+            if (typeof sfx === 'function') sfx('splash', { throttleMs: 100 });
+            continue;
+          }
+        }
+
         let isHookCatch = (typeof sc.hookLineIndex !== 'number') || sc.hookLineIndex >= LINE_POINTS - 1;
         if (isHookCatch) {
           sc.x = hookDrawX;
-          sc.y = hookY;
+          // heavy：鉤住時略往下墜，需更用力感（視覺下沉）
+          sc.y = hookY + (sc.heavySink ? sc.heavySink * 28 : 0);
         } else {
           let idx = sc.hookLineIndex;
           let tt = typeof sc.hookLineT === 'number' ? sc.hookLineT : 0;
           let p1 = linePoints[idx];
           let p2 = linePoints[idx + 1] || p1;
           sc.x = p1.x + (p2.x - p1.x) * tt;
-          sc.y = p1.y + (p2.y - p1.y) * tt;
+          sc.y = p1.y + (p2.y - p1.y) * tt + (sc.heavySink ? sc.heavySink * 18 : 0);
         }
         let waterY = getWaveY(sc.x, wavePhase);
         let aboveWater = sc.y <= waterY;
         let prevLiftY = (typeof sc.prevLiftY === 'number') ? sc.prevLiftY : sc.y;
         if (aboveWater) {
+          // 拉出水面後取消 struggle 計時（已成功階段）
+          if (sc.struggleMs > 0 && !sc.everAboveWater) {
+            sc.struggleMs = 0;
+          }
           sc.everAboveWater = true;
+
+          // slip：出水後、進鍋前有機率掙脫（每幀低機率，heavy／resist 較高）
+          if (!sc.caught && sc.slipChance > 0 && Math.random() < sc.slipChance * 0.012 * timeScale) {
+            sc.falling = true;
+            sc.fallT = 0;
+            sc.fallStartY = sc.y;
+            sc.fallEndY = Math.min(getFishBottomY() - 20, 530 + Math.random() * 40);
+            sc.lifting = false;
+            sc.everAboveWater = false;
+            sc.hookHits = 0;
+            sc.reactCooldown = 0.6;
+            sc.burstBoost = 0.9;
+            if (typeof sfx === 'function') sfx('splash', { throttleMs: 100 });
+            sc.prevLiftY = sc.y;
+            continue;
+          }
+
           let inPot = isEnteringPotFromAbove(sc.x, sc.y, prevLiftY, bowlX, bowlY, pot.w, pot.h);
           if (inPot && timeLeft > 0 && !gameOver) {
             sc.caught = true;
@@ -4507,10 +4793,12 @@ function gameLoop(currentTime) {
             sc.fallEndY = 530 + Math.random() * 40;
             sc.lifting = false;
             sc.everAboveWater = false;
+            sc.hookHits = 0;
           } else if (!fishing && !hookThrowing) {
             sc.lifting = false;
             sc.hookLineIndex = null;
             sc.hookLineT = 0;
+            sc.hookHits = 0;
           }
         }
         sc.prevLiftY = sc.y;
@@ -4528,6 +4816,7 @@ function gameLoop(currentTime) {
         }
         if (Math.abs(sc.y - sc.fallEndY) < 1) {
           sc.y = sc.fallEndY;
+          sc.baseY = sc.y;
           sc.falling = false;
         }
       }
