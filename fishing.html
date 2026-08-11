@@ -2640,32 +2640,55 @@ let specialSeaCreatures = []; // 在場特別魚（含淡出中）
 // 相容舊程式：指向「第一隻可互動」的特別魚（碰撞／單槽邏輯會改成遍歷陣列）
 let specialSeaCreature = null;
 
-const THEME_SPECIAL_TYPES_20 = [
-  { type: 'fish_cloud', name: '雲雲魚', score: CLOUD_FISH_SCORE, energy: CLOUD_FISH_ENERGY }
-];
-const THEME_SPECIAL_TYPES_30 = [
-  { type: 'fish_dumpling', name: '餃子魚', score: DUMPLING_FISH_SCORE, energy: DUMPLING_FISH_ENERGY },
-  { type: 'fish_heart', name: '心心魚', score: HEART_FISH_SCORE, energy: HEART_FISH_ENERGY },
-  { type: 'fish_dog', name: '狗狗魚', score: HEART_FISH_SCORE, energy: HEART_FISH_ENERGY },
-  { type: 'fish_bear', name: '熊仔魚', score: HEART_FISH_SCORE, energy: HEART_FISH_ENERGY }
-];
-const COMBO_SPECIAL_TYPES_1000 = [
-  { type: 'octopus', name: '章魚', score: OCTOPUS_SCORE, energy: OCTOPUS_ENERGY },
-  { type: 'turtle', name: '海龜', score: TURTLE_SCORE, energy: TURTLE_ENERGY }
-];
-const COMBO_SPECIAL_TYPES_1500 = [
-  { type: 'fish_durian', name: '榴槤魚', score: DURIAN_SCORE, energy: DURIAN_ENERGY }
+// ============================================================
+// 特別魚出現時間 — 統一排程表
+// mode:
+//   interval  → 遊戲時間到點就進 pending（每種獨立 nextAt）
+//   combo     → 由 registerScoreGain / trySpawnComboSpecial 觸發（不走時間表）
+//   energy    → 元氣低於門檻時，週期檢查 + 迫切度機率
+// ============================================================
+const SPECIAL_SPAWN_DEFS = [
+  // —— 主題：各自間隔 ——
+  { type: 'fish_cloud',    name: '雲雲魚', score: CLOUD_FISH_SCORE,    energy: CLOUD_FISH_ENERGY,    mode: 'interval', intervalSec: 20, firstSec: [8, 16],  jitter: 0.15, priority: 40 },
+  { type: 'fish_dog',      name: '狗狗魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 28, firstSec: [12, 22], jitter: 0.15, priority: 32 },
+  { type: 'fish_dumpling', name: '餃子魚', score: DUMPLING_FISH_SCORE, energy: DUMPLING_FISH_ENERGY, mode: 'interval', intervalSec: 30, firstSec: [14, 24], jitter: 0.15, priority: 30 },
+  { type: 'fish_heart',    name: '心心魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 34, firstSec: [18, 28], jitter: 0.15, priority: 30 },
+  { type: 'fish_bear',     name: '熊仔魚', score: HEART_FISH_SCORE,    energy: HEART_FISH_ENERGY,    mode: 'interval', intervalSec: 38, firstSec: [20, 32], jitter: 0.15, priority: 28 },
+  // —— Combo（分數觸發，僅作定義／抽選池）——
+  { type: 'octopus',       name: '章魚',   score: OCTOPUS_SCORE,       energy: OCTOPUS_ENERGY,       mode: 'combo', comboTier: 1000, priority: 80 },
+  { type: 'turtle',        name: '海龜',   score: TURTLE_SCORE,        energy: TURTLE_ENERGY,        mode: 'combo', comboTier: 1000, priority: 80 },
+  { type: 'fish_durian',   name: '榴槤魚', score: DURIAN_SCORE,        energy: DURIAN_ENERGY,        mode: 'combo', comboTier: 1500, priority: 85 },
+  // —— 低元氣救援 ——
+  { type: 'molamola',      name: 'Molamola', score: MOLAMOLA_SCORE,   energy: MOLAMOLA_ENERGY,      mode: 'energy', energyBelow: MOLAMOLA_ENERGY_THRESHOLD, checkEverySec: 2.5, priority: 90 },
+  { type: 'fish_monster',  name: '水怪魚', score: MONSTER_SCORE,       energy: MONSTER_ENERGY,       mode: 'energy', energyBelow: MONSTER_ENERGY_THRESHOLD, checkEverySec: 3.0, priority: 100 }
 ];
 
+function specialDefsByMode(mode) {
+  return SPECIAL_SPAWN_DEFS.filter(function(d) { return d.mode === mode; });
+}
+function specialDefByType(type) {
+  for (let i = 0; i < SPECIAL_SPAWN_DEFS.length; i++) {
+    if (SPECIAL_SPAWN_DEFS[i].type === type) return SPECIAL_SPAWN_DEFS[i];
+  }
+  return null;
+}
+
+// 相容舊名稱
+const THEME_SPECIAL_SCHEDULE = specialDefsByMode('interval');
+const THEME_SPECIAL_TYPES_20 = THEME_SPECIAL_SCHEDULE.filter(function(d) { return d.intervalSec <= 22; });
+const THEME_SPECIAL_TYPES_30 = THEME_SPECIAL_SCHEDULE.filter(function(d) { return d.intervalSec > 22; });
+const COMBO_SPECIAL_TYPES_1000 = specialDefsByMode('combo').filter(function(d) { return d.comboTier === 1000; });
+const COMBO_SPECIAL_TYPES_1500 = specialDefsByMode('combo').filter(function(d) { return d.comboTier === 1500; });
+
 const specialSpawn = {
-  nextTheme20At: 12,   // 秒（遊戲時間）
-  nextTheme30At: 18,
-  nextMolaCheckAt: 8,
-  nextMonsterCheckAt: 10,
-  molaWaitMs: 0,
-  monsterWaitMs: 0,
-  pending: [],         // { priority, def, reason }
-  recentTypes: []
+  // type → 下次可觸發的遊戲時間（秒）
+  nextAt: {},
+  // energy 檢查用累積等待
+  waitMs: { molamola: 0, fish_monster: 0 },
+  pending: [],
+  recentTypes: [],
+  // 同種最短冷卻（秒），避免 pending 堆積同種
+  typeCooldownSec: 6
 };
 
 // 特別魚游泳風格（依種類不同動作）
@@ -2727,7 +2750,7 @@ function tryHookSpecial(sc, hookLineIndex, hookLineT) {
     return false;
   }
 
-  // 成功上鉤
+  // 成功上鉤（不使用拉桿小遊戲，直接可拉進鍋）
   sc.lifting = true;
   sc.flying = false;
   sc.flyT = 0;
@@ -2740,6 +2763,7 @@ function tryHookSpecial(sc, hookLineIndex, hookLineT) {
   sc.struggleElapsed = 0;
   sc.slipChance = rx.slipChance || 0;
   sc.reactMode = rx.mode;
+  sc.reelDone = true; // 相容舊旗標：視為已可進鍋
   // heavy：略往下沉一點，增加拉竿難度感
   if (rx.mode === 'heavy') {
     sc.heavySink = 0.35 + Math.random() * 0.25;
@@ -2749,6 +2773,50 @@ function tryHookSpecial(sc, hookLineIndex, hookLineT) {
   playRandomCatchSound();
   return true;
 }
+
+// ============================================================
+// 拉桿小遊戲（特別魚上鉤後）
+// 連點／按住「釣魚」或空白鍵填滿量表；超時或歸零則脫鉤
+// ============================================================
+const REEL_DIFFICULTY = {
+  // tapPower: 每次點擊進度；decay: 每秒流失；duration: 時限(秒)；drainHold: 按住每秒增加
+  catch:    { tapPower: 0.14, decay: 0.10, duration: 4.5, holdPower: 0.28 },
+  dodge:    { tapPower: 0.11, decay: 0.14, duration: 4.0, holdPower: 0.24 },
+  flee:     { tapPower: 0.12, decay: 0.12, duration: 4.2, holdPower: 0.26 },
+  heavy:    { tapPower: 0.09, decay: 0.16, duration: 5.0, holdPower: 0.22 },
+  struggle: { tapPower: 0.10, decay: 0.18, duration: 3.8, holdPower: 0.25 },
+  resist:   { tapPower: 0.08, decay: 0.20, duration: 4.5, holdPower: 0.20 }
+};
+const REEL_DIFFICULTY_DEFAULT = { tapPower: 0.12, decay: 0.14, duration: 4.2, holdPower: 0.25 };
+
+let reelGame = {
+  active: false,
+  target: null,
+  progress: 0,
+  timeLeft: 0,
+  duration: 4,
+  tapPower: 0.12,
+  decay: 0.14,
+  holdPower: 0.25,
+  holding: false,
+  pulse: 0,
+  resultFlash: 0, // >0 成功閃光
+  failFlash: 0
+};
+
+function startReelMinigame(sc) { if (sc) sc.reelDone = true; }
+
+function reelTap() { return false; }
+
+function setReelHolding(on) { /* no-op */ }
+
+function succeedReelMinigame() { /* no-op */ }
+
+function failReelMinigame(silent) { if (typeof reelGame !== "undefined") { reelGame.active = false; reelGame.holding = false; reelGame.target = null; } }
+
+function updateReelMinigame(dtSec) { /* no-op */ }
+
+function drawReelMinigame() { /* no-op */ }
 
 function triggerSpecialDodge(sc) {
   if (!sc) return;
@@ -3069,10 +3137,17 @@ function flushSpecialPending() {
   }
 }
 
-function jitterIntervalSec(baseMs) {
-  const base = baseMs / 1000;
-  const jitter = base * 0.15 * (Math.random() * 2 - 1); // ±15%
-  return Math.max(base * 0.5, base + jitter);
+function jitterIntervalSec(baseSec, jitterRatio) {
+  const j = (typeof jitterRatio === 'number') ? jitterRatio : 0.15;
+  const jitter = baseSec * j * (Math.random() * 2 - 1);
+  return Math.max(baseSec * 0.5, baseSec + jitter);
+}
+
+/** 排程下一次 interval 型特別魚 */
+function scheduleNextInterval(def, fromTime) {
+  if (!def || def.mode !== 'interval') return;
+  const base = def.intervalSec || 30;
+  specialSpawn.nextAt[def.type] = fromTime + jitterIntervalSec(base, def.jitter);
 }
 
 function molaChance(timeLeftVal, waitedMs) {
@@ -3089,16 +3164,34 @@ function monsterChance(timeLeftVal, waitedMs) {
   return 0.15 + urgency * 0.55 + patience * 0.35;
 }
 
-function trySpawnComboSpecial(tier) {
-  // 改為進 pending，由 updateSpecialSpawns 消化
-  if (!gameStarted || gameOver) return;
-  if (tier >= 1500) {
-    const def = pickWeightedSpecial(COMBO_SPECIAL_TYPES_1500) || COMBO_SPECIAL_TYPES_1500[0];
-    enqueueSpecial(SPECIAL_PRIORITY.combo1500, def, 'combo1500');
-  } else {
-    const def = pickWeightedSpecial(COMBO_SPECIAL_TYPES_1000) || COMBO_SPECIAL_TYPES_1000[0];
-    enqueueSpecial(SPECIAL_PRIORITY.combo1000, def, 'combo1000');
+function energyChanceFor(def, waitedMs) {
+  if (!def) return 0;
+  if (def.type === 'molamola') return molaChance(timeLeft, waitedMs);
+  if (def.type === 'fish_monster') return monsterChance(timeLeft, waitedMs);
+  return 0;
+}
+
+/** 場上或 pending 是否已有同 type（避免重複堆） */
+function specialTypeBusy(type) {
+  for (let i = 0; i < specialSeaCreatures.length; i++) {
+    const c = specialSeaCreatures[i];
+    if (c && c.type === type && !c.caught) return true;
   }
+  for (let i = 0; i < specialSpawn.pending.length; i++) {
+    if (specialSpawn.pending[i].def && specialSpawn.pending[i].def.type === type) return true;
+  }
+  return false;
+}
+
+function trySpawnComboSpecial(tier) {
+  if (!gameStarted || gameOver) return;
+  const pool = (tier >= 1500) ? COMBO_SPECIAL_TYPES_1500 : COMBO_SPECIAL_TYPES_1000;
+  if (!pool.length) return;
+  const def = pickWeightedSpecial(pool) || pool[0];
+  if (specialTypeBusy(def.type)) return;
+  const pri = (tier >= 1500) ? SPECIAL_PRIORITY.combo1500 : SPECIAL_PRIORITY.combo1000;
+  const reason = (tier >= 1500) ? 'combo1500' : 'combo1000';
+  enqueueSpecial(pri, def, reason);
   flushSpecialPending();
 }
 
@@ -3107,68 +3200,90 @@ function resetSpecialSpawnScheduler() {
   specialSeaCreature = null;
   specialSpawn.pending = [];
   specialSpawn.recentTypes = [];
-  specialSpawn.molaWaitMs = 0;
-  specialSpawn.monsterWaitMs = 0;
-  // 開局錯開首波，避免同時湧入
-  specialSpawn.nextTheme20At = 8 + Math.random() * 8;
-  specialSpawn.nextTheme30At = 14 + Math.random() * 10;
-  specialSpawn.nextMolaCheckAt = 6 + Math.random() * 4;
-  specialSpawn.nextMonsterCheckAt = 8 + Math.random() * 5;
+  specialSpawn.waitMs = { molamola: 0, fish_monster: 0 };
+  specialSpawn.nextAt = {};
+
+  const intervalDefs = specialDefsByMode('interval');
+  for (let i = 0; i < intervalDefs.length; i++) {
+    const d = intervalDefs[i];
+    const win = d.firstSec || [10, 20];
+    specialSpawn.nextAt[d.type] = win[0] + Math.random() * (win[1] - win[0]);
+  }
+  const energyDefs = specialDefsByMode('energy');
+  for (let i = 0; i < energyDefs.length; i++) {
+    const d = energyDefs[i];
+    // 首檢略錯開
+    specialSpawn.nextAt[d.type] = 5 + Math.random() * 5 + i * 1.5;
+  }
 }
 
-// 舊 API 相容：重開／初始化仍可能呼叫，改為 reset
-function scheduleSpecialSeaCreature() { /* no-op：改由 updateSpecialSpawns */ }
+// 舊 API 相容
+function scheduleSpecialSeaCreature() { /* no-op */ }
 function scheduleMolamolaCheck() { /* no-op */ }
 function scheduleMonsterCheck() { /* no-op */ }
 
+/**
+ * 每幀特別魚排程
+ * 1) interval 種類：到點 → pending
+ * 2) energy 種類：到點檢查 → 機率 pending
+ * 3) combo 由分數事件另行觸發
+ * 4) flush pending（受槽位／優先權限制）
+ */
 function updateSpecialSpawns(dtSec) {
   if (!gameStarted || gameOver || paramPanelOpen) return;
-  const t = elapsedGameTime; // 秒
+  const t = elapsedGameTime;
 
-  // —— 主題 20s 池 ——
-  if (t >= specialSpawn.nextTheme20At) {
-    const def = pickWeightedSpecial(THEME_SPECIAL_TYPES_20);
-    enqueueSpecial(SPECIAL_PRIORITY.theme20, def, 'theme20');
-    specialSpawn.nextTheme20At = t + jitterIntervalSec(THEME_SPECIAL_INTERVAL_20);
-  }
-  // —— 主題 30s 池 ——
-  if (t >= specialSpawn.nextTheme30At) {
-    const def = pickWeightedSpecial(THEME_SPECIAL_TYPES_30);
-    enqueueSpecial(SPECIAL_PRIORITY.theme30, def, 'theme30');
-    specialSpawn.nextTheme30At = t + jitterIntervalSec(THEME_SPECIAL_INTERVAL_30);
-  }
-  // —— Molamola 迫切度 ——
-  if (t >= specialSpawn.nextMolaCheckAt) {
-    if (timeLeft < MOLAMOLA_ENERGY_THRESHOLD) {
-      specialSpawn.molaWaitMs += 2500;
-      if (Math.random() < molaChance(timeLeft, specialSpawn.molaWaitMs)) {
-        enqueueSpecial(SPECIAL_PRIORITY.mola, {
-          type: 'molamola', name: 'Molamola', score: MOLAMOLA_SCORE, energy: MOLAMOLA_ENERGY
-        }, 'mola');
-        specialSpawn.molaWaitMs = 0;
-      }
-    } else {
-      specialSpawn.molaWaitMs = 0;
+  // —— 1. 時間表（主題魚）——
+  const intervalDefs = specialDefsByMode('interval');
+  for (let i = 0; i < intervalDefs.length; i++) {
+    const def = intervalDefs[i];
+    let nextAt = specialSpawn.nextAt[def.type];
+    if (typeof nextAt !== 'number') {
+      scheduleNextInterval(def, t);
+      continue;
     }
-    specialSpawn.nextMolaCheckAt = t + 2.5;
-  }
-  // —— 水怪 迫切度 ——
-  if (t >= specialSpawn.nextMonsterCheckAt) {
-    if (timeLeft < MONSTER_ENERGY_THRESHOLD) {
-      specialSpawn.monsterWaitMs += 3000;
-      if (Math.random() < monsterChance(timeLeft, specialSpawn.monsterWaitMs)) {
-        enqueueSpecial(SPECIAL_PRIORITY.monster, {
-          type: 'fish_monster', name: '水怪魚', score: MONSTER_SCORE, energy: MONSTER_ENERGY
-        }, 'monster');
-        specialSpawn.monsterWaitMs = 0;
-      }
-    } else {
-      specialSpawn.monsterWaitMs = 0;
+    if (t < nextAt) continue;
+    // 到點：若同種忙碌則只延後，不丟事件
+    if (specialTypeBusy(def.type)) {
+      specialSpawn.nextAt[def.type] = t + (specialSpawn.typeCooldownSec || 6);
+      continue;
     }
-    specialSpawn.nextMonsterCheckAt = t + 3.0;
+    enqueueSpecial(def.priority || SPECIAL_PRIORITY.theme30, def, 'theme_' + def.type);
+    scheduleNextInterval(def, t);
   }
 
-  // 消化佇列
+  // —— 2. 低元氣救援 ——
+  const energyDefs = specialDefsByMode('energy');
+  for (let i = 0; i < energyDefs.length; i++) {
+    const def = energyDefs[i];
+    let nextAt = specialSpawn.nextAt[def.type];
+    if (typeof nextAt !== 'number') {
+      specialSpawn.nextAt[def.type] = t + (def.checkEverySec || 3);
+      continue;
+    }
+    if (t < nextAt) continue;
+
+    const every = def.checkEverySec || 3;
+    specialSpawn.nextAt[def.type] = t + every;
+
+    const threshold = def.energyBelow;
+    if (!(timeLeft < threshold)) {
+      specialSpawn.waitMs[def.type] = 0;
+      continue;
+    }
+    if (specialTypeBusy(def.type)) continue;
+
+    specialSpawn.waitMs[def.type] = (specialSpawn.waitMs[def.type] || 0) + every * 1000;
+    const p = energyChanceFor(def, specialSpawn.waitMs[def.type]);
+    if (Math.random() < p) {
+      enqueueSpecial(def.priority || SPECIAL_PRIORITY.mola, def, 'energy_' + def.type);
+      specialSpawn.waitMs[def.type] = 0;
+      // 成功後多冷卻一輪，避免連發
+      specialSpawn.nextAt[def.type] = t + every * 2.5;
+    }
+  }
+
+  // —— 3. 消化佇列 ——
   flushSpecialPending();
 
   // 清掉已完全淡出的
@@ -3825,32 +3940,35 @@ function showGameOverModal() {
   });
   const playTime = formatPlayTime(elapsedGameTime);
   const rowStyle = 'display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(120,150,200,0.10);padding:7px 2px;gap:8px;font-weight:400;';
-  const listRowStyle = 'display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(120,150,200,0.08);padding:6px 2px;gap:12px;font-weight:400;';
+  // 橫向卡片：圖在上、數量在下
+  const cardStyle = 'flex:0 0 auto;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border-radius:12px;background:rgba(255,255,255,0.7);box-shadow:0 1px 4px rgba(80,110,170,0.08);';
   let listHtml = '';
   if (keys.length === 0) {
     listHtml = '<div style="padding:8px 4px;color:#6b7c99;font-size:0.88em;font-weight:400;">本局尚未釣到魚</div>';
   } else {
+    listHtml = '<div style="display:flex;flex-direction:row;flex-wrap:nowrap;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px 8px;scrollbar-width:thin;">';
     for (let i = 0; i < keys.length; i++) {
       const k = keys[i];
       const n = collectedFishCounts[k];
       const src = fishTypeImgSrc(k);
       const label = fishTypeLabel(k);
       const imgHtml = src
-        ? '<img src="' + src + '" alt="' + label + '" title="' + label + '" width="48" height="40" style="width:48px;height:40px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(80,110,170,0.18));" onerror="this.outerHTML=\'<span style=\\\'font-size:12px;color:#6b7c99;font-weight:400;\\\'>' + label + '</span>\'">'
-        : '<span style="min-width:48px;height:40px;display:inline-flex;align-items:center;justify-content:center;background:#eef3fb;border-radius:10px;font-size:11px;color:#6b7c99;font-weight:400;flex-shrink:0;">' + label + '</span>';
+        ? '<img src="' + src + '" alt="' + label + '" title="' + label + '" width="48" height="40" style="width:48px;height:40px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(80,110,170,0.18));" onerror="this.style.display=\'none\'">'
+        : '<span style="width:48px;height:40px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#6b7c99;">' + label + '</span>';
       listHtml +=
-        '<div style="' + listRowStyle + '">' +
+        '<div style="' + cardStyle + '" title="' + label + '">' +
           imgHtml +
-          '<span style="color:#354560;font-weight:400;font-size:0.95em;">× ' + n + '</span>' +
+          '<span style="color:#354560;font-weight:400;font-size:0.82em;letter-spacing:0.02em;">×' + n + '</span>' +
         '</div>';
     }
+    listHtml += '</div>';
   }
   statsEl.innerHTML =
     '<div style="' + rowStyle + '"><span style="color:#6b7c99;font-weight:400;">總得分</span><span style="color:#4a86d8;font-weight:500;font-size:1.08em;">' + score + ' <span style="font-size:0.72em;font-weight:400;">pt</span></span></div>' +
     '<div style="' + rowStyle + '"><span style="color:#6b7c99;font-weight:400;">花費時間</span><span style="color:#354560;font-weight:400;">' + playTime + '</span></div>' +
     '<div style="' + rowStyle + '"><span style="color:#6b7c99;font-weight:400;">種類／總隻數</span><span style="color:#7c5cbf;font-weight:400;">' + fishTypeCount + ' 種／' + totalFishCaught + ' 隻</span></div>' +
     '<div style="' + rowStyle + '"><span style="color:#6b7c99;font-weight:400;">收集垃圾</span><span style="color:#ff7b8a;font-weight:400;">' + trashCaughtCount + '</span></div>' +
-    '<div style="margin-top:12px;padding:10px 8px;border-radius:16px;background:linear-gradient(160deg,#fff 0%,#f5f8fd 100%);box-shadow:inset 2px 3px 10px rgba(90,120,180,0.08);max-height:42vh;overflow-y:auto;">' +
+    '<div style="margin-top:12px;padding:10px 8px;border-radius:16px;background:linear-gradient(160deg,#fff 0%,#f5f8fd 100%);box-shadow:inset 2px 3px 10px rgba(90,120,180,0.08);">' +
       '<div style="font-weight:500;color:#4a86d8;margin-bottom:6px;letter-spacing:0.06em;font-size:0.92em;">釣獲列表</div>' +
       listHtml +
     '</div>';
@@ -3864,7 +3982,8 @@ function hideGameOverModal() {
 // 魚／垃圾／特殊海洋生物出生時的「最高路徑」高度，跟著海平面高度參數走
 // （海平面調高，這條線跟著往下；海平面調低，這條線跟著往上，魚群活動範圍隨之整體平移）
 function getFishTopY() {
-  return LINE_PARAMS.seaSurfaceY + 20;
+  // 與海面拉開距離，魚群不會貼在水線上
+  return LINE_PARAMS.seaSurfaceY + 85;
 }
 
 // 遊戲內部畫布的高度（對應 resizeGameCanvas 裡的 GAME_HEIGHT，固定 600）。
@@ -4696,13 +4815,11 @@ function gameLoop(currentTime) {
 
       // 上鉤跟隨
       if (sc.lifting && !sc.caught) {
-        // struggle：時限內未拉出水面 → 脫鉤逃跑
+        // struggle 抖動（無拉桿小遊戲）
         if (sc.struggleMs > 0) {
           sc.struggleElapsed = (sc.struggleElapsed || 0) + deltaTime;
-          // 掙扎視覺：左右微抖
           sc.drawTilt = Math.sin(sc.struggleElapsed * 0.04) * 0.35;
           if (sc.struggleElapsed >= sc.struggleMs) {
-            // 脫鉤
             sc.lifting = false;
             sc.hookLineIndex = null;
             sc.hookLineT = 0;
@@ -4713,7 +4830,7 @@ function gameLoop(currentTime) {
             sc.burstBoost = 1.3;
             if (Math.random() < 0.5) sc.dir *= -1;
             sc.baseY = sc.y;
-            if (typeof sfx === 'function') sfx('splash', { throttleMs: 100 });
+            if (typeof sfx === "function") sfx("splash", { throttleMs: 100 });
             continue;
           }
         }
@@ -4721,8 +4838,9 @@ function gameLoop(currentTime) {
         let isHookCatch = (typeof sc.hookLineIndex !== 'number') || sc.hookLineIndex >= LINE_POINTS - 1;
         if (isHookCatch) {
           sc.x = hookDrawX;
-          // heavy：鉤住時略往下墜，需更用力感（視覺下沉）
-          sc.y = hookY + (sc.heavySink ? sc.heavySink * 28 : 0);
+          // heavy：鉤住時略往下墜；拉桿中再略沉
+          const sink = (sc.heavySink ? sc.heavySink * 28 : 0);
+          sc.y = hookY + sink;
         } else {
           let idx = sc.hookLineIndex;
           let tt = typeof sc.hookLineT === 'number' ? sc.hookLineT : 0;
@@ -4735,11 +4853,10 @@ function gameLoop(currentTime) {
         let aboveWater = sc.y <= waterY;
         let prevLiftY = (typeof sc.prevLiftY === 'number') ? sc.prevLiftY : sc.y;
         if (aboveWater) {
-          // 拉出水面後取消 struggle 計時（已成功階段）
-          if (sc.struggleMs > 0 && !sc.everAboveWater) {
-            sc.struggleMs = 0;
-          }
           sc.everAboveWater = true;
+
+          // 拉出水面後取消 struggle 計時
+          if (sc.struggleMs > 0) sc.struggleMs = 0;
 
           // slip：出水後、進鍋前有機率掙脫（每幀低機率，heavy／resist 較高）
           if (!sc.caught && sc.slipChance > 0 && Math.random() < sc.slipChance * 0.012 * timeScale) {
@@ -4828,6 +4945,10 @@ function gameLoop(currentTime) {
     // 特別魚統一排程（pending / 主題 / 低元氣）
     updateSpecialSpawns(deltaTime / 1000);
     updateTrashSpawn();
+
+    // 拉桿小遊戲
+    updateReelMinigame(deltaTime / 1000);
+    drawReelMinigame();
 
     // 粒子：更新 + 繪製（在 HUD 之下、遊戲物件之上）
     updateParticles(deltaTime / 1000);
@@ -5106,9 +5227,17 @@ canvas.addEventListener("mousedown", () => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.code === "Space" || e.code === "ArrowUp" || e.code === "ArrowDown") e.preventDefault();
-  if (!gameOver && !fishing && !hookThrowing && e.code === "Space") {
-    startHookCast();
+  if (e.code === "Space") {
+    if (reelGame.active) {
+      reelTap();
+      setReelHolding(true);
+      return;
+    }
+    if (!gameOver && !fishing && !hookThrowing) startHookCast();
   }
+});
+document.addEventListener("keyup", (e) => {
+  if (e.code === "Space") setReelHolding(false);
 });
 
 // 觸控與鍵盤事件
@@ -5118,7 +5247,12 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowUp' || e.key === 'w') keyState.up = true;
   if (e.key === 'ArrowDown' || e.key === 's') keyState.down = true;
   if (e.key === ' ' || e.key === 'Enter') {
-    if (!fishing && !hookThrowing && !gameOver) startHookCast();
+    if (reelGame.active) {
+      reelTap();
+      setReelHolding(true);
+    } else if (!fishing && !hookThrowing && !gameOver) {
+      startHookCast();
+    }
   }
 });
 
@@ -5127,6 +5261,7 @@ window.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowRight' || e.key === 'd') keyState.right = false;
   if (e.key === 'ArrowUp' || e.key === 'w') keyState.up = false;
   if (e.key === 'ArrowDown' || e.key === 's') keyState.down = false;
+  if (e.key === ' ' || e.key === 'Enter') setReelHolding(false);
 });
 const joystick = document.getElementById('joystick');
 const knob = document.getElementById('joystick-knob');
@@ -5209,6 +5344,12 @@ function doRestartGame() {
   trashCaughtCount = 0;
   scorePopups.length = 0;
   specialAlert = null;
+  reelGame.active = false;
+  reelGame.target = null;
+  reelGame.holding = false;
+  reelGame.progress = 0;
+  reelGame.resultFlash = 0;
+  reelGame.failFlash = 0;
   lastTime = 0;
   deltaTime = 0;
   spawnFish();
@@ -5514,6 +5655,12 @@ window.addEventListener('keydown', function(e) {
   const actionBtn = document.getElementById('actionBtn');
   if (actionBtn) {
     function triggerFishingAction(e) {
+      // 拉桿小遊戲優先：連點加進度
+      if (reelGame.active) {
+        reelTap();
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        return;
+      }
       if (!fishing && !hookThrowing && !gameOver) {
         startHookCast();
       }
@@ -5522,11 +5669,26 @@ window.addEventListener('keydown', function(e) {
         e.stopPropagation();
       }
     }
-    actionBtn.addEventListener('touchstart', triggerFishingAction, { passive: false });
+    actionBtn.addEventListener('touchstart', function(e) {
+      if (reelGame.active) setReelHolding(true);
+      triggerFishingAction(e);
+    }, { passive: false });
+    actionBtn.addEventListener('touchend', function() { setReelHolding(false); });
+    actionBtn.addEventListener('touchcancel', function() { setReelHolding(false); });
+    actionBtn.addEventListener('mousedown', function() {
+      if (reelGame.active) setReelHolding(true);
+    });
+    actionBtn.addEventListener('mouseup', function() { setReelHolding(false); });
+    actionBtn.addEventListener('mouseleave', function() { setReelHolding(false); });
     actionBtn.addEventListener('click', triggerFishingAction);
   }
 
   function triggerFishingFromCanvas(e) {
+    if (reelGame.active) {
+      reelTap();
+      if (e) e.preventDefault();
+      return;
+    }
     if (!fishing && !hookThrowing && !gameOver) {
       startHookCast();
     }
