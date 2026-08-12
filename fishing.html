@@ -98,7 +98,7 @@
       max-width: calc(100vh * (9 / 16));
       max-height: calc(100vw * (16 / 9));
       aspect-ratio: 9 / 16;
-      background: #87ceeb;
+      background: #0a1a2f;
       overflow: hidden;
       border-radius: var(--clay-radius-2xl);
       box-shadow:
@@ -112,7 +112,39 @@
       align-items: center;
     }
 
+    /* 海中 YouTube 層：背景圖之上、canvas（魚群）之下 */
+    #seaYtWrap {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: 28%;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+      background: #061018;
+    }
+    #seaYtWrap.is-playing {
+      opacity: 1;
+    }
+    #seaYtWrap iframe {
+      position: absolute;
+      border: 0;
+      /* 放大裁切黑邊／標題 */
+      width: 140%;
+      height: 140%;
+      left: -20%;
+      top: -20%;
+      transform: scale(1.2);
+      transform-origin: center center;
+      pointer-events: none;
+    }
+
     canvas {
+      position: relative;
+      z-index: 1;
       background: transparent;
       display: block;
       width: 100%;
@@ -744,6 +776,9 @@
   </style>
 </head>
 <body>
+  <div id="gameBg">
+  <!-- 海中背景音樂／影像（YouTube，開始遊戲後播放） -->
+  <div id="seaYtWrap" aria-hidden="true"></div>
   <!-- 設定為 540x960 (9:16 直式解析度) -->
   <canvas id="gameCanvas" width="540" height="960"></canvas>
 
@@ -777,7 +812,7 @@
   <!-- 遊戲結束 POPUP（預設隱藏） -->
   <div id="gameOverModal" style="display:none;">
     <div class="modal-content" id="gameOverModalContent" style="text-align:center;">
-      <h2>遊戲結束</h2>
+      <h2 id="gameOverTitle">遊戲結束</h2>
       <div id="gameOverStats" style="margin:16px 0; font-size:1.05em; line-height:1.9; text-align:left; padding:0 8px;">
         <!-- 統計內容由 JS 動態填入 -->
       </div>
@@ -826,6 +861,7 @@
   <div id="screenButtons" >
     <button id="actionBtn">釣魚</button>
   </div>
+  </div><!-- /#gameBg -->
   <script>
 const canvas = document.getElementById('gameCanvas');
 
@@ -4422,12 +4458,28 @@ function gameLoop(currentTime) {
     waveDisturb.v *= 0.92;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 畫背景圖（天空+海洋）
+    // 圖層：背景圖 → YouTube（HTML）→ canvas 魚／UI
+    // YT 播放中：只畫海面以上的天空；海面以下保持透明讓影片透出
+    const seaYtOn = !!(typeof seaYtStarted !== 'undefined' && seaYtStarted &&
+      document.getElementById('seaYtWrap') &&
+      document.getElementById('seaYtWrap').classList.contains('is-playing'));
+    const seaY = LINE_PARAMS.seaSurfaceY;
     if (bgImg.complete && bgImg.naturalWidth > 0) {
-      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      if (seaYtOn) {
+        // 只畫天空（裁切到海平面）
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, canvas.width, seaY + 2);
+        ctx.clip();
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+        // 極淡水色，讓影片偏藍、仍清楚可見
+        ctx.fillStyle = 'rgba(25, 70, 110, 0.22)';
+        ctx.fillRect(0, seaY, canvas.width, canvas.height - seaY);
+      } else {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      }
     } else {
-      // 圖片尚未載入完成時的備用漸層
-      let seaY = LINE_PARAMS.seaSurfaceY;
       let skyGradient = ctx.createLinearGradient(0, 0, 0, seaY);
       skyGradient.addColorStop(0, '#b3e0ff');
       skyGradient.addColorStop(0.3, '#e6f6ff');
@@ -4436,14 +4488,22 @@ function gameLoop(currentTime) {
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvas.width, seaY);
       let seaGradient = ctx.createLinearGradient(0, seaY, 0, canvas.height);
-      seaGradient.addColorStop(0, '#7bbbe6');
-      seaGradient.addColorStop(0.15, '#3a8cc1');
-      seaGradient.addColorStop(0.4, '#206090');
-      seaGradient.addColorStop(0.7, '#133a5c');
-      seaGradient.addColorStop(1, '#0a1a2f');
+      if (seaYtOn) {
+        seaGradient.addColorStop(0, 'rgba(123,187,230,0.28)');
+        seaGradient.addColorStop(0.25, 'rgba(58,140,193,0.22)');
+        seaGradient.addColorStop(0.55, 'rgba(32,96,144,0.28)');
+        seaGradient.addColorStop(1, 'rgba(10,26,47,0.38)');
+      } else {
+        seaGradient.addColorStop(0, '#7bbbe6');
+        seaGradient.addColorStop(0.15, '#3a8cc1');
+        seaGradient.addColorStop(0.4, '#206090');
+        seaGradient.addColorStop(0.7, '#133a5c');
+        seaGradient.addColorStop(1, '#0a1a2f');
+      }
       ctx.fillStyle = seaGradient;
       ctx.fillRect(0, seaY, canvas.width, canvas.height - seaY);
     }
+    if (typeof updateSeaYtLayout === 'function') updateSeaYtLayout();
 
     // --- 日／夜氛圍（天空遮罩 + 簡易月亮／太陽）---
     {
@@ -5541,6 +5601,7 @@ function doRestartGame() {
   elapsedGameTime = 0;
   gameOver = false;
   gameStarted = true;
+  if (typeof startSeaYoutube === 'function') startSeaYoutube();
   collectedFishCounts = {};
   collectedFishPts = {};
   trashCaughtCount = 0;
@@ -5667,6 +5728,81 @@ window.addEventListener('keydown', function(e) {
   }
 });
 
+// ============================================================
+// 海中 YouTube 背景（點擊開始遊戲後才載入並播放，符合瀏覽器自動播放政策）
+// ============================================================
+// https://youtu.be/eG5Zm8ZAutI
+const SEA_YT_VIDEO_ID = 'eG5Zm8ZAutI';
+let seaYtStarted = false;
+
+function updateSeaYtLayout() {
+  const wrap = document.getElementById('seaYtWrap');
+  if (!wrap || !canvas) return;
+  const seaY = (typeof LINE_PARAMS !== 'undefined' && LINE_PARAMS.seaSurfaceY) ? LINE_PARAMS.seaSurfaceY : 270;
+  // 自海平面起往下鋪滿，對齊 canvas 座標系比例
+  const ratio = Math.max(0.12, Math.min(0.6, seaY / (canvas.height || 960)));
+  wrap.style.top = (ratio * 100) + '%';
+  wrap.style.bottom = '0';
+  wrap.style.left = '0';
+  wrap.style.right = '0';
+}
+
+function startSeaYoutube() {
+  const wrap = document.getElementById('seaYtWrap');
+  if (!wrap) return;
+  updateSeaYtLayout();
+  if (seaYtStarted) {
+    wrap.classList.add('is-playing');
+    const iframe = document.getElementById('seaYtFrame');
+    if (iframe && iframe.contentWindow) {
+      try {
+        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
+        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+      } catch (e) { /* ignore */ }
+    }
+    return;
+  }
+  seaYtStarted = true;
+  const id = SEA_YT_VIDEO_ID;
+  // playlist= 同 id → 單曲循環；autoplay 需在使用者點擊開始時呼叫
+  const params = [
+    'autoplay=1',
+    'mute=0',
+    'loop=1',
+    'playlist=' + id,
+    'controls=0',
+    'modestbranding=1',
+    'rel=0',
+    'playsinline=1',
+    'iv_load_policy=3',
+    'fs=0',
+    'disablekb=1',
+    'enablejsapi=1'
+  ].join('&');
+  const iframe = document.createElement('iframe');
+  iframe.id = 'seaYtFrame';
+  iframe.title = '海中背景';
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+  iframe.setAttribute('allowfullscreen', '0');
+  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  iframe.src = 'https://www.youtube.com/embed/' + id + '?' + params;
+  wrap.innerHTML = '';
+  wrap.appendChild(iframe);
+  wrap.classList.add('is-playing');
+}
+
+function stopSeaYoutube() {
+  const wrap = document.getElementById('seaYtWrap');
+  if (!wrap) return;
+  wrap.classList.remove('is-playing');
+  const iframe = document.getElementById('seaYtFrame');
+  if (iframe && iframe.contentWindow) {
+    try {
+      iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+    } catch (e) { /* ignore */ }
+  }
+}
+
 // === 開始畫面：點擊畫面開始遊戲 ===
 (function() {
   const startModal = document.getElementById('startModal');
@@ -5676,6 +5812,8 @@ window.addEventListener('keydown', function(e) {
     if (startModal) startModal.style.display = 'none';
     resumeAudioCtx();
     sfx('game_start');
+    // 使用者手勢當下啟動 YouTube（才可帶聲音自動播放）
+    startSeaYoutube();
   }
   if (startModal) {
     startModal.addEventListener('click', beginGame);
