@@ -142,6 +142,32 @@
       pointer-events: none;
     }
 
+    /* 海影開啟聲音（第二次手勢 unmute） */
+    #ytUnmuteBtn {
+      display: none;
+      position: absolute;
+      right: 14px;
+      bottom: max(96px, calc(env(safe-area-inset-bottom) + 88px));
+      z-index: 2100;
+      padding: 10px 14px;
+      border: 3px solid rgba(255, 255, 255, 0.75);
+      border-radius: var(--clay-radius-pill);
+      cursor: pointer;
+      font-size: 0.92em;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(155deg, #7eb6ff 0%, var(--clay-blue) 45%, var(--clay-blue-deep) 100%);
+      box-shadow: var(--shadow-clay);
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+    }
+    #ytUnmuteBtn.is-visible { display: inline-flex; align-items: center; gap: 6px; }
+    #ytUnmuteBtn.is-on {
+      background: linear-gradient(155deg, #9a9a9a 0%, #6b7c99 100%);
+      opacity: 0.85;
+    }
+    #ytUnmuteBtn:active { transform: scale(0.92); box-shadow: var(--shadow-clay-pressed); }
+
     canvas {
       position: relative;
       z-index: 1;
@@ -861,6 +887,8 @@
   <div id="screenButtons" >
     <button id="actionBtn">釣魚</button>
   </div>
+  <!-- 手機靜音自動播後，再點一次開海影聲音 -->
+  <button type="button" id="ytUnmuteBtn" title="開啟／關閉海影聲音" aria-pressed="false">🔊 海影聲音</button>
   </div><!-- /#gameBg -->
   <script>
 const canvas = document.getElementById('gameCanvas');
@@ -5737,17 +5765,32 @@ window.addEventListener('keydown', function(e) {
 });
 
 // ============================================================
-// 海中 YouTube 背景（點擊開始遊戲後才載入並播放，符合瀏覽器自動播放政策）
-// ============================================================
+// 海中 YouTube 背景
+// 手機／桌面：開始遊戲手勢當下載入，預設靜音 autoplay（行動最穩）
+// 再點「海影聲音」第二次手勢 unmute
 // https://youtu.be/eG5Zm8ZAutI?si=JT8LO73bsLDA8Y5q
+// ============================================================
 const SEA_YT_VIDEO_ID = 'eG5Zm8ZAutI';
 let seaYtStarted = false;
+let seaYtMuted = true; // 預設靜音，符合行動自動播放政策
+
+function postSeaYtCommand(func, args) {
+  const iframe = document.getElementById('seaYtFrame');
+  if (!iframe || !iframe.contentWindow) return;
+  const payload = JSON.stringify({
+    event: 'command',
+    func: func,
+    args: args || []
+  });
+  try {
+    iframe.contentWindow.postMessage(payload, '*');
+  } catch (e) { /* ignore */ }
+}
 
 function updateSeaYtLayout() {
   const wrap = document.getElementById('seaYtWrap');
   if (!wrap || !canvas) return;
   const seaY = (typeof LINE_PARAMS !== 'undefined' && LINE_PARAMS.seaSurfaceY) ? LINE_PARAMS.seaSurfaceY : 270;
-  // 自海平面起往下鋪滿，對齊 canvas 座標系比例
   const ratio = Math.max(0.12, Math.min(0.6, seaY / (canvas.height || 960)));
   wrap.style.top = (ratio * 100) + '%';
   wrap.style.bottom = '0';
@@ -5755,27 +5798,53 @@ function updateSeaYtLayout() {
   wrap.style.right = '0';
 }
 
+function updateYtUnmuteBtn() {
+  const btn = document.getElementById('ytUnmuteBtn');
+  if (!btn) return;
+  if (!seaYtStarted) {
+    btn.classList.remove('is-visible', 'is-on');
+    btn.setAttribute('aria-pressed', 'false');
+    return;
+  }
+  btn.classList.add('is-visible');
+  if (seaYtMuted) {
+    btn.classList.remove('is-on');
+    btn.innerHTML = '🔊 海影聲音';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.title = '開啟海影聲音';
+  } else {
+    btn.classList.add('is-on');
+    btn.innerHTML = '🔇 海影靜音';
+    btn.setAttribute('aria-pressed', 'true');
+    btn.title = '關閉海影聲音';
+  }
+}
+
+/**
+ * 開始／恢復海影：一律 mute=1 自動播（iOS／Android 最穩）
+ * 必須在使用者 click／touchstart 同步呼叫，勿 setTimeout 延後
+ */
 function startSeaYoutube() {
   const wrap = document.getElementById('seaYtWrap');
   if (!wrap) return;
   updateSeaYtLayout();
+
   if (seaYtStarted) {
     wrap.classList.add('is-playing');
-    const iframe = document.getElementById('seaYtFrame');
-    if (iframe && iframe.contentWindow) {
-      try {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
-        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-      } catch (e) { /* ignore */ }
-    }
+    postSeaYtCommand('playVideo');
+    postSeaYtCommand('mute'); // 確保仍是靜音策略
+    seaYtMuted = true;
+    updateYtUnmuteBtn();
     return;
   }
+
   seaYtStarted = true;
+  seaYtMuted = true;
   const id = SEA_YT_VIDEO_ID;
-  // playlist= 同 id → 單曲循環；autoplay 需在使用者點擊開始時呼叫
+  // mute=1 + playsinline=1：手機靜音自動播關鍵
   const params = [
     'autoplay=1',
-    'mute=0',
+    'mute=1',
     'loop=1',
     'playlist=' + id,
     'controls=0',
@@ -5785,31 +5854,67 @@ function startSeaYoutube() {
     'iv_load_policy=3',
     'fs=0',
     'disablekb=1',
-    'enablejsapi=1'
+    'enablejsapi=1',
+    'origin=' + encodeURIComponent(location.origin || '')
   ].join('&');
+
   const iframe = document.createElement('iframe');
   iframe.id = 'seaYtFrame';
   iframe.title = '海中背景';
+  // 明確允許 autoplay（靜音）
   iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
   iframe.setAttribute('allowfullscreen', '0');
+  iframe.setAttribute('playsinline', '1');
   iframe.referrerPolicy = 'strict-origin-when-cross-origin';
   iframe.src = 'https://www.youtube.com/embed/' + id + '?' + params;
   wrap.innerHTML = '';
   wrap.appendChild(iframe);
   wrap.classList.add('is-playing');
+  updateYtUnmuteBtn();
+
+  // iframe 就緒後再送一次 play + mute（部分 WebView 需要）
+  iframe.addEventListener('load', function() {
+    postSeaYtCommand('playVideo');
+    postSeaYtCommand('mute');
+  });
+}
+
+/** 第二次使用者手勢：開啟／關閉聲音 */
+function toggleSeaYtSound() {
+  if (!seaYtStarted) return;
+  if (seaYtMuted) {
+    postSeaYtCommand('unMute');
+    postSeaYtCommand('setVolume', [100]);
+    postSeaYtCommand('playVideo');
+    seaYtMuted = false;
+  } else {
+    postSeaYtCommand('mute');
+    seaYtMuted = true;
+  }
+  updateYtUnmuteBtn();
+  if (typeof sfx === 'function') sfx('ui_click', { throttleMs: 80 });
 }
 
 function stopSeaYoutube() {
   const wrap = document.getElementById('seaYtWrap');
   if (!wrap) return;
   wrap.classList.remove('is-playing');
-  const iframe = document.getElementById('seaYtFrame');
-  if (iframe && iframe.contentWindow) {
-    try {
-      iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
-    } catch (e) { /* ignore */ }
-  }
+  postSeaYtCommand('pauseVideo');
+  seaYtMuted = true;
+  updateYtUnmuteBtn();
 }
+
+(function bindYtUnmuteBtn() {
+  const btn = document.getElementById('ytUnmuteBtn');
+  if (!btn) return;
+  function onTap(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSeaYtSound();
+  }
+  btn.addEventListener('click', onTap);
+  btn.addEventListener('touchend', onTap, { passive: false });
+})();
 
 // === 開始畫面：點擊畫面開始遊戲 ===
 (function() {
@@ -5820,7 +5925,7 @@ function stopSeaYoutube() {
     if (startModal) startModal.style.display = 'none';
     resumeAudioCtx();
     sfx('game_start');
-    // 使用者手勢當下啟動 YouTube（才可帶聲音自動播放）
+    // 使用者手勢當下啟動 YouTube（靜音 autoplay，行動最穩）
     startSeaYoutube();
   }
   if (startModal) {
