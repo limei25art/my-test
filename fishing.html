@@ -134,13 +134,13 @@
       }
     }
 
-    /* 海中 YouTube：背景圖之上、canvas（魚群）之下 */
+    /* 海中 YouTube：背景圖之上、canvas（魚群）之下；放大約 1260 高 */
     #seaYtWrap {
       position: absolute;
       left: 0;
       right: 0;
       bottom: 0;
-      top: 28%;
+      top: 22%;
       z-index: 0;
       overflow: hidden;
       pointer-events: none;
@@ -154,27 +154,28 @@
     #seaYtWrap iframe {
       position: absolute;
       border: 0;
-      width: 140%;
-      height: 140%;
-      left: -20%;
-      top: -20%;
-      transform: scale(1.25);
+      /* 高度 1260、16:9 對應寬約 2240，置中放大裁黑邊 */
+      width: 2240px;
+      height: 1260px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(1.12);
       transform-origin: center center;
       pointer-events: none;
     }
 
-    /* bg.jpg 半透 50%，蓋在 YouTube 瀏覽器上面、魚群下面 */
+    /* bg2.jpg 半透 50%，蓋在 YouTube 上面、魚群下面 */
     #seaBgOverlay {
       position: absolute;
       left: 0;
       right: 0;
       bottom: 0;
-      top: 28%;
+      top: 22%;
       z-index: 0;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.9s ease;
-      background: url('img/bg.jpg') center center / cover no-repeat;
+      background: url('img/bg2.jpg') center center / cover no-repeat;
     }
     #seaBgOverlay.is-playing {
       opacity: 0.5;
@@ -210,15 +211,18 @@
     }
     #ytUnmuteBtn:active { transform: scale(0.90); box-shadow: var(--shadow-clay-pressed); }
 
-    canvas {
-      position: relative;
+    /* 顯示用 canvas：CSS 永遠鋪滿 9:16 的 #gameBg，邏輯座標在離屏 buffer */
+    #gameCanvas {
+      position: absolute;
+      inset: 0;
       z-index: 1;
       background: transparent;
       display: block;
       width: 100%;
       height: 100%;
-      object-fit: contain;
       border-radius: var(--clay-radius-2xl);
+      /* 觸控／滑鼠落在顯示層 */
+      touch-action: none;
     }
 
     /* ---------- Top action buttons（縮小） ---------- */
@@ -849,7 +853,7 @@
   <div id="gameBg">
   <!-- 海中 YouTube（開始遊戲後播放） -->
   <div id="seaYtWrap" aria-hidden="true"></div>
-  <!-- bg.jpg 半透，蓋在 YT 上面、canvas 魚群下面 -->
+  <!-- bg2.jpg 半透，蓋在 YT 上面、canvas 魚群下面 -->
   <div id="seaBgOverlay" aria-hidden="true"></div>
   <!-- 設定為 540x960 (9:16 直式解析度) -->
   <canvas id="gameCanvas" width="540" height="960"></canvas>
@@ -936,7 +940,23 @@
   </div>
   </div><!-- /#gameBg -->
   <script>
-const canvas = document.getElementById('gameCanvas');
+// ============================================================
+// 雙 Canvas：邏輯 buffer 固定 540×960（Mobile／桌面座標一致）
+//            顯示 canvas 鋪滿 #gameBg，每幀把 buffer 拉伸貼上
+// ============================================================
+const GAME_W = 540;
+const GAME_H = 960;
+const displayCanvas = document.getElementById('gameCanvas');
+const displayCtx = displayCanvas.getContext('2d', { alpha: true });
+// 離屏邏輯畫布（所有遊戲座標、碰撞、生成都用這張）
+const canvas = document.createElement('canvas');
+canvas.width = GAME_W;
+canvas.height = GAME_H;
+// 相容舊程式碼若讀 canvas.style（無 DOM 時忽略）
+try {
+  canvas.style.width = GAME_W + 'px';
+  canvas.style.height = GAME_H + 'px';
+} catch (e) { /* ignore */ }
 
 // ============================================================
 // 音效反饋系統（SFX）
@@ -1183,6 +1203,25 @@ function playRandomCatchSound() {
 }
 
 const ctx = canvas.getContext('2d');
+
+/** 把 540×960 邏輯畫面貼到顯示 canvas（HiDPI） */
+function presentGameFrame() {
+  if (!displayCtx || !displayCanvas) return;
+  const dw = displayCanvas.width;
+  const dh = displayCanvas.height;
+  if (!(dw > 0 && dh > 0)) return;
+  displayCtx.setTransform(1, 0, 0, 1, 0, 0);
+  displayCtx.clearRect(0, 0, dw, dh);
+  displayCtx.imageSmoothingEnabled = true;
+  displayCtx.imageSmoothingQuality = 'high';
+  displayCtx.drawImage(canvas, 0, 0, GAME_W, GAME_H, 0, 0, dw, dh);
+}
+
+/** 排程下一幀前先 present，確保所有 return 路徑畫面都更新 */
+function frameNext() {
+  presentGameFrame();
+  animationId = requestAnimationFrame(gameLoop);
+}
 
 const FISH_COUNT = 20;
 const GAME_TIME = 100; // 以原版節奏為準，這裡當作元氣值上限
@@ -4497,7 +4536,7 @@ function gameLoop(currentTime) {
     
     // 如果幀率太快，跳過這一幀
     if (deltaTime < frameTime) {
-      animationId = requestAnimationFrame(gameLoop);
+      frameNext();
       return;
     }
     
@@ -5513,9 +5552,10 @@ function gameLoop(currentTime) {
       // 碗下沉動畫已停用（改為遊戲結束 POPUP），此區塊僅保留相容，不再顯示排行榜
       if (bowlY >= bowlSinkTargetY) {
         bowlY = bowlSinkTargetY;
+        presentGameFrame();
         return;
       }
-      animationId = requestAnimationFrame(gameLoop);
+      frameNext();
       return;
     }
     // 遊戲結束：不再播放鍋蓋／碗下沉動畫、不顯示排行榜，改為直接跳出結束 POPUP
@@ -5526,10 +5566,10 @@ function gameLoop(currentTime) {
       lidDropping = false;
       bowlSinking = false;
       showGameOverModal();
-      animationId = requestAnimationFrame(gameLoop);
+      frameNext();
       return;
     }
-    animationId = requestAnimationFrame(gameLoop);
+    frameNext();
 
     // === 緊張背景音效 ===
     if (!gameOver && timeLeft > 0) {
@@ -5552,7 +5592,7 @@ function gameLoop(currentTime) {
   } catch (e) {
     // 若有錯誤，顯示在 console，並嘗試繼續下一幀
     console.error('gameLoop error:', e);
-    animationId = requestAnimationFrame(gameLoop);
+    frameNext();
   }
 }
 
@@ -5561,7 +5601,7 @@ function countdown() {
 }
 
 // 釣魚（滑鼠點擊或空白鍵）
-canvas.addEventListener("mousedown", () => {
+displayCanvas.addEventListener("mousedown", () => {
   // !fishing && !hookThrowing 這個條件維持整個「迴圈甩竿＋自由落下」期間都是 false，
   // 一定要等鉤子真的碰到水面（見 gameLoop 的 'fall' 階段）才會恢復成可以再拉竿一次。
   if (!gameOver && !fishing && !hookThrowing) {
@@ -5653,22 +5693,38 @@ function updateJoystick(e) {
   keyState.up = dy < -12;
   keyState.down = dy > 12;
 }
-// 響應式 canvas 尺寸調整
+// 響應式：只調「顯示 canvas」像素；邏輯 buffer 永遠 540×960
 function resizeGameCanvas() {
-  const GAME_WIDTH = 540;
-  const GAME_HEIGHT = 960;
-  let w = window.innerWidth;
-  let h = window.innerHeight;
-  let scale = Math.min(w / GAME_WIDTH, h / GAME_HEIGHT);
-  canvas.width = GAME_WIDTH;
-  canvas.height = GAME_HEIGHT;
-  canvas.style.width = (GAME_WIDTH * scale) + 'px';
-  canvas.style.height = (GAME_HEIGHT * scale) + 'px';
-  canvas.style.left = ((w - GAME_WIDTH * scale) / 2) + 'px';
-  canvas.style.top = ((h - GAME_HEIGHT * scale) / 2) + 'px';
-  canvas.style.position = 'absolute';
+  // 邏輯尺寸鎖死，避免 Mobile／桌面世界座標漂移
+  if (canvas.width !== GAME_W) canvas.width = GAME_W;
+  if (canvas.height !== GAME_H) canvas.height = GAME_H;
+
+  const bg = document.getElementById('gameBg');
+  const rect = bg ? bg.getBoundingClientRect() : null;
+  let cssW = rect && rect.width > 0 ? rect.width : Math.min(window.innerWidth, window.innerHeight * 9 / 16);
+  let cssH = rect && rect.height > 0 ? rect.height : Math.min(window.innerHeight, window.innerWidth * 16 / 9);
+  // 保 9:16
+  if (cssW / cssH > 9 / 16) cssW = cssH * 9 / 16;
+  else cssH = cssW * 16 / 9;
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  displayCanvas.style.width = '100%';
+  displayCanvas.style.height = '100%';
+  displayCanvas.style.position = 'absolute';
+  displayCanvas.style.left = '0';
+  displayCanvas.style.top = '0';
+  const bw = Math.max(1, Math.round(cssW * dpr));
+  const bh = Math.max(1, Math.round(cssH * dpr));
+  if (displayCanvas.width !== bw) displayCanvas.width = bw;
+  if (displayCanvas.height !== bh) displayCanvas.height = bh;
+
+  if (typeof updateSeaYtLayout === 'function') updateSeaYtLayout();
+  presentGameFrame();
 }
 window.addEventListener('resize', resizeGameCanvas);
+window.addEventListener('orientationchange', function() {
+  setTimeout(resizeGameCanvas, 50);
+});
 resizeGameCanvas();
 
 // 重新開始（由遊戲結束 POPUP 呼叫；已移除右上角 🔄 按鈕）
@@ -5733,7 +5789,7 @@ function doRestartGame() {
   catAnimFrame = 0;
   catAnimTimer = 0;
   catWasMoving = false;
-  animationId = requestAnimationFrame(gameLoop);
+  frameNext();
 }
 // 新增：遊戲說明按鈕
 const infoBtn = document.getElementById('infoBtn');
@@ -5813,7 +5869,8 @@ window.addEventListener('keydown', function(e) {
 // 海中 YouTube 背景
 // 手機／桌面：開始遊戲手勢當下載入，預設靜音 autoplay（行動最穩）
 // 再點「海影聲音」第二次手勢 unmute
-// https://youtu.be/eG5Zm8ZAutI?si=JT8LO73bsLDA8Y5q
+// 單支影片（非 playlist 頁）：https://youtu.be/eG5Zm8ZAutI
+// embed 時 playlist=同 id 只是為了 loop=1 能單曲循環，不是多支播放清單
 // ============================================================
 const SEA_YT_VIDEO_ID = 'eG5Zm8ZAutI';
 let seaYtStarted = false;
@@ -6200,8 +6257,8 @@ function stopSeaYoutube() {
     }
     if (e) e.preventDefault();
   }
-  canvas.addEventListener('click', triggerFishingFromCanvas);
-  canvas.addEventListener('touchstart', triggerFishingFromCanvas);
+  displayCanvas.addEventListener('click', triggerFishingFromCanvas);
+  displayCanvas.addEventListener('touchstart', triggerFishingFromCanvas);
 })();
 
 // ============================================================
@@ -6459,7 +6516,7 @@ lidDropOffset = 0;
 catAnimFrame = 0; // 重置精靈移動動畫影格
 catAnimTimer = 0;
 catWasMoving = false;
-animationId = requestAnimationFrame(gameLoop);
+frameNext();
 
 function setAllAudioMuted(muted) {
   isMuted = !!muted;
