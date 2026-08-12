@@ -112,7 +112,7 @@
       align-items: center;
     }
 
-    /* 海中 YouTube 層：背景圖之上、canvas（魚群）之下 */
+    /* 海中 YouTube 層：背景圖之上、canvas（魚群）之下，半透 50% */
     #seaYtWrap {
       position: absolute;
       left: 0;
@@ -124,20 +124,20 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.9s ease;
-      background: #061018;
+      background: transparent;
     }
     #seaYtWrap.is-playing {
-      opacity: 1;
+      opacity: 0.5; /* 瀏覽器／影片半透明 50% */
     }
     #seaYtWrap iframe {
       position: absolute;
       border: 0;
-      /* 放大裁切黑邊／標題 */
+      /* 放大裁切黑邊／標題列 */
       width: 140%;
       height: 140%;
       left: -20%;
       top: -20%;
-      transform: scale(1.2);
+      transform: scale(1.25);
       transform-origin: center center;
       pointer-events: none;
     }
@@ -4473,8 +4473,8 @@ function gameLoop(currentTime) {
         ctx.clip();
         ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
         ctx.restore();
-        // 極淡水色，讓影片偏藍、仍清楚可見
-        ctx.fillStyle = 'rgba(25, 70, 110, 0.22)';
+        // 極淡水色（YT 已 50% 透明，勿再蓋太厚）
+        ctx.fillStyle = 'rgba(20, 60, 100, 0.12)';
         ctx.fillRect(0, seaY, canvas.width, canvas.height - seaY);
       } else {
         ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
@@ -4518,7 +4518,15 @@ function gameLoop(currentTime) {
         g.addColorStop(0.55, 'rgba(10, 40, 70,' + (0.28 * night) + ')');
         g.addColorStop(1, 'rgba(5, 20, 40,' + (0.18 * night) + ')');
         ctx.fillStyle = g;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // YT 播放時：夜幕主要蓋天空，海洋少蓋一點以免影片過暗
+        if (typeof seaYtOn !== 'undefined' && seaYtOn) {
+          ctx.fillRect(0, 0, canvas.width, seaY + 4);
+          ctx.globalAlpha = 0.35 * night;
+          ctx.fillRect(0, seaY, canvas.width, canvas.height - seaY);
+          ctx.globalAlpha = 1;
+        } else {
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
         // 星星（固定種子感：用固定座標）
         if (night > 0.35) {
           ctx.globalAlpha = Math.min(1, (night - 0.35) / 0.4) * 0.9;
@@ -5731,7 +5739,7 @@ window.addEventListener('keydown', function(e) {
 // ============================================================
 // 海中 YouTube 背景（點擊開始遊戲後才載入並播放，符合瀏覽器自動播放政策）
 // ============================================================
-// https://youtu.be/eG5Zm8ZAutI
+// https://youtu.be/eG5Zm8ZAutI?si=JT8LO73bsLDA8Y5q
 const SEA_YT_VIDEO_ID = 'eG5Zm8ZAutI';
 let seaYtStarted = false;
 
