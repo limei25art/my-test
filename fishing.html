@@ -87,17 +87,16 @@
         linear-gradient(165deg, #091d29 0%, #112c3b 45%, #183f54 100%);
       overflow: hidden;
       font-family: 'Noto Sans TC', 'Segoe UI', system-ui, -apple-system, sans-serif;
-      /* dvh：避開手機瀏覽器網址列造成 100vh 偏高、整頁下沉 */
+      /* 只用 dvh，避免 svh/dvh 混用造成 Mobile 整頁下移 */
       width: 100%;
+      height: 100%;
       height: 100dvh;
-      height: 100svh;
       max-height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
       color: var(--clay-text);
       -webkit-font-smoothing: antialiased;
-      /* 避免 iOS 橡皮筋把 UI 整塊拖偏 */
       position: fixed;
       inset: 0;
       overscroll-behavior: none;
@@ -106,10 +105,11 @@
 
     #gameBg {
       position: relative;
-      width: 100%;
-      height: 100%;
-      max-width: min(100vw, calc(100dvh * (9 / 16)));
-      max-height: min(100dvh, calc(100vw * (16 / 9)));
+      /* 以可視區置中，不再 100% 撐滿再被 safe-area 往下擠 */
+      width: min(100vw, calc(100dvh * 9 / 16));
+      height: min(100dvh, calc(100vw * 16 / 9));
+      max-width: 100vw;
+      max-height: 100dvh;
       aspect-ratio: 9 / 16;
       background: #0a1a2f;
       overflow: hidden;
@@ -124,8 +124,17 @@
       justify-content: center;
       align-items: center;
     }
+    @supports (height: 100svh) {
+      /* 小屏優先穩定可視高度，減少網址列伸縮跳動 */
+      body { height: 100svh; max-height: 100svh; }
+      #gameBg {
+        width: min(100vw, calc(100svh * 9 / 16));
+        height: min(100svh, calc(100vw * 16 / 9));
+        max-height: 100svh;
+      }
+    }
 
-    /* 海中 YouTube 層：背景圖之上、canvas（魚群）之下，半透 50% */
+    /* 海中 YouTube：背景圖之上、canvas（魚群）之下 */
     #seaYtWrap {
       position: absolute;
       left: 0;
@@ -140,12 +149,11 @@
       background: transparent;
     }
     #seaYtWrap.is-playing {
-      opacity: 0.2; /* 更透，多露出背景圖 */
+      opacity: 0.5;
     }
     #seaYtWrap iframe {
       position: absolute;
       border: 0;
-      /* 放大裁切黑邊／標題列 */
       width: 140%;
       height: 140%;
       left: -20%;
@@ -155,21 +163,36 @@
       pointer-events: none;
     }
 
-    /* 海影聲音：排在 info 按鈕正下方（.btn-row 直向） */
+    /* bg.jpg 半透 50%，蓋在 YouTube 瀏覽器上面、魚群下面 */
+    #seaBgOverlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: 28%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+      background: url('img/bg.jpg') center center / cover no-repeat;
+    }
+    #seaBgOverlay.is-playing {
+      opacity: 0.5;
+    }
+
+    /* 海影聲音：info 正下方，只顯示 🔊／🔇 */
     #ytUnmuteBtn {
       display: none;
       position: relative;
-      right: auto;
-      bottom: auto;
       z-index: 100;
-      margin: 4px;
-      padding: 11px 15px;
-      min-width: 48px;
-      min-height: 48px;
-      border: 3px solid rgba(255, 255, 255, 0.7);
+      margin: 2px;
+      padding: 6px 8px;
+      min-width: 34px;
+      min-height: 34px;
+      border: 2px solid rgba(255, 255, 255, 0.7);
       border-radius: var(--clay-radius-pill);
       cursor: pointer;
-      font-size: 20px;
+      font-size: 14px;
       line-height: 1;
       font-weight: 800;
       color: #fff;
@@ -183,7 +206,7 @@
     #ytUnmuteBtn.is-visible { display: inline-flex; }
     #ytUnmuteBtn.is-on {
       background: linear-gradient(155deg, #9a9a9a 0%, #6b7c99 100%);
-      opacity: 0.9;
+      opacity: 0.92;
     }
     #ytUnmuteBtn:active { transform: scale(0.90); box-shadow: var(--shadow-clay-pressed); }
 
@@ -198,17 +221,17 @@
       border-radius: var(--clay-radius-2xl);
     }
 
-    /* ---------- Top action buttons (clay pills) ---------- */
+    /* ---------- Top action buttons（縮小） ---------- */
     #infoBtn, #paramPanelBtn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      margin: 4px;
-      padding: 11px 15px;
-      min-width: 48px;
-      min-height: 48px;
-      border: 3px solid rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      margin: 2px;
+      padding: 6px 8px;
+      min-width: 34px;
+      min-height: 34px;
+      border: 2px solid rgba(255, 255, 255, 0.7);
       border-radius: var(--clay-radius-pill);
       cursor: pointer;
       color: #fff;
@@ -280,12 +303,13 @@
 
     .btn-row {
       position: absolute;
-      top: max(10px, env(safe-area-inset-top, 0px));
-      right: max(10px, env(safe-area-inset-right, 0px));
+      /* 相對 gameBg 固定，避免 Mobile safe-area 把整排往下推歪 */
+      top: 10px;
+      right: 10px;
       display: flex;
       flex-direction: column; /* info 在上，🔊 在下 */
       align-items: flex-end;
-      gap: 6px;
+      gap: 4px;
       z-index: 2100;
     }
 
@@ -483,8 +507,8 @@
     /* ---------- Joystick (soft clay disc) ---------- */
     #joystick {
       position: absolute;
-      left: 20px;
-      bottom: max(20px, env(safe-area-inset-bottom));
+      left: 16px;
+      bottom: 16px;
       width: 118px;
       height: 118px;
       z-index: 2000;
@@ -562,8 +586,8 @@
     /* ---------- Action button (amber clay blob) ---------- */
     #screenButtons {
       position: absolute;
-      right: 20px;
-      bottom: max(20px, env(safe-area-inset-bottom));
+      right: 16px;
+      bottom: 16px;
       z-index: 2000;
     }
 
@@ -823,8 +847,10 @@
 </head>
 <body>
   <div id="gameBg">
-  <!-- 海中背景音樂／影像（YouTube，開始遊戲後播放） -->
+  <!-- 海中 YouTube（開始遊戲後播放） -->
   <div id="seaYtWrap" aria-hidden="true"></div>
+  <!-- bg.jpg 半透，蓋在 YT 上面、canvas 魚群下面 -->
+  <div id="seaBgOverlay" aria-hidden="true"></div>
   <!-- 設定為 540x960 (9:16 直式解析度) -->
   <canvas id="gameCanvas" width="540" height="960"></canvas>
 
@@ -5807,14 +5833,25 @@ function postSeaYtCommand(func, args) {
 }
 
 function updateSeaYtLayout() {
-  const wrap = document.getElementById('seaYtWrap');
-  if (!wrap || !canvas) return;
   const seaY = (typeof LINE_PARAMS !== 'undefined' && LINE_PARAMS.seaSurfaceY) ? LINE_PARAMS.seaSurfaceY : 270;
   const ratio = Math.max(0.12, Math.min(0.6, seaY / (canvas.height || 960)));
-  wrap.style.top = (ratio * 100) + '%';
-  wrap.style.bottom = '0';
-  wrap.style.left = '0';
-  wrap.style.right = '0';
+  const top = (ratio * 100) + '%';
+  const wrap = document.getElementById('seaYtWrap');
+  const overlay = document.getElementById('seaBgOverlay');
+  [wrap, overlay].forEach(function(el) {
+    if (!el) return;
+    el.style.top = top;
+    el.style.bottom = '0';
+    el.style.left = '0';
+    el.style.right = '0';
+  });
+}
+
+function setSeaMediaPlaying(on) {
+  const wrap = document.getElementById('seaYtWrap');
+  const overlay = document.getElementById('seaBgOverlay');
+  if (wrap) wrap.classList.toggle('is-playing', !!on);
+  if (overlay) overlay.classList.toggle('is-playing', !!on);
 }
 
 function updateYtUnmuteBtn() {
@@ -5823,6 +5860,7 @@ function updateYtUnmuteBtn() {
   if (!seaYtStarted) {
     btn.classList.remove('is-visible', 'is-on');
     btn.setAttribute('aria-pressed', 'false');
+    btn.textContent = '🔊';
     return;
   }
   btn.classList.add('is-visible');
@@ -5833,9 +5871,9 @@ function updateYtUnmuteBtn() {
     btn.title = '開啟海影聲音';
   } else {
     btn.classList.add('is-on');
-    btn.textContent = '🔊';
+    btn.textContent = '🔇';
     btn.setAttribute('aria-pressed', 'true');
-    btn.title = '關閉海影聲音（目前有聲）';
+    btn.title = '關閉海影聲音';
   }
 }
 
@@ -5850,21 +5888,20 @@ function startSeaYoutube() {
   updateSeaYtLayout();
 
   if (seaYtStarted) {
-    wrap.classList.add('is-playing');
+    setSeaMediaPlaying(true);
     postSeaYtCommand('playVideo');
-    postSeaYtCommand('unMute');
-    postSeaYtCommand('setVolume', [100]);
-    seaYtMuted = false;
+    postSeaYtCommand('mute');
+    seaYtMuted = true;
     updateYtUnmuteBtn();
     return;
   }
 
   seaYtStarted = true;
-  seaYtMuted = false; // 開始遊戲後嘗試有聲
+  seaYtMuted = true; // 預設靜音：Mobile 自動播最穩
   const id = SEA_YT_VIDEO_ID;
   const params = [
     'autoplay=1',
-    'mute=0',
+    'mute=1',
     'loop=1',
     'playlist=' + id,
     'controls=0',
@@ -5888,13 +5925,12 @@ function startSeaYoutube() {
   iframe.src = 'https://www.youtube.com/embed/' + id + '?' + params;
   wrap.innerHTML = '';
   wrap.appendChild(iframe);
-  wrap.classList.add('is-playing');
+  setSeaMediaPlaying(true);
   updateYtUnmuteBtn();
 
   iframe.addEventListener('load', function() {
     postSeaYtCommand('playVideo');
-    postSeaYtCommand('unMute');
-    postSeaYtCommand('setVolume', [100]);
+    postSeaYtCommand('mute');
   });
 }
 
@@ -5915,9 +5951,7 @@ function toggleSeaYtSound() {
 }
 
 function stopSeaYoutube() {
-  const wrap = document.getElementById('seaYtWrap');
-  if (!wrap) return;
-  wrap.classList.remove('is-playing');
+  setSeaMediaPlaying(false);
   postSeaYtCommand('pauseVideo');
   seaYtMuted = true;
   updateYtUnmuteBtn();
