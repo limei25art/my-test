@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>姜太公E後人釣魚記</title>
+  <title>姜太公後人E釣魚記</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     /* ============================================================
@@ -888,7 +888,7 @@
   <!-- 遊戲開始畫面（透明 POPUP，點擊畫面開始） -->
   <div id="startModal">
     <div class="modal-content">
-      <h2>姜太公E後人釣魚記</h2>
+      <h2>姜太公後人E釣魚記</h2>
       <div class="start-howto">
         <ol style="padding-left:1.2em; margin:0;">
           <li>左右移動角色，對準海裡的魚。</li>
@@ -4450,11 +4450,20 @@ function generateResultShareCard() {
     g.fillStyle = 'rgba(255,255,255,0.96)';
     g.fillRect(cardX, cardY + 70, cardW, 48);
 
-    // EDAN 角色（左上角）
+    // EDAN 角色：左上角原圖 + 右上角水平左右反轉
     if (edanImg && edanImg.naturalWidth) {
       const ew = 150;
       const eh = ew * (edanImg.naturalHeight / edanImg.naturalWidth);
-      g.drawImage(edanImg, cardX + 18, cardY + 8, ew, eh);
+      const ey = cardY + 8;
+      // 左上角（原方向）
+      g.drawImage(edanImg, cardX + 18, ey, ew, eh);
+      // 右上角（左右反轉）
+      const exR = cardX + cardW - 18 - ew;
+      g.save();
+      g.translate(exR + ew, ey);
+      g.scale(-1, 1);
+      g.drawImage(edanImg, 0, 0, ew, eh);
+      g.restore();
     }
 
     // 標題
@@ -4462,7 +4471,7 @@ function generateResultShareCard() {
     g.font = '700 36px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
     g.textAlign = 'center';
     g.textBaseline = 'middle';
-    g.fillText('姜太公E後人釣魚日記', W / 2, cardY + 48);
+    g.fillText('姜太公後人E釣魚日記', W / 2, cardY + 48);
 
     // 大分數
     g.fillStyle = '#4a86d8';
@@ -4624,8 +4633,8 @@ function downloadResultShare() {
 async function shareResultShare() {
   if (!lastResultShareCanvas) return;
   if (typeof sfx === 'function') sfx('ui_click', { throttleMs: 80 });
-  const title = '姜太公E後人釣魚記 · 得分 ' + score;
-  const text = '我在姜太公E後人釣魚記得了 ' + score + ' 分！';
+  const title = '姜太公後人E釣魚記 · 得分 ' + score;
+  const text = '我在姜太公後人E釣魚記得了 ' + score + ' 分！';
   try {
     const blob = await new Promise(function(resolve) {
       lastResultShareCanvas.toBlob(resolve, 'image/png');
