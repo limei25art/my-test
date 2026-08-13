@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>經典釣魚遊戲</title>
+  <title>姜太公E後人釣魚記</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     /* ============================================================
@@ -888,7 +888,7 @@
   <!-- 遊戲開始畫面（透明 POPUP，點擊畫面開始） -->
   <div id="startModal">
     <div class="modal-content">
-      <h2>經典釣魚遊戲</h2>
+      <h2>姜太公E後人釣魚記</h2>
       <div class="start-howto">
         <ol style="padding-left:1.2em; margin:0;">
           <li>左右移動角色，對準海裡的魚。</li>
@@ -918,6 +918,15 @@
       <h2 id="gameOverTitle">遊戲結束</h2>
       <div id="gameOverStats" style="margin:16px 0; font-size:1.05em; line-height:1.9; text-align:left; padding:0 8px;">
         <!-- 統計內容由 JS 動態填入 -->
+      </div>
+      <!-- 社群分享 Grid 圖 -->
+      <div id="resultShareWrap" style="display:none;margin:12px 0 4px;">
+        <div style="font-weight:500;color:#4a86d8;margin-bottom:8px;font-size:0.9em;letter-spacing:0.04em;">分享卡片</div>
+        <img id="resultSharePreview" alt="本局結果" style="width:100%;max-width:320px;border-radius:16px;box-shadow:0 8px 24px rgba(60,90,150,0.22);background:#e8eef8;">
+        <div class="rank-btn-row" style="margin-top:10px;justify-content:center;gap:8px;flex-wrap:wrap;">
+          <button type="button" id="resultShareBtn" title="分享">分享</button>
+          <button type="button" id="resultDownloadBtn" title="下載圖片">下載</button>
+        </div>
       </div>
       <div class="rank-btn-row" style="margin-top:18px;">
         <button id="gameOverRestartBtn">重新開始</button>
@@ -3133,6 +3142,127 @@ function updateSpecialFleeFromHook(sc, dtSec) {
   }
 }
 
+/**
+ * 特別魚脫鉤落地：初始化拋物線／旋轉狀態
+ * @param {object} sc
+ * @param {{reason?:string, vx?:number, vy?:number}} opts
+ */
+function beginSpecialFall(sc, opts) {
+  if (!sc || sc.falling) return;
+  opts = opts || {};
+  sc.falling = true;
+  sc.lifting = false;
+  sc.everAboveWater = false;
+  sc.hookLineIndex = null;
+  sc.hookLineT = 0;
+  sc.hookHits = 0;
+  sc.struggleMs = 0;
+  sc.struggleElapsed = 0;
+  sc.reactCooldown = 0.75 + Math.random() * 0.35;
+  sc.burstBoost = Math.max(sc.burstBoost || 0, 0.85);
+  sc.fallT = 0;
+  sc.fallStartY = sc.y;
+  const top = getFishTopY() + 24;
+  const bot = getFishBottomY() - 24;
+  sc.fallEndY = top + Math.random() * Math.max(20, bot - top);
+  // 水平：隨機 + 可帶鉤速殘餘
+  sc.fallVx = (typeof opts.vx === 'number') ? opts.vx : (Math.random() - 0.5) * 2.4;
+  // 初始下墜速度（空中）
+  sc.fallVy = (typeof opts.vy === 'number') ? opts.vy : (1.0 + Math.random() * 1.8);
+  // 旋轉：脫鉤方向感
+  sc.fallSpin = (0.06 + Math.random() * 0.1) * (sc.fallVx >= 0 ? 1 : -1);
+  sc.fallRot = (sc.drawTilt || 0) * (sc.dir || 1);
+  sc.fallPhase = 'air';
+  sc.fallSplashDone = false;
+  if (typeof sfx === 'function') sfx('splash', { throttleMs: 100 });
+}
+
+/**
+ * 每幀更新脫鉤落地：空中拋物 → 入水水花 → 水中阻尼下沉 → 回游
+ */
+function updateSpecialFall(sc, dtSec, timeScale) {
+  if (!sc || !sc.falling) return;
+  const ts = (typeof timeScale === 'number' && timeScale > 0) ? timeScale : 1;
+  const dt = Math.max(0.001, dtSec || 0.016) * ts;
+  sc.fallT = (sc.fallT || 0) + dt;
+
+  const waterY = (typeof getWaveY === 'function')
+    ? getWaveY(sc.x, typeof wavePhase !== 'undefined' ? wavePhase : 0)
+    : (LINE_PARAMS.seaSurfaceY || 270);
+
+  // 重力／浮力依相位
+  let gravity = 420;   // px/s² 空中
+  let dragX = 0.15;
+  let dragY = 0.08;
+  if (sc.fallPhase === 'sink' || sc.fallPhase === 'settle') {
+    gravity = 90;      // 水中下沉慢
+    dragX = 1.8;
+    dragY = 1.2;
+  } else if (sc.y > waterY - 6 && sc.fallPhase === 'air') {
+    // 剛穿水面
+    sc.fallPhase = 'splash';
+  }
+
+  // 積分速度
+  sc.fallVy += gravity * dt * 0.016; // 用接近幀比例的縮放，手感偏「遊戲感」
+  sc.fallVx *= Math.exp(-dragX * dt);
+  sc.fallVy *= Math.exp(-dragY * dt);
+
+  sc.x += sc.fallVx * 60 * dt;
+  sc.y += sc.fallVy * 60 * dt;
+
+  // 旋轉：空中快、入水後逐漸停
+  const spinFade = (sc.fallPhase === 'air') ? 1 : 0.35;
+  sc.fallSpin *= Math.exp(-1.2 * dt);
+  sc.fallRot = (sc.fallRot || 0) + sc.fallSpin * 60 * dt * spinFade;
+  // 限制翻轉幅度，避免轉太多看不清
+  if (sc.fallRot > Math.PI * 0.85) sc.fallRot = Math.PI * 0.85;
+  if (sc.fallRot < -Math.PI * 0.85) sc.fallRot = -Math.PI * 0.85;
+  sc.drawTilt = sc.fallRot;
+
+  // 入水瞬間：水花 + 減速
+  if (sc.fallPhase === 'splash' || (sc.fallPhase === 'air' && sc.y >= waterY)) {
+    if (!sc.fallSplashDone) {
+      sc.fallSplashDone = true;
+      sc.fallPhase = 'sink';
+      sc.fallVy *= 0.35;
+      sc.fallVx *= 0.55;
+      sc.fallSpin *= 0.4;
+      if (typeof fxHookSplash === 'function') fxHookSplash(sc.x, waterY);
+      if (typeof sfx === 'function') sfx('splash', { throttleMs: 120 });
+    } else {
+      sc.fallPhase = 'sink';
+    }
+  }
+
+  // 接近目標深度：軟著陸
+  const endY = sc.fallEndY;
+  if (sc.y >= endY - 4) {
+    sc.fallPhase = 'settle';
+    sc.y += (endY - sc.y) * Math.min(1, 8 * dt);
+    sc.fallVy *= 0.7;
+    sc.fallVx *= 0.75;
+    sc.fallRot *= 0.85;
+    if (Math.abs(sc.y - endY) < 2.5 && Math.abs(sc.fallVy) < 0.15 && Math.abs(sc.fallVx) < 0.2) {
+      sc.y = endY;
+      sc.baseY = endY;
+      sc.falling = false;
+      sc.fallPhase = 'air';
+      sc.fallVx = 0;
+      sc.fallVy = 0;
+      sc.fallRot = 0;
+      sc.drawTilt = 0;
+      // 落地後短暫加速游走
+      sc.burstBoost = Math.max(sc.burstBoost || 0, 0.7);
+      if (Math.random() < 0.4) sc.dir *= -1;
+    }
+  }
+
+  // 邊界夾住
+  if (sc.x < -SPAWN_MARGIN) sc.x = -SPAWN_MARGIN;
+  if (sc.x > canvas.width + SPAWN_MARGIN) sc.x = canvas.width + SPAWN_MARGIN;
+}
+
 function makeSpecialCreature(def) {
   const fromLeft = Math.random() < 0.5;
   const x = fromLeft ? -SPAWN_MARGIN : canvas.width + SPAWN_MARGIN;
@@ -3171,6 +3301,15 @@ function makeSpecialCreature(def) {
     // 繪製用（每幀更新）
     drawTilt: 0,
     drawScale: 1,
+    // 脫鉤落地
+    falling: false,
+    fallVx: 0,
+    fallVy: 0,
+    fallRot: 0,
+    fallSpin: 0,
+    fallEndY: 0,
+    fallPhase: 'air', // air | splash | sink | settle
+    fallSplashDone: false,
     // 遇鉤反應狀態
     hookHits: 0,
     reactCooldown: 0,
@@ -3618,11 +3757,19 @@ function updateTrashSpawn() {
 function drawSpecialSeaCreature(creature) {
   ctx.save();
   ctx.translate(creature.x, creature.y);
-  // 游動時套用傾斜／微縮放；上鉤／進鍋保持正向
+  // 游動／脫鉤下落可傾斜；上鉤／進鍋保持正向
   const free = !creature.lifting && !creature.caught && !creature.falling;
-  const tilt = free ? (creature.drawTilt || 0) : 0;
-  const scl = free ? (creature.drawScale || 1) : 1;
-  ctx.rotate(tilt * creature.dir);
+  let tilt = 0;
+  let scl = 1;
+  if (creature.falling) {
+    tilt = typeof creature.fallRot === 'number' ? creature.fallRot : (creature.drawTilt || 0);
+    // 下落時略微拉長感
+    scl = 1 + Math.min(0.12, Math.abs(creature.fallVy || 0) * 0.008);
+  } else if (free) {
+    tilt = creature.drawTilt || 0;
+    scl = creature.drawScale || 1;
+  }
+  ctx.rotate(tilt);
   ctx.scale(creature.dir * scl, scl);
   if (creature.fadeOut) {
     creature.fadeElapsed = (creature.fadeElapsed || 0) + deltaTime;
@@ -4220,6 +4367,287 @@ function formatPlayTime(seconds) {
   if (m > 0) return m + ' 分 ' + r + ' 秒';
   return r + ' 秒';
 }
+/** 載入單張圖（已 cache 會很快） */
+function loadShareImage(src) {
+  return new Promise(function(resolve) {
+    if (!src) { resolve(null); return; }
+    const im = new Image();
+    im.onload = function() { resolve(im); };
+    im.onerror = function() { resolve(null); };
+    im.src = src;
+  });
+}
+
+/**
+ * Grid Generator：產生社群分享用結果圖（1080×1350）
+ * @returns {Promise<HTMLCanvasElement|null>}
+ */
+function generateResultShareCard() {
+  const W = 1080;
+  const H = 1350;
+  const keys = Object.keys(collectedFishCounts);
+  keys.sort(function(a, b) {
+    return (collectedFishCounts[b] || 0) - (collectedFishCounts[a] || 0);
+  });
+  let totalFish = 0;
+  for (let i = 0; i < keys.length; i++) totalFish += collectedFishCounts[keys[i]] || 0;
+  const playTime = formatPlayTime(elapsedGameTime);
+
+  const loads = keys.map(function(k) { return loadShareImage(fishTypeImgSrc(k)); });
+  loads.push(loadShareImage('img/EDAN.png'));
+  return Promise.all(loads).then(function(allImgs) {
+    const edanImg = allImgs[allImgs.length - 1];
+    const imgs = allImgs.slice(0, keys.length);
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    const g = c.getContext('2d');
+
+    // —— 背景：海空漸層 + 柔和圓 ——
+    const bg = g.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#b8e0ff');
+    bg.addColorStop(0.22, '#d6efff');
+    bg.addColorStop(0.45, '#7ec8f0');
+    bg.addColorStop(0.72, '#2a6fa0');
+    bg.addColorStop(1, '#0c2a48');
+    g.fillStyle = bg;
+    g.fillRect(0, 0, W, H);
+
+    // 裝飾光斑
+    g.fillStyle = 'rgba(255,255,255,0.18)';
+    g.beginPath(); g.arc(180, 160, 120, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(920, 280, 90, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,200,120,0.2)';
+    g.beginPath(); g.arc(860, 120, 70, 0, Math.PI * 2); g.fill();
+
+    // 主卡片
+    const cardX = 56, cardY = 72, cardW = W - 112, cardH = H - 160;
+    g.save();
+    g.shadowColor = 'rgba(20,50,90,0.35)';
+    g.shadowBlur = 40;
+    g.shadowOffsetY = 16;
+    roundRectPath(g, cardX, cardY, cardW, cardH, 40);
+    const cardGrad = g.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+    cardGrad.addColorStop(0, 'rgba(255,255,255,0.96)');
+    cardGrad.addColorStop(0.55, 'rgba(245,248,253,0.94)');
+    cardGrad.addColorStop(1, 'rgba(220,232,248,0.92)');
+    g.fillStyle = cardGrad;
+    g.fill();
+    g.restore();
+
+    // 頂部色帶
+    g.save();
+    roundRectPath(g, cardX, cardY, cardW, 110, 40);
+    g.clip();
+    const band = g.createLinearGradient(cardX, cardY, cardX + cardW, cardY);
+    band.addColorStop(0, '#5b9cf5');
+    band.addColorStop(0.5, '#7c5cbf');
+    band.addColorStop(1, '#ff8f6b');
+    g.fillStyle = band;
+    g.fillRect(cardX, cardY, cardW, 110);
+    g.restore();
+    // 蓋住色帶下圓角
+    g.fillStyle = 'rgba(255,255,255,0.96)';
+    g.fillRect(cardX, cardY + 70, cardW, 48);
+
+    // EDAN 角色（左上角）
+    if (edanImg && edanImg.naturalWidth) {
+      const ew = 150;
+      const eh = ew * (edanImg.naturalHeight / edanImg.naturalWidth);
+      g.drawImage(edanImg, cardX + 18, cardY + 8, ew, eh);
+    }
+
+    // 標題
+    g.fillStyle = '#fff';
+    g.font = '700 36px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('姜太公E後人釣魚日記', W / 2, cardY + 48);
+
+    // 大分數
+    g.fillStyle = '#4a86d8';
+    g.font = '800 96px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+    g.fillText(String(score), W / 2, cardY + 168);
+    g.fillStyle = '#6b7c99';
+    g.font = '600 28px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+    g.fillText('SCORE', W / 2, cardY + 222);
+
+    // 統計列
+    const statsY = cardY + 270;
+    const statItems = [
+      { label: '時間', value: playTime },
+      { label: '種類', value: keys.length + ' 種' },
+      { label: '總隻', value: totalFish + ' 隻' },
+      { label: '垃圾', value: String(trashCaughtCount) }
+    ];
+    const statW = cardW / 4;
+    for (let i = 0; i < statItems.length; i++) {
+      const cx = cardX + statW * (i + 0.5);
+      g.fillStyle = '#8a9bb5';
+      g.font = '500 22px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+      g.fillText(statItems[i].label, cx, statsY);
+      g.fillStyle = '#354560';
+      g.font = '700 28px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+      g.fillText(statItems[i].value, cx, statsY + 36);
+    }
+
+    // Grid 區
+    const gridTop = statsY + 70;
+    const gridPad = 36;
+    const gridLeft = cardX + gridPad;
+    const gridRight = cardX + cardW - gridPad;
+    const gridW = gridRight - gridLeft;
+    const maxCells = Math.min(keys.length, 12);
+    const cols = maxCells <= 4 ? Math.max(1, maxCells) : (maxCells <= 6 ? 3 : 4);
+    const rows = Math.max(1, Math.ceil(maxCells / cols));
+    const gap = 18;
+    const cellW = (gridW - gap * (cols - 1)) / cols;
+    const cellH = Math.min(200, cellW * 1.05);
+
+    if (maxCells === 0) {
+      g.fillStyle = '#8a9bb5';
+      g.font = '500 28px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+      g.textAlign = 'center';
+      g.fillText('本局尚未釣到魚…下次加油！', W / 2, gridTop + 120);
+    }
+
+    for (let i = 0; i < maxCells; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = gridLeft + col * (cellW + gap);
+      const y = gridTop + 8 + row * (cellH + gap);
+
+      // cell 背景
+      g.save();
+      g.shadowColor = 'rgba(80,110,170,0.12)';
+      g.shadowBlur = 12;
+      g.shadowOffsetY = 4;
+      roundRectPath(g, x, y, cellW, cellH, 22);
+      g.fillStyle = '#fff';
+      g.fill();
+      g.restore();
+
+      // 圖
+      const im = imgs[i];
+      const n = collectedFishCounts[keys[i]] || 0;
+      if (im && im.naturalWidth) {
+        const maxImgW = cellW * 0.72;
+        const maxImgH = cellH * 0.55;
+        const scale = Math.min(maxImgW / im.naturalWidth, maxImgH / im.naturalHeight);
+        const iw = im.naturalWidth * scale;
+        const ih = im.naturalHeight * scale;
+        g.drawImage(im, x + (cellW - iw) / 2, y + 16, iw, ih);
+      } else {
+        g.fillStyle = '#c5d0e0';
+        g.font = '600 22px sans-serif';
+        g.textAlign = 'center';
+        g.fillText(fishTypeLabel(keys[i]).slice(0, 4), x + cellW / 2, y + cellH * 0.4);
+      }
+
+      // 數量徽章
+      const badge = '×' + n;
+      g.font = '700 26px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+      const bw = g.measureText(badge).width + 28;
+      const bx = x + (cellW - bw) / 2;
+      const by = y + cellH - 48;
+      roundRectPath(g, bx, by, bw, 34, 17);
+      const bgad = g.createLinearGradient(bx, by, bx + bw, by);
+      bgad.addColorStop(0, '#5b9cf5');
+      bgad.addColorStop(1, '#7c5cbf');
+      g.fillStyle = bgad;
+      g.fill();
+      g.fillStyle = '#fff';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(badge, x + cellW / 2, by + 17);
+    }
+
+    if (keys.length > 12) {
+      g.fillStyle = '#8a9bb5';
+      g.font = '500 22px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+      g.textAlign = 'center';
+      g.fillText('…還有 ' + (keys.length - 12) + ' 種', W / 2, cardY + cardH - 56);
+    }
+
+    // 底欄
+    g.fillStyle = 'rgba(255,255,255,0.75)';
+    g.font = '600 24px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+    g.textAlign = 'center';
+    g.fillText('UNOFFICIA.FANART BY LI_MEI.ART', W / 2, H - 48);
+
+    return c;
+  });
+}
+
+function roundRectPath(ctx2, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx2.beginPath();
+  ctx2.moveTo(x + rr, y);
+  ctx2.arcTo(x + w, y, x + w, y + h, rr);
+  ctx2.arcTo(x + w, y + h, x, y + h, rr);
+  ctx2.arcTo(x, y + h, x, y, rr);
+  ctx2.arcTo(x, y, x + w, y, rr);
+  ctx2.closePath();
+}
+
+let lastResultShareCanvas = null;
+let lastResultShareUrl = null;
+
+function showResultSharePreview(canvasEl) {
+  lastResultShareCanvas = canvasEl;
+  const wrap = document.getElementById('resultShareWrap');
+  const preview = document.getElementById('resultSharePreview');
+  if (!wrap || !preview || !canvasEl) return;
+  if (lastResultShareUrl) {
+    try { URL.revokeObjectURL(lastResultShareUrl); } catch (e) { /* ignore */ }
+  }
+  canvasEl.toBlob(function(blob) {
+    if (!blob) {
+      preview.src = canvasEl.toDataURL('image/png');
+    } else {
+      lastResultShareUrl = URL.createObjectURL(blob);
+      preview.src = lastResultShareUrl;
+    }
+    wrap.style.display = 'block';
+  }, 'image/png');
+}
+
+function downloadResultShare() {
+  if (!lastResultShareCanvas) return;
+  const a = document.createElement('a');
+  a.download = 'fishing-result-' + Date.now() + '.png';
+  a.href = lastResultShareCanvas.toDataURL('image/png');
+  a.click();
+  if (typeof sfx === 'function') sfx('ui_click', { throttleMs: 80 });
+}
+
+async function shareResultShare() {
+  if (!lastResultShareCanvas) return;
+  if (typeof sfx === 'function') sfx('ui_click', { throttleMs: 80 });
+  const title = '姜太公E後人釣魚記 · 得分 ' + score;
+  const text = '我在姜太公E後人釣魚記得了 ' + score + ' 分！';
+  try {
+    const blob = await new Promise(function(resolve) {
+      lastResultShareCanvas.toBlob(resolve, 'image/png');
+    });
+    if (blob && navigator.share && navigator.canShare) {
+      const file = new File([blob], 'fishing-result.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: title, text: text });
+        return;
+      }
+    }
+    if (navigator.share) {
+      await navigator.share({ title: title, text: text });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  // 後備：下載
+  downloadResultShare();
+}
+
 function showGameOverModal() {
   const modal = document.getElementById('gameOverModal');
   const statsEl = document.getElementById('gameOverStats');
@@ -4270,6 +4698,13 @@ function showGameOverModal() {
       listHtml +
     '</div>';
   modal.style.display = 'flex';
+
+  // 產生分享 Grid 圖
+  const shareWrap = document.getElementById('resultShareWrap');
+  if (shareWrap) shareWrap.style.display = 'none';
+  generateResultShareCard().then(function(c) {
+    if (c) showResultSharePreview(c);
+  }).catch(function() { /* ignore */ });
 }
 function hideGameOverModal() {
   const modal = document.getElementById('gameOverModal');
@@ -5229,17 +5664,14 @@ function gameLoop(currentTime) {
           sc.struggleElapsed = (sc.struggleElapsed || 0) + deltaTime;
           sc.drawTilt = Math.sin(sc.struggleElapsed * 0.04) * 0.35;
           if (sc.struggleElapsed >= sc.struggleMs) {
-            sc.lifting = false;
-            sc.hookLineIndex = null;
-            sc.hookLineT = 0;
-            sc.everAboveWater = false;
-            sc.struggleElapsed = 0;
-            sc.hookHits = 0;
-            sc.reactCooldown = 0.8;
+            // 掙扎超時脫鉤 → 完整落地動作
+            beginSpecialFall(sc, {
+              reason: 'struggle_timeout',
+              vx: (Math.random() - 0.5) * 3.0,
+              vy: 0.6 + Math.random() * 1.4
+            });
             sc.burstBoost = 1.3;
             if (Math.random() < 0.5) sc.dir *= -1;
-            sc.baseY = sc.y;
-            if (typeof sfx === "function") sfx("splash", { throttleMs: 100 });
             continue;
           }
         }
@@ -5269,16 +5701,11 @@ function gameLoop(currentTime) {
 
           // slip：出水後、進鍋前有機率掙脫（每幀低機率，heavy／resist 較高）
           if (!sc.caught && sc.slipChance > 0 && Math.random() < sc.slipChance * 0.012 * timeScale) {
-            sc.falling = true;
-            sc.fallT = 0;
-            sc.fallStartY = sc.y;
-            sc.fallEndY = Math.min(getFishBottomY() - 20, 530 + Math.random() * 40);
-            sc.lifting = false;
-            sc.everAboveWater = false;
-            sc.hookHits = 0;
-            sc.reactCooldown = 0.6;
-            sc.burstBoost = 0.9;
-            if (typeof sfx === 'function') sfx('splash', { throttleMs: 100 });
+            beginSpecialFall(sc, {
+              reason: 'slip',
+              vx: (Math.random() - 0.5) * 2.2 + (typeof hookVelX === 'number' ? hookVelX * 0.15 : 0),
+              vy: 1.2 + Math.random() * 1.5
+            });
             sc.prevLiftY = sc.y;
             continue;
           }
@@ -5313,13 +5740,12 @@ function gameLoop(currentTime) {
           }
         } else {
           if (sc.everAboveWater) {
-            sc.falling = true;
-            sc.fallT = 0;
-            sc.fallStartY = sc.y;
-            sc.fallEndY = 530 + Math.random() * 40;
-            sc.lifting = false;
-            sc.everAboveWater = false;
-            sc.hookHits = 0;
+            // 曾出水但鉤沉回海：脫鉤落地
+            beginSpecialFall(sc, {
+              reason: 'miss_pot',
+              vx: (Math.random() - 0.5) * 1.6,
+              vy: 0.8 + Math.random() * 1.2
+            });
           } else if (!fishing && !hookThrowing) {
             sc.lifting = false;
             sc.hookLineIndex = null;
@@ -5330,21 +5756,9 @@ function gameLoop(currentTime) {
         sc.prevLiftY = sc.y;
       }
 
-      // 脫鉤下沉
+      // 脫鉤落地（拋物線 + 旋轉 + 入水水花）
       if (sc.falling) {
-        let fallSpeed = sc.speed * 0.8;
-        if (sc.y < sc.fallEndY) {
-          sc.y += fallSpeed * timeScale;
-          if (sc.y > sc.fallEndY) sc.y = sc.fallEndY;
-        } else {
-          sc.y -= fallSpeed * timeScale;
-          if (sc.y < sc.fallEndY) sc.y = sc.fallEndY;
-        }
-        if (Math.abs(sc.y - sc.fallEndY) < 1) {
-          sc.y = sc.fallEndY;
-          sc.baseY = sc.y;
-          sc.falling = false;
-        }
+        updateSpecialFall(sc, deltaTime / 1000, timeScale);
       }
 
       drawSpecialSeaCreature(sc);
@@ -5883,6 +6297,23 @@ if (gameOverRestartBtn) {
     doRestartGame();
   };
 }
+// 分享卡片：分享／下載
+(function bindResultShareBtns() {
+  const shareBtn = document.getElementById('resultShareBtn');
+  const dlBtn = document.getElementById('resultDownloadBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      shareResultShare();
+    });
+  }
+  if (dlBtn) {
+    dlBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      downloadResultShare();
+    });
+  }
+})();
 // 遊戲結束 POPUP 顯示時按空白鍵可重新開始
 window.addEventListener('keydown', function(e) {
   const gameOverModal = document.getElementById('gameOverModal');
