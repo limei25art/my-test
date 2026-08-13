@@ -4384,7 +4384,6 @@ function loadShareImage(src) {
  */
 function generateResultShareCard() {
   const W = 1080;
-  const H = 1350;
   const keys = Object.keys(collectedFishCounts);
   keys.sort(function(a, b) {
     return (collectedFishCounts[b] || 0) - (collectedFishCounts[a] || 0);
@@ -4392,6 +4391,28 @@ function generateResultShareCard() {
   let totalFish = 0;
   for (let i = 0; i < keys.length; i++) totalFish += collectedFishCounts[keys[i]] || 0;
   const playTime = formatPlayTime(elapsedGameTime);
+
+  // —— 先算版面：全部魚獲、高度隨內容變化 ——
+  const cardX = 56, cardY = 56, cardW = W - 112;
+  const gridPad = 36;
+  const gridLeft = cardX + gridPad;
+  const gridW = cardW - gridPad * 2;
+  const maxCells = keys.length; // 全部列出
+  const cols = maxCells <= 0 ? 1 : (maxCells <= 4 ? Math.max(1, maxCells) : (maxCells <= 9 ? 3 : 4));
+  const rows = Math.max(1, Math.ceil(Math.max(1, maxCells) / cols));
+  const gap = 16;
+  const cellW = (gridW - gap * (cols - 1)) / cols;
+  const cellH = Math.min(188, Math.max(140, cellW * 1.02));
+
+  const headerH = 118;
+  const scoreBlockH = 210; // EDAN + 分數區
+  const statsH = 90;
+  const gridTopOff = 24;
+  const gridH = maxCells === 0 ? 140 : (rows * cellH + (rows - 1) * gap);
+  const footerPad = 72;
+  const cardInner = headerH + scoreBlockH + statsH + gridTopOff + gridH + 40;
+  const cardH = Math.max(900, cardInner);
+  const H = cardY + cardH + footerPad + 36; // 整圖高度可變
 
   const loads = keys.map(function(k) { return loadShareImage(fishTypeImgSrc(k)); });
   loads.push(loadShareImage('img/EDAN.png'));
@@ -4403,25 +4424,23 @@ function generateResultShareCard() {
     c.height = H;
     const g = c.getContext('2d');
 
-    // —— 背景：海空漸層 + 柔和圓 ——
+    // —— 背景：海空漸層 ——
     const bg = g.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0, '#b8e0ff');
-    bg.addColorStop(0.22, '#d6efff');
+    bg.addColorStop(0.2, '#d6efff');
     bg.addColorStop(0.45, '#7ec8f0');
-    bg.addColorStop(0.72, '#2a6fa0');
+    bg.addColorStop(0.75, '#2a6fa0');
     bg.addColorStop(1, '#0c2a48');
     g.fillStyle = bg;
     g.fillRect(0, 0, W, H);
 
-    // 裝飾光斑
     g.fillStyle = 'rgba(255,255,255,0.18)';
-    g.beginPath(); g.arc(180, 160, 120, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.arc(920, 280, 90, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(180, 140, 110, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(920, 240, 80, 0, Math.PI * 2); g.fill();
     g.fillStyle = 'rgba(255,200,120,0.2)';
-    g.beginPath(); g.arc(860, 120, 70, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(860, 100, 64, 0, Math.PI * 2); g.fill();
 
     // 主卡片
-    const cardX = 56, cardY = 72, cardW = W - 112, cardH = H - 160;
     g.save();
     g.shadowColor = 'rgba(20,50,90,0.35)';
     g.shadowBlur = 40;
@@ -4437,34 +4456,17 @@ function generateResultShareCard() {
 
     // 頂部色帶
     g.save();
-    roundRectPath(g, cardX, cardY, cardW, 110, 40);
+    roundRectPath(g, cardX, cardY, cardW, headerH, 40);
     g.clip();
     const band = g.createLinearGradient(cardX, cardY, cardX + cardW, cardY);
     band.addColorStop(0, '#5b9cf5');
     band.addColorStop(0.5, '#7c5cbf');
     band.addColorStop(1, '#ff8f6b');
     g.fillStyle = band;
-    g.fillRect(cardX, cardY, cardW, 110);
+    g.fillRect(cardX, cardY, cardW, headerH);
     g.restore();
-    // 蓋住色帶下圓角
     g.fillStyle = 'rgba(255,255,255,0.96)';
-    g.fillRect(cardX, cardY + 70, cardW, 48);
-
-    // EDAN 角色：左上角原圖 + 右上角水平左右反轉
-    if (edanImg && edanImg.naturalWidth) {
-      const ew = 150;
-      const eh = ew * (edanImg.naturalHeight / edanImg.naturalWidth);
-      const ey = cardY + 8;
-      // 左上角（原方向）
-      g.drawImage(edanImg, cardX + 18, ey, ew, eh);
-      // 右上角（左右反轉）
-      const exR = cardX + cardW - 18 - ew;
-      g.save();
-      g.translate(exR + ew, ey);
-      g.scale(-1, 1);
-      g.drawImage(edanImg, 0, 0, ew, eh);
-      g.restore();
-    }
+    g.fillRect(cardX, cardY + headerH - 40, cardW, 48);
 
     // 標題
     g.fillStyle = '#fff';
@@ -4473,16 +4475,29 @@ function generateResultShareCard() {
     g.textBaseline = 'middle';
     g.fillText('姜太公後人E釣魚日記', W / 2, cardY + 48);
 
-    // 大分數
+    // —— 分數列：EDAN（約 2 倍大）在左，分數在右 ——
+    const scoreRowY = cardY + headerH + 20;
+    let edanW = 0, edanH = 0;
+    if (edanImg && edanImg.naturalWidth) {
+      edanW = 300; // 原 150 → 大一倍
+      edanH = edanW * (edanImg.naturalHeight / edanImg.naturalWidth);
+      const edanX = cardX + 28;
+      const edanY = scoreRowY + Math.max(0, (scoreBlockH - 40 - edanH) * 0.35);
+      g.drawImage(edanImg, edanX, edanY, edanW, edanH);
+    }
+    // 分數靠右半／置中偏右，避開 EDAN
+    const scoreCX = cardX + Math.max(cardW * 0.58, 28 + edanW + 40 + (cardW - 28 - edanW - 40) * 0.5);
     g.fillStyle = '#4a86d8';
     g.font = '800 96px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
-    g.fillText(String(score), W / 2, cardY + 168);
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(String(score), scoreCX, scoreRowY + 70);
     g.fillStyle = '#6b7c99';
     g.font = '600 28px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
-    g.fillText('SCORE', W / 2, cardY + 222);
+    g.fillText('SCORE', scoreCX, scoreRowY + 130);
 
     // 統計列
-    const statsY = cardY + 270;
+    const statsY = cardY + headerH + scoreBlockH;
     const statItems = [
       { label: '時間', value: playTime },
       { label: '種類', value: keys.length + ' 種' },
@@ -4494,39 +4509,28 @@ function generateResultShareCard() {
       const cx = cardX + statW * (i + 0.5);
       g.fillStyle = '#8a9bb5';
       g.font = '500 22px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+      g.textAlign = 'center';
       g.fillText(statItems[i].label, cx, statsY);
       g.fillStyle = '#354560';
       g.font = '700 28px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
       g.fillText(statItems[i].value, cx, statsY + 36);
     }
 
-    // Grid 區
-    const gridTop = statsY + 70;
-    const gridPad = 36;
-    const gridLeft = cardX + gridPad;
-    const gridRight = cardX + cardW - gridPad;
-    const gridW = gridRight - gridLeft;
-    const maxCells = Math.min(keys.length, 12);
-    const cols = maxCells <= 4 ? Math.max(1, maxCells) : (maxCells <= 6 ? 3 : 4);
-    const rows = Math.max(1, Math.ceil(maxCells / cols));
-    const gap = 18;
-    const cellW = (gridW - gap * (cols - 1)) / cols;
-    const cellH = Math.min(200, cellW * 1.05);
-
+    // 全部魚獲 grid
+    const gridTop = statsY + statsH;
     if (maxCells === 0) {
       g.fillStyle = '#8a9bb5';
       g.font = '500 28px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
       g.textAlign = 'center';
-      g.fillText('本局尚未釣到魚…下次加油！', W / 2, gridTop + 120);
+      g.fillText('本局尚未釣到魚…下次加油！', W / 2, gridTop + 80);
     }
 
     for (let i = 0; i < maxCells; i++) {
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = gridLeft + col * (cellW + gap);
-      const y = gridTop + 8 + row * (cellH + gap);
+      const y = gridTop + row * (cellH + gap);
 
-      // cell 背景
       g.save();
       g.shadowColor = 'rgba(80,110,170,0.12)';
       g.shadowBlur = 12;
@@ -4536,7 +4540,6 @@ function generateResultShareCard() {
       g.fill();
       g.restore();
 
-      // 圖
       const im = imgs[i];
       const n = collectedFishCounts[keys[i]] || 0;
       if (im && im.naturalWidth) {
@@ -4545,7 +4548,7 @@ function generateResultShareCard() {
         const scale = Math.min(maxImgW / im.naturalWidth, maxImgH / im.naturalHeight);
         const iw = im.naturalWidth * scale;
         const ih = im.naturalHeight * scale;
-        g.drawImage(im, x + (cellW - iw) / 2, y + 16, iw, ih);
+        g.drawImage(im, x + (cellW - iw) / 2, y + 14, iw, ih);
       } else {
         g.fillStyle = '#c5d0e0';
         g.font = '600 22px sans-serif';
@@ -4553,12 +4556,11 @@ function generateResultShareCard() {
         g.fillText(fishTypeLabel(keys[i]).slice(0, 4), x + cellW / 2, y + cellH * 0.4);
       }
 
-      // 數量徽章
       const badge = '×' + n;
       g.font = '700 26px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
       const bw = g.measureText(badge).width + 28;
       const bx = x + (cellW - bw) / 2;
-      const by = y + cellH - 48;
+      const by = y + cellH - 46;
       roundRectPath(g, bx, by, bw, 34, 17);
       const bgad = g.createLinearGradient(bx, by, bx + bw, by);
       bgad.addColorStop(0, '#5b9cf5');
@@ -4571,18 +4573,12 @@ function generateResultShareCard() {
       g.fillText(badge, x + cellW / 2, by + 17);
     }
 
-    if (keys.length > 12) {
-      g.fillStyle = '#8a9bb5';
-      g.font = '500 22px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
-      g.textAlign = 'center';
-      g.fillText('…還有 ' + (keys.length - 12) + ' 種', W / 2, cardY + cardH - 56);
-    }
-
     // 底欄
-    g.fillStyle = 'rgba(255,255,255,0.75)';
+    g.fillStyle = 'rgba(255,255,255,0.8)';
     g.font = '600 24px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
     g.textAlign = 'center';
-    g.fillText('UNOFFICIA.FANART BY LI_MEI.ART', W / 2, H - 48);
+    g.textBaseline = 'middle';
+    g.fillText('UNOFFICIA.FANART BY LI_MEI.ART', W / 2, H - 36);
 
     return c;
   });
