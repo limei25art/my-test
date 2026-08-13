@@ -134,7 +134,7 @@
       }
     }
 
-    /* 海中 YouTube：背景圖之上、canvas（魚群）之下；放大約 1260 高 */
+    /* 海中 YouTube：背景圖之上、canvas（魚群）之下 */
     #seaYtWrap {
       position: absolute;
       left: 0;
@@ -154,12 +154,12 @@
     #seaYtWrap iframe {
       position: absolute;
       border: 0;
-      /* 高度 1260、16:9 對應寬約 2240，置中放大裁黑邊 */
+      /* 固定 1120×630（16:9），置中裁切 */
       width: 1120px;
       height: 630px;
       left: 50%;
       top: 50%;
-      transform: translate(-50%, -50%) scale(1.12);
+      transform: translate(-50%, -50%);
       transform-origin: center center;
       pointer-events: none;
     }
@@ -5869,10 +5869,9 @@ window.addEventListener('keydown', function(e) {
 // 海中 YouTube 背景
 // 手機／桌面：開始遊戲手勢當下載入，預設靜音 autoplay（行動最穩）
 // 再點「海影聲音」第二次手勢 unmute
-// 單支影片（非 playlist 頁）：https://youtu.be/eG5Zm8ZAutI
-// embed 時 playlist=同 id 只是為了 loop=1 能單曲循環，不是多支播放清單
+// Playlist：https://youtube.com/playlist?list=PLjkJIZ79Q7fUuKQC_sooXigT9vISt3UVC
 // ============================================================
-const SEA_YT_VIDEO_ID = 'eG5Zm8ZAutI';
+const SEA_YT_PLAYLIST_ID = 'PLjkJIZ79Q7fUuKQC_sooXigT9vISt3UVC';
 let seaYtStarted = false;
 let seaYtMuted = true; // 預設靜音，符合行動自動播放政策
 
@@ -5955,12 +5954,14 @@ function startSeaYoutube() {
 
   seaYtStarted = true;
   seaYtMuted = true; // 預設靜音：Mobile 自動播最穩
-  const id = SEA_YT_VIDEO_ID;
+  const listId = SEA_YT_PLAYLIST_ID;
+  // videoseries + list= 播放整份 playlist；loop=1 清單播完再從頭
   const params = [
+    'listType=playlist',
+    'list=' + encodeURIComponent(listId),
     'autoplay=1',
     'mute=1',
     'loop=1',
-    'playlist=' + id,
     'controls=0',
     'modestbranding=1',
     'rel=0',
@@ -5974,12 +5975,13 @@ function startSeaYoutube() {
 
   const iframe = document.createElement('iframe');
   iframe.id = 'seaYtFrame';
-  iframe.title = '海中背景';
+  iframe.title = '海中背景 playlist';
   iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
   iframe.setAttribute('allowfullscreen', '0');
   iframe.setAttribute('playsinline', '1');
   iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-  iframe.src = 'https://www.youtube.com/embed/' + id + '?' + params;
+  // 官方 playlist embed：/embed/videoseries?list=PLAYLIST_ID
+  iframe.src = 'https://www.youtube.com/embed/videoseries?' + params;
   wrap.innerHTML = '';
   wrap.appendChild(iframe);
   setSeaMediaPlaying(true);
