@@ -181,21 +181,18 @@
       opacity: 0.5;
     }
 
-    /* 海影聲音：info 正下方，只顯示 🔊／🔇 */
+    /* 海影聲音：info 正下方，用 icon_speaker_ON／OFF */
     #ytUnmuteBtn {
       display: none;
       position: relative;
       z-index: 100;
       margin: 2px;
-      padding: 6px 8px;
+      padding: 4px;
       min-width: 34px;
       min-height: 34px;
       border: 2px solid rgba(255, 255, 255, 0.7);
       border-radius: var(--clay-radius-pill);
       cursor: pointer;
-      font-size: 14px;
-      line-height: 1;
-      font-weight: 800;
       color: #fff;
       background: linear-gradient(155deg, #7eb6ff 0%, var(--clay-blue) 45%, var(--clay-blue-deep) 100%);
       box-shadow: var(--shadow-clay);
@@ -204,12 +201,42 @@
       align-items: center;
       justify-content: center;
     }
+    #ytUnmuteBtn img {
+      display: block;
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+    }
     #ytUnmuteBtn.is-visible { display: inline-flex; }
     #ytUnmuteBtn.is-on {
       background: linear-gradient(155deg, #9a9a9a 0%, #6b7c99 100%);
       opacity: 0.92;
+      animation: none;
     }
-    #ytUnmuteBtn:active { transform: scale(0.90); box-shadow: var(--shadow-clay-pressed); }
+    /* 靜音時：脈衝／輕晃提示可開聲；開聲後停動畫 */
+    #ytUnmuteBtn.is-need-sound {
+      animation: ytUnmutePulse 1.25s ease-in-out infinite;
+    }
+    @keyframes ytUnmutePulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: var(--shadow-clay), 0 0 0 0 rgba(126, 182, 255, 0.55);
+      }
+      40% {
+        transform: scale(1.12);
+        box-shadow: var(--shadow-clay), 0 0 0 10px rgba(126, 182, 255, 0);
+      }
+      70% {
+        transform: scale(1.04);
+      }
+    }
+    #ytUnmuteBtn:active {
+      animation: none;
+      transform: scale(0.90);
+      box-shadow: var(--shadow-clay-pressed);
+    }
 
     /* 顯示用 canvas：CSS 永遠鋪滿 9:16 的 #gameBg，邏輯座標在離屏 buffer */
     #gameCanvas {
@@ -919,7 +946,7 @@
   </div>
   <div class="btn-row">
     <button id="infoBtn" title="遊戲說明">i</button>
-    <button type="button" id="ytUnmuteBtn" title="海影聲音" aria-pressed="false">🔊</button>
+    <button type="button" id="ytUnmuteBtn" title="海影聲音" aria-pressed="false"><img src="img/icon_speaker_OFF.png" alt="海影聲音" width="22" height="22"></button>
   </div>
   <div id="joystick" >
     <div id="joystick-base"></div>
@@ -5913,21 +5940,34 @@ function setSeaMediaPlaying(on) {
 function updateYtUnmuteBtn() {
   const btn = document.getElementById('ytUnmuteBtn');
   if (!btn) return;
+  let icon = btn.querySelector('img');
+  if (!icon) {
+    icon = document.createElement('img');
+    icon.width = 22;
+    icon.height = 22;
+    icon.alt = '海影聲音';
+    btn.textContent = '';
+    btn.appendChild(icon);
+  }
   if (!seaYtStarted) {
-    btn.classList.remove('is-visible', 'is-on');
+    btn.classList.remove('is-visible', 'is-on', 'is-need-sound');
     btn.setAttribute('aria-pressed', 'false');
-    btn.textContent = '🔊';
+    icon.src = 'img/icon_speaker_OFF.png';
     return;
   }
   btn.classList.add('is-visible');
   if (seaYtMuted) {
+    // 靜音／關聲：OFF 圖 + 脈衝提示可開聲
     btn.classList.remove('is-on');
-    btn.textContent = '🔊';
+    btn.classList.add('is-need-sound');
+    icon.src = 'img/icon_speaker_OFF.png';
     btn.setAttribute('aria-pressed', 'false');
     btn.title = '開啟海影聲音';
   } else {
+    // 已開聲：ON 圖，停止動作
     btn.classList.add('is-on');
-    btn.textContent = '🔇';
+    btn.classList.remove('is-need-sound');
+    icon.src = 'img/icon_speaker_ON.png';
     btn.setAttribute('aria-pressed', 'true');
     btn.title = '關閉海影聲音';
   }
