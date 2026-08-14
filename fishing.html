@@ -1245,17 +1245,15 @@ function playRandomCatchSound() {
 
 const ctx = canvas.getContext('2d');
 
-/** 把 540×960 邏輯畫面貼到顯示 canvas（限 DPR + 低成本縮放） */
+/** 把 540×960 邏輯畫面貼到顯示 canvas（限 DPR + 低成本縮放）
+ *  smoothing 只在 resize 設一次，這裡只做純 blit
+ */
 function presentGameFrame() {
   if (!displayCtx || !displayCanvas) return;
   const dw = displayCanvas.width;
   const dh = displayCanvas.height;
   if (!(dw > 0 && dh > 0)) return;
-  displayCtx.setTransform(1, 0, 0, 1, 0, 0);
-  // 全幅 drawImage 會蓋滿，省略 clearRect 少一次填充
-  // 縮放用 low smoothing，比 high 省 GPU
-  displayCtx.imageSmoothingEnabled = true;
-  if (displayCtx.imageSmoothingQuality) displayCtx.imageSmoothingQuality = 'low';
+  // 全幅 drawImage 會蓋滿，省略 clearRect；不重設 transform／smoothing（resize 已設）
   displayCtx.drawImage(canvas, 0, 0, GAME_W, GAME_H, 0, 0, dw, dh);
 }
 
@@ -6159,8 +6157,10 @@ function resizeGameCanvas() {
   if (cssW / cssH > 9 / 16) cssW = cssH * 9 / 16;
   else cssH = cssW * 16 / 9;
 
-  // 限制 DPR：最高 1.5，降低顯示層填充率（邏輯 buffer 仍 540×960）
-  const DPR_CAP = 1.5;
+  // 限制 DPR：手機 1.5、桌面 2，降低顯示層填充率（邏輯 buffer 仍 540×960）
+  const isTouch = (navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+  const DPR_CAP = (isMobileUA || isTouch) ? 1.5 : 2;
   const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
   displayCanvas.style.width = '100%';
   displayCanvas.style.height = '100%';
@@ -6171,6 +6171,13 @@ function resizeGameCanvas() {
   const bh = Math.max(1, Math.round(cssH * dpr));
   if (displayCanvas.width !== bw) displayCanvas.width = bw;
   if (displayCanvas.height !== bh) displayCanvas.height = bh;
+
+  // 縮放品質只在 resize 設一次（改 pixel buffer 會重置 context 狀態）
+  if (displayCtx) {
+    displayCtx.setTransform(1, 0, 0, 1, 0, 0);
+    displayCtx.imageSmoothingEnabled = true;
+    if (displayCtx.imageSmoothingQuality) displayCtx.imageSmoothingQuality = 'low';
+  }
 
   if (typeof updateSeaYtLayout === 'function') updateSeaYtLayout();
   presentGameFrame();
@@ -6454,7 +6461,7 @@ function startSeaYoutube() {
     'fs=0',
     'disablekb=1',
     'enablejsapi=1',
-    // 建議 360p（vq=medium）；顯示尺寸仍 CSS 1120×630，YT 可能忽略 vq
+    // 建議 360p：vq=medium（顯示尺寸仍 CSS 1120×630，解碼解析度盡量低）
     'vq=medium',
     'origin=' + encodeURIComponent(location.origin || '')
   ].join('&');
@@ -6473,12 +6480,20 @@ function startSeaYoutube() {
   setSeaMediaPlaying(true);
   updateYtUnmuteBtn();
 
+  function forceYt360p() {
+    // medium ≈ 360p；新版 YT 可能忽略，無副作用
+    postSeaYtCommand('setPlaybackQuality', ['medium']);
+    postSeaYtCommand('setPlaybackQualityRange', ['medium', 'medium']);
+  }
+
   iframe.addEventListener('load', function() {
     postSeaYtCommand('playVideo');
     postSeaYtCommand('mute');
-    // 再請求一次 360p（舊 API，新版可能無效，無副作用）
-    postSeaYtCommand('setPlaybackQuality', ['medium']);
+    forceYt360p();
     postSeaYtCommand('setPlaybackRate', [1]);
+    // 延遲再請求兩次（播放器就緒後較容易生效）
+    setTimeout(forceYt360p, 800);
+    setTimeout(forceYt360p, 2500);
   });
 }
 
