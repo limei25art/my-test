@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>姜太公後人E釣魚記</title>
+  <title>自稱姜太公後人EDlui釣魚記</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     /* ============================================================
@@ -178,7 +178,7 @@
       background: url('img/bg2.jpg') center center / cover no-repeat;
     }
     #seaBgOverlay.is-playing {
-      opacity: 0.3; /* 透 70% → 不透明度 30% */
+      opacity: 0.7;
     }
 
     /* 海影聲音：info 正下方，用 icon_speaker_ON／OFF */
@@ -888,7 +888,7 @@
   <!-- 遊戲開始畫面（透明 POPUP，點擊畫面開始） -->
   <div id="startModal">
     <div class="modal-content">
-      <h2>姜太公後人E釣魚記</h2>
+      <h2>自稱姜太公後人EDlui釣魚記<br><span style="font-size:0.72em;font-weight:600;letter-spacing:0.12em;opacity:0.9;">---願者上鉤---</span></h2>
       <div class="start-howto">
         <ol style="padding-left:1.2em; margin:0;">
           <li>左右移動角色，對準海裡的魚。</li>
@@ -4468,12 +4468,14 @@ function generateResultShareCard() {
     g.fillStyle = 'rgba(255,255,255,0.96)';
     g.fillRect(cardX, cardY + headerH - 40, cardW, 48);
 
-    // 標題
+    // 標題（兩排）
     g.fillStyle = '#fff';
-    g.font = '700 36px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
     g.textAlign = 'center';
     g.textBaseline = 'middle';
-    g.fillText('姜太公後人E釣魚日記', W / 2, cardY + 48);
+    g.font = '700 30px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+    g.fillText('自稱姜太公後人EDlui釣魚記', W / 2, cardY + 36);
+    g.font = '600 22px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
+    g.fillText('---願者上鉤---', W / 2, cardY + 68);
 
     // —— 分數列：EDAN（約 2 倍大）在左，分數在右 ——
     const scoreRowY = cardY + headerH + 20;
@@ -4629,8 +4631,8 @@ function downloadResultShare() {
 async function shareResultShare() {
   if (!lastResultShareCanvas) return;
   if (typeof sfx === 'function') sfx('ui_click', { throttleMs: 80 });
-  const title = '姜太公後人E釣魚記 · 得分 ' + score;
-  const text = '我在姜太公後人E釣魚記得了 ' + score + ' 分！';
+  const title = '自稱姜太公後人EDlui釣魚記 · 得分 ' + score;
+  const text = '自稱姜太公後人EDlui釣魚記 ---願者上鉤--- 得分 ' + score + '！';
   try {
     const blob = await new Promise(function(resolve) {
       lastResultShareCanvas.toBlob(resolve, 'image/png');
