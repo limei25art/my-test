@@ -983,12 +983,7 @@
 const GAME_W = 540;
 const GAME_H = 960;
 const displayCanvas = document.getElementById('gameCanvas');
-// alpha:false 顯示層不透明可略省合成；desynchronized 部分瀏覽器可降延遲
-const displayCtx = displayCanvas.getContext('2d', {
-  alpha: false,
-  desynchronized: true,
-  willReadFrequently: false
-});
+const displayCtx = displayCanvas.getContext('2d');
 // 離屏邏輯畫布（所有遊戲座標、碰撞、生成都用這張）
 const canvas = document.createElement('canvas');
 canvas.width = GAME_W;
@@ -1245,15 +1240,16 @@ function playRandomCatchSound() {
 
 const ctx = canvas.getContext('2d');
 
-/** 把 540×960 邏輯畫面貼到顯示 canvas（限 DPR + 低成本縮放）
- *  smoothing 只在 resize 設一次，這裡只做純 blit
- */
+/** 把 540×960 邏輯畫面貼到顯示 canvas（HiDPI） */
 function presentGameFrame() {
   if (!displayCtx || !displayCanvas) return;
   const dw = displayCanvas.width;
   const dh = displayCanvas.height;
   if (!(dw > 0 && dh > 0)) return;
-  // 全幅 drawImage 會蓋滿，省略 clearRect；不重設 transform／smoothing（resize 已設）
+  displayCtx.setTransform(1, 0, 0, 1, 0, 0);
+  displayCtx.clearRect(0, 0, dw, dh);
+  displayCtx.imageSmoothingEnabled = true;
+  displayCtx.imageSmoothingQuality = 'high';
   displayCtx.drawImage(canvas, 0, 0, GAME_W, GAME_H, 0, 0, dw, dh);
 }
 
@@ -6157,11 +6153,7 @@ function resizeGameCanvas() {
   if (cssW / cssH > 9 / 16) cssW = cssH * 9 / 16;
   else cssH = cssW * 16 / 9;
 
-  // 限制 DPR：手機 1.5、桌面 2，降低顯示層填充率（邏輯 buffer 仍 540×960）
-  const isTouch = (navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
-  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
-  const DPR_CAP = (isMobileUA || isTouch) ? 1.5 : 2;
-  const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
   displayCanvas.style.width = '100%';
   displayCanvas.style.height = '100%';
   displayCanvas.style.position = 'absolute';
@@ -6171,13 +6163,6 @@ function resizeGameCanvas() {
   const bh = Math.max(1, Math.round(cssH * dpr));
   if (displayCanvas.width !== bw) displayCanvas.width = bw;
   if (displayCanvas.height !== bh) displayCanvas.height = bh;
-
-  // 縮放品質只在 resize 設一次（改 pixel buffer 會重置 context 狀態）
-  if (displayCtx) {
-    displayCtx.setTransform(1, 0, 0, 1, 0, 0);
-    displayCtx.imageSmoothingEnabled = true;
-    if (displayCtx.imageSmoothingQuality) displayCtx.imageSmoothingQuality = 'low';
-  }
 
   if (typeof updateSeaYtLayout === 'function') updateSeaYtLayout();
   presentGameFrame();
