@@ -149,7 +149,7 @@
       background: transparent;
     }
     #seaYtWrap.is-playing {
-      opacity: 0.5;
+      opacity: 1; /* 海影不透明 */
     }
     #seaYtWrap iframe {
       position: absolute;
@@ -164,7 +164,7 @@
       pointer-events: none;
     }
 
-    /* bg2.jpg 半透 50%，蓋在 YouTube 上面、魚群下面 */
+    /* bg2.jpg 透 70%（opacity 0.3），蓋在 YouTube 上面、魚群下面 */
     #seaBgOverlay {
       position: absolute;
       left: 0;
@@ -178,7 +178,7 @@
       background: url('img/bg2.jpg') center center / cover no-repeat;
     }
     #seaBgOverlay.is-playing {
-      opacity: 0.5;
+      opacity: 0.3; /* 透 70% → 不透明度 30% */
     }
 
     /* 海影聲音：info 正下方，用 icon_speaker_ON／OFF */
@@ -983,7 +983,12 @@
 const GAME_W = 540;
 const GAME_H = 960;
 const displayCanvas = document.getElementById('gameCanvas');
-const displayCtx = displayCanvas.getContext('2d', { alpha: true });
+// alpha:false 顯示層不透明可略省合成；desynchronized 部分瀏覽器可降延遲
+const displayCtx = displayCanvas.getContext('2d', {
+  alpha: false,
+  desynchronized: true,
+  willReadFrequently: false
+});
 // 離屏邏輯畫布（所有遊戲座標、碰撞、生成都用這張）
 const canvas = document.createElement('canvas');
 canvas.width = GAME_W;
@@ -1240,16 +1245,17 @@ function playRandomCatchSound() {
 
 const ctx = canvas.getContext('2d');
 
-/** 把 540×960 邏輯畫面貼到顯示 canvas（HiDPI） */
+/** 把 540×960 邏輯畫面貼到顯示 canvas（限 DPR + 低成本縮放） */
 function presentGameFrame() {
   if (!displayCtx || !displayCanvas) return;
   const dw = displayCanvas.width;
   const dh = displayCanvas.height;
   if (!(dw > 0 && dh > 0)) return;
   displayCtx.setTransform(1, 0, 0, 1, 0, 0);
-  displayCtx.clearRect(0, 0, dw, dh);
+  // 全幅 drawImage 會蓋滿，省略 clearRect 少一次填充
+  // 縮放用 low smoothing，比 high 省 GPU
   displayCtx.imageSmoothingEnabled = true;
-  displayCtx.imageSmoothingQuality = 'high';
+  if (displayCtx.imageSmoothingQuality) displayCtx.imageSmoothingQuality = 'low';
   displayCtx.drawImage(canvas, 0, 0, GAME_W, GAME_H, 0, 0, dw, dh);
 }
 
@@ -6153,7 +6159,9 @@ function resizeGameCanvas() {
   if (cssW / cssH > 9 / 16) cssW = cssH * 9 / 16;
   else cssH = cssW * 16 / 9;
 
-  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  // 限制 DPR：最高 1.5，降低顯示層填充率（邏輯 buffer 仍 540×960）
+  const DPR_CAP = 1.5;
+  const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
   displayCanvas.style.width = '100%';
   displayCanvas.style.height = '100%';
   displayCanvas.style.position = 'absolute';
@@ -6446,6 +6454,8 @@ function startSeaYoutube() {
     'fs=0',
     'disablekb=1',
     'enablejsapi=1',
+    // 建議 360p（vq=medium）；顯示尺寸仍 CSS 1120×630，YT 可能忽略 vq
+    'vq=medium',
     'origin=' + encodeURIComponent(location.origin || '')
   ].join('&');
 
@@ -6466,6 +6476,9 @@ function startSeaYoutube() {
   iframe.addEventListener('load', function() {
     postSeaYtCommand('playVideo');
     postSeaYtCommand('mute');
+    // 再請求一次 360p（舊 API，新版可能無效，無副作用）
+    postSeaYtCommand('setPlaybackQuality', ['medium']);
+    postSeaYtCommand('setPlaybackRate', [1]);
   });
 }
 
