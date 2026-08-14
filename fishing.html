@@ -149,7 +149,7 @@
       background: transparent;
     }
     #seaYtWrap.is-playing {
-      opacity: 1; /* 海影不透明 */
+      opacity: 0.5;
     }
     #seaYtWrap iframe {
       position: absolute;
@@ -178,7 +178,7 @@
       background: url('img/bg2.jpg') center center / cover no-repeat;
     }
     #seaBgOverlay.is-playing {
-      opacity: 0.7;
+      opacity: 0.5;
     }
 
     /* 海影聲音：info 正下方，用 icon_speaker_ON／OFF */
@@ -290,7 +290,7 @@
       background: rgba(40, 60, 100, 0.28);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      z-index: 1500;
+      z-index: 9999; /* popup 最高層 */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -390,7 +390,7 @@
       background: rgba(60, 80, 120, 0.45);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
-      z-index: 5000; /* 高於搖桿／按鈕（2000），保證最上層 */
+      z-index: 9999; /* popup 最高層（高於搖桿／按鈕） */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -4404,7 +4404,7 @@ function generateResultShareCard() {
   const cellW = (gridW - gap * (cols - 1)) / cols;
   const cellH = Math.min(188, Math.max(140, cellW * 1.02));
 
-  const headerH = 118;
+  const headerH = 168; // 標題漸變色帶加高
   const scoreBlockH = 210; // EDAN + 分數區
   const statsH = 90;
   const gridTopOff = 24;
@@ -4465,17 +4465,18 @@ function generateResultShareCard() {
     g.fillStyle = band;
     g.fillRect(cardX, cardY, cardW, headerH);
     g.restore();
+    // 色帶下緣柔和過渡到卡片白底
     g.fillStyle = 'rgba(255,255,255,0.96)';
-    g.fillRect(cardX, cardY + headerH - 40, cardW, 48);
+    g.fillRect(cardX, cardY + headerH - 28, cardW, 36);
 
-    // 標題（兩排）
+    // 標題（兩排）—— 置於加高色帶中央
     g.fillStyle = '#fff';
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.font = '700 30px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
-    g.fillText('自稱姜太公後人EDlui釣魚記', W / 2, cardY + 36);
+    g.fillText('自稱姜太公後人EDlui釣魚記', W / 2, cardY + 58);
     g.font = '600 22px "Noto Sans TC", "Segoe UI", system-ui, sans-serif';
-    g.fillText('---願者上鉤---', W / 2, cardY + 68);
+    g.fillText('---願者上鉤---', W / 2, cardY + 100);
 
     // —— 分數列：EDAN（約 2 倍大）在左，分數在右 ——
     const scoreRowY = cardY + headerH + 20;
