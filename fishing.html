@@ -391,16 +391,33 @@
       transition: transform 0.18s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.18s ease;
       text-shadow: 0 1px 0 rgba(0, 80, 40, 0.2);
     }
-    /* 分享／下載細少少 */
-    #resultShareBtn,
-    #resultDownloadBtn {
+    /* 分享按鈕 #resultShareBtn */
+    #resultShareBtn {
       flex: 0 0 auto !important;
-      min-width: 76px;
-      padding: 8px 14px !important;
-      font-size: 0.8em !important;
-      font-weight: 700 !important;
-      border-width: 2px !important;
-      letter-spacing: 0.02em;
+      min-width: 96px;
+      padding: 9px 18px !important;
+      font-size: 0.88em !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.04em;
+      border: 2px solid rgba(220, 235, 255, 0.9) !important;
+      border-radius: 999px !important;
+      color: #fff !important;
+      background: linear-gradient(155deg, #7eb6ff 0%, #5b9cf5 45%, #3a7bd5 100%) !important;
+      box-shadow:
+        6px 8px 18px rgba(60, 120, 200, 0.32),
+        inset 0 -3px 6px rgba(30, 80, 160, 0.2),
+        inset 0 3px 6px rgba(230, 245, 255, 0.55) !important;
+      text-shadow: 0 1px 0 rgba(20, 60, 120, 0.25);
+    }
+    #resultShareBtn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow:
+        8px 12px 24px rgba(60, 120, 200, 0.4),
+        inset 0 -3px 6px rgba(30, 80, 160, 0.18),
+        inset 0 3px 6px rgba(230, 245, 255, 0.65) !important;
+    }
+    #resultShareBtn:active {
+      transform: scale(0.94);
     }
     .rank-btn-row button:hover,
     #gameOverRestartBtn:hover {
@@ -537,15 +554,165 @@
         0 2px 8px rgba(74, 134, 216, 0.18);
     }
 
-    #gameOverModal #gameOverTitle {
-      background: linear-gradient(135deg, #1a3a6e 0%, #2c5aa0 40%, #1e4d8c 70%, #0d2b55 100%);
+    /* GameOver 過場動畫（popup 之前） */
+    #gameOverAnim {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 9500;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      background: radial-gradient(ellipse at center, rgba(20,40,80,0.35) 0%, rgba(6,12,28,0.78) 70%, rgba(4,8,18,0.88) 100%);
+      pointer-events: none;
+      opacity: 0;
+    }
+    #gameOverAnim.is-show {
+      display: flex;
+      animation: goBgIn 0.35s ease-out forwards;
+    }
+    #gameOverAnim.is-out {
+      animation: goBgOut 0.4s ease-in forwards;
+    }
+    #gameOverAnim .go-ring {
+      position: absolute;
+      width: min(72vw, 280px);
+      height: min(72vw, 280px);
+      border-radius: 50%;
+      border: 3px solid rgba(255, 112, 139, 0.55);
+      box-shadow: 0 0 40px rgba(255, 112, 139, 0.35), inset 0 0 30px rgba(255, 193, 77, 0.15);
+      animation: goRing 1.2s ease-out both;
+      pointer-events: none;
+    }
+    #gameOverAnim .go-text {
+      position: relative;
+      z-index: 1;
+      font-family: 'Noto Sans TC', 'Segoe UI', system-ui, sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.6em, 13vw, 3.8em);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      background: linear-gradient(120deg, #fff 0%, #ffe08a 22%, #ff708b 55%, #ff8fb8 78%, #fff 100%);
+      background-size: 200% 100%;
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      color: #1a3a6e; /* 不支援 clip 時的後備深藍 */
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-shadow: none; /* 蓋掉 .modal-content h2 的淺色陰影 */
+      color: #ff708b;
+      filter: drop-shadow(0 8px 22px rgba(0,0,0,0.5));
+      animation: goSlam 0.7s cubic-bezier(0.16, 1.2, 0.3, 1) both,
+                 goShimmer 1.4s ease-in-out 0.5s infinite alternate;
+    }
+    #gameOverAnim .go-sub {
+      position: relative;
+      z-index: 1;
+      font-size: 0.85em;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      color: rgba(255, 240, 220, 0.88);
+      opacity: 0;
+      animation: goSubIn 0.5s ease-out 0.45s forwards;
+    }
+    @keyframes goBgIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes goBgOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @keyframes goRing {
+      0% { transform: scale(0.3); opacity: 0; }
+      40% { opacity: 1; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    @keyframes goSlam {
+      0% { opacity: 0; transform: scale(2.6) translateY(12px); filter: blur(10px); }
+      60% { opacity: 1; transform: scale(0.94) translateY(0); filter: blur(0); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes goShimmer {
+      from { background-position: 0% 50%; }
+      to { background-position: 100% 50%; }
+    }
+    @keyframes goSubIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #gameOverModal #gameOverTitle {
+      background: linear-gradient(120deg, #0b1f42 0%, #1a3a6e 28%, #2f6cc4 55%, #1e4d8c 78%, #0a2048 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: #14356a;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-shadow: none;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.35));
+    }
+    #gameOverStats {
+      color: #1a3a6e;
+    }
+    #resultShareWrap .result-share-label {
+      color: #2c5aa0 !important;
+      font-weight: 600;
+    }
+    /* 遊戲結束佈局：標題 → 可捲內容 → 底部重開 */
+    #gameOverModalContent {
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      max-height: min(86vh, 720px);
+      padding: 22px 16px 16px;
+      width: 90%;
+      max-width: 340px;
+    }
+    #gameOverModalContent .game-over-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 2px 8px;
+      text-align: left;
+    }
+    #gameOverModalContent .game-over-footer {
+      flex: 0 0 auto;
+      padding-top: 12px;
+      margin-top: 4px;
+      border-top: 1px solid rgba(120, 150, 200, 0.14);
+    }
+    #gameOverModalContent .game-over-footer #gameOverRestartBtn {
+      width: 100%;
+      flex: none;
+      padding: 12px 18px;
+      font-size: 1em;
+    }
+    #resultShareWrap {
+      margin: 14px 0 4px;
+      text-align: center;
+    }
+    #resultShareWrap .result-share-label {
+      font-weight: 600;
+      color: #2c5aa0;
+      margin-bottom: 8px;
+      font-size: 0.88em;
+      letter-spacing: 0.04em;
+    }
+    #resultSharePreview {
+      display: block;
+      width: 100%;
+      max-width: 280px;
+      margin: 0 auto;
+      border-radius: 14px;
+      box-shadow: 0 6px 18px rgba(60, 90, 150, 0.2);
+      background: #e8eef8;
+    }
+    #resultShareWrap .result-share-actions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
     }
     /* 說明列表：圖片列 */
     .info-fish-row {
@@ -581,7 +748,11 @@
     #gameOverStats {
       background: linear-gradient(160deg, #ffffff 0%, var(--clay-surface) 100%);
       border-radius: var(--clay-radius-lg);
-      padding: 14px 16px !important;
+      padding: 12px 14px !important;
+      margin: 0 !important;
+      font-size: 0.98em;
+      line-height: 1.75;
+      text-align: left;
       box-shadow:
         inset 2px 3px 10px rgba(90, 120, 180, 0.12),
         inset -2px -2px 6px rgba(255, 255, 255, 0.9),
@@ -1033,23 +1204,29 @@
       </div>
     </div>
   </div>
+  <!-- GameOver 過場（結束 popup 之前） -->
+  <div id="gameOverAnim" aria-hidden="true">
+    <div class="go-ring" aria-hidden="true"></div>
+    <div class="go-text">Game Over</div>
+    <div class="go-sub">元氣耗盡</div>
+  </div>
   <!-- 遊戲結束 POPUP（預設隱藏） -->
   <div id="gameOverModal" style="display:none;">
-    <div class="modal-content" id="gameOverModalContent" style="text-align:center;">
+    <div class="modal-content" id="gameOverModalContent">
       <h2 id="gameOverTitle">遊戲結束</h2>
-      <div id="gameOverStats" style="margin:16px 0; font-size:1.05em; line-height:1.9; text-align:left; padding:0 8px;">
-        <!-- 統計內容由 JS 動態填入 -->
-      </div>
-      <!-- 社群分享 Grid 圖 -->
-      <div id="resultShareWrap" style="display:none;margin:12px 0 4px;">
-        <div style="font-weight:500;color:#4a86d8;margin-bottom:8px;font-size:0.9em;letter-spacing:0.04em;">分享卡片</div>
-        <img id="resultSharePreview" alt="本局結果" style="width:100%;max-width:320px;border-radius:16px;box-shadow:0 8px 24px rgba(60,90,150,0.22);background:#e8eef8;">
-        <div class="rank-btn-row" style="margin-top:10px;justify-content:center;gap:8px;flex-wrap:wrap;">
-          <button type="button" id="resultShareBtn" title="分享">分享</button>
-          <button type="button" id="resultDownloadBtn" title="下載圖片">下載</button>
+      <div class="game-over-body">
+        <div id="gameOverStats">
+          <!-- 統計內容由 JS 動態填入 -->
+        </div>
+        <div id="resultShareWrap" style="display:none;">
+          <div class="result-share-label">分享卡片</div>
+          <img id="resultSharePreview" alt="本局結果">
+          <div class="result-share-actions">
+            <button type="button" id="resultShareBtn" title="分享">分享</button>
+          </div>
         </div>
       </div>
-      <div class="rank-btn-row" style="margin-top:18px;">
+      <div class="game-over-footer">
         <button id="gameOverRestartBtn">重新開始</button>
       </div>
     </div>
@@ -2606,6 +2783,7 @@ function createSchoolFish(fromLeft, batchMeta, indexInBatch, batchSize) {
 
 // 產生一批：整批同一方向，形成一道魚流（不是左右對衝）
 function spawnFishSchoolBatch() {
+  if (gameOver) return;
   // 超過上限時先清掉已游出／最舊的魚群成員，避免陣列無限膨脹
   let schoolCount = 0;
   for (let i = 0; i < fishes.length; i++) {
@@ -2671,9 +2849,56 @@ function runFishSchoolBatches() {
 // （遊戲結束/碗下沉/面板開啟時暫停生成，但排程本身照常繼續倒數）
 function scheduleFishSchool() {
   if (fishSchoolTimer) clearTimeout(fishSchoolTimer);
+  // 遊戲結束後停止魚群排程
+  if (gameOver) return;
   fishSchoolTimer = setTimeout(() => {
+    if (gameOver) return;
     runFishSchoolBatches();
   }, FISH_SCHOOL_INTERVAL);
+}
+function stopFishSpawnsOnGameOver() {
+  if (fishSchoolTimer) { clearTimeout(fishSchoolTimer); fishSchoolTimer = null; }
+  if (fishSchoolBatchTimer) { clearInterval(fishSchoolBatchTimer); fishSchoolBatchTimer = null; }
+  // 特別魚／垃圾排程：靠 gameOver 旗標在 update 內停止；這裡清 pending
+  if (typeof specialPendingQueue !== 'undefined' && Array.isArray(specialPendingQueue)) {
+    specialPendingQueue.length = 0;
+  }
+}
+
+let gameOverAnimTimer = null;
+/** 先播 Game Over 過場，再出結束 popup（不改 popup 佈局） */
+function playGameOverSequence() {
+  const anim = document.getElementById('gameOverAnim');
+  if (gameOverAnimTimer) {
+    clearTimeout(gameOverAnimTimer);
+    gameOverAnimTimer = null;
+  }
+  if (anim) {
+    anim.classList.remove('is-out');
+    anim.classList.add('is-show');
+    anim.setAttribute('aria-hidden', 'false');
+    // 重播文字動畫
+    const txt = anim.querySelector('.go-text');
+    const ring = anim.querySelector('.go-ring');
+    if (txt) { txt.style.animation = 'none'; void txt.offsetWidth; txt.style.animation = ''; }
+    if (ring) { ring.style.animation = 'none'; void ring.offsetWidth; ring.style.animation = ''; }
+  }
+  if (typeof sfx === 'function') sfx('game_over');
+  if (anim) anim.dataset.sfxDone = '1';
+  // 停留後淡出，再出 popup
+  gameOverAnimTimer = setTimeout(function() {
+    if (anim) {
+      anim.classList.add('is-out');
+    }
+    gameOverAnimTimer = setTimeout(function() {
+      gameOverAnimTimer = null;
+      if (anim) {
+        anim.classList.remove('is-show', 'is-out');
+        anim.setAttribute('aria-hidden', 'true');
+      }
+      showGameOverModal();
+    }, 380);
+  }, 1500);
 }
 
 // --- 垃圾相關 ---
@@ -4783,7 +5008,12 @@ function showGameOverModal() {
   const modal = document.getElementById('gameOverModal');
   const statsEl = document.getElementById('gameOverStats');
   if (!modal || !statsEl) return;
-  sfx('game_over');
+  // GameOver 過場已播過音效則不再重播
+  if (!(document.getElementById('gameOverAnim') && document.getElementById('gameOverAnim').dataset.sfxDone === '1')) {
+    sfx('game_over');
+  }
+  const goAnim = document.getElementById('gameOverAnim');
+  if (goAnim) goAnim.dataset.sfxDone = '';
   const keys = Object.keys(collectedFishCounts);
   const fishTypeCount = keys.length;
   let totalFishCaught = 0;
@@ -4796,8 +5026,8 @@ function showGameOverModal() {
   });
   const playTime = formatPlayTime(elapsedGameTime);
   // 結果文字與 title 同系深藍
-  const cLabel = '#1a3a6e';
-  const cVal = '#2c5aa0';
+  const cLabel = '#16345f';
+  const cVal = '#245aab';
   const rowStyle = 'display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(26,58,110,0.12);padding:7px 2px;gap:8px;font-weight:400;';
   const cardStyle = 'flex:0 0 auto;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border-radius:12px;background:rgba(255,255,255,0.7);box-shadow:0 1px 4px rgba(80,110,170,0.08);';
   let listHtml = '';
@@ -5615,9 +5845,9 @@ function gameLoop(currentTime) {
             fish.y = fish.baseY + Math.sin(fish.bobTime * fish.bobSpeed + fish.bobPhase) * fish.bobAmplitude;
           }
         }
-        // 游出畫面：一般魚重生；魚群成員直接移除
+        // 游出畫面：一般魚重生；魚群成員直接移除；遊戲結束後不再生成
         if ((fish.dir === 1 && fish.x > canvas.width + SPAWN_MARGIN) || (fish.dir === -1 && fish.x < -SPAWN_MARGIN)) {
-          if (fish.fishTier === 'school') {
+          if (fish.fishTier === 'school' || gameOver) {
             fish.removeMe = true;
             continue;
           }
@@ -5992,9 +6222,8 @@ function gameLoop(currentTime) {
               const good = rs > 0 || re > 0;
               fxPotCatch(fish.x, fish.y, good);
             }
-            // 立刻生成新魚（小黃魚群的魚被釣到後不補新魚，牠們只在魚群批次裡出現，
-            // 釣完/游完就消失，等下一次 35 秒倒數才會有下一批）
-            if (fish.fishTier !== 'school') {
+            // 立刻生成新魚（魚群不補；遊戲結束後不再生成）
+            if (fish.fishTier !== 'school' && !gameOver && timeLeft > 0) {
               fishes.push(createFish());
             }
             // 新增：進入漸層消失動畫
@@ -6139,7 +6368,10 @@ function gameLoop(currentTime) {
       displayTimeLeft = 0;
       lidDropping = false;
       bowlSinking = false;
-      showGameOverModal();
+      // 結束後暫停魚類生成，先播 GameOver 動畫再開 popup
+      if (typeof stopFishSpawnsOnGameOver === 'function') stopFishSpawnsOnGameOver();
+      if (typeof playGameOverSequence === 'function') playGameOverSequence();
+      else showGameOverModal();
       frameNext();
       return;
     }
@@ -6331,6 +6563,17 @@ resizeGameCanvas();
 
 // 重新開始（由遊戲結束 POPUP 呼叫；已移除右上角 🔄 按鈕）
 function doRestartGame() {
+  const goAnim = document.getElementById('gameOverAnim');
+  if (goAnim) {
+    goAnim.classList.remove('is-show');
+    goAnim.setAttribute('aria-hidden', 'true');
+    goAnim.dataset.sfxDone = '';
+  }
+  if (typeof gameOverAnimTimer !== 'undefined' && gameOverAnimTimer) {
+    clearTimeout(gameOverAnimTimer);
+    gameOverAnimTimer = null;
+  }
+
   if (animationId) cancelAnimationFrame(animationId);
   if (countdownTimer) clearTimeout(countdownTimer);
   hideGameOverModal();
