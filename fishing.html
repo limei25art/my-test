@@ -641,22 +641,22 @@
     }
 
     #gameOverModal #gameOverTitle {
-      background: linear-gradient(120deg, #0b1f42 0%, #1a3a6e 28%, #2f6cc4 55%, #1e4d8c 78%, #0a2048 100%);
+      background: linear-gradient(120deg, #2a3a6a 0%, #5a6f9e 30%, #8b7cb8 55%, #6b7c99 80%, #4a5a80 100%);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      color: #14356a;
+      color: #6b7c99;
       font-weight: 900;
       letter-spacing: 0.08em;
       text-shadow: none;
       margin-bottom: 10px;
-      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.35));
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.4));
     }
     #gameOverStats {
-      color: #1a3a6e;
+      color: #8b95a8;
     }
     #resultShareWrap .result-share-label {
-      color: #2c5aa0 !important;
+      color: #8b7cb8 !important;
       font-weight: 600;
     }
     /* 遊戲結束佈局：標題 → 可捲內容 → 底部重開 */
@@ -5026,8 +5026,8 @@ function showGameOverModal() {
   });
   const playTime = formatPlayTime(elapsedGameTime);
   // 結果文字與 title 同系深藍
-  const cLabel = '#16345f';
-  const cVal = '#245aab';
+  const cLabel = '#8b95a8';
+  const cVal = '#8b7cb8';
   const rowStyle = 'display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(26,58,110,0.12);padding:7px 2px;gap:8px;font-weight:400;';
   const cardStyle = 'flex:0 0 auto;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;border-radius:12px;background:rgba(255,255,255,0.7);box-shadow:0 1px 4px rgba(80,110,170,0.08);';
   let listHtml = '';
@@ -5365,8 +5365,9 @@ function gameLoop(currentTime) {
       return;
     }
     
-    // 計算時間縮放因子
-    const timeScale = deltaTime / frameTime;
+    // 計算時間縮放因子；遊戲結束後凍結世界（YouTube 仍在 HTML 層播放）
+    let timeScale = deltaTime / frameTime;
+    if (gameOver) timeScale = 0;
     lastTime = currentTime;
     
     // 防呆：確保 fishes、trashes 一定是陣列
@@ -5543,8 +5544,8 @@ function gameLoop(currentTime) {
     ctx.stroke();
     ctx.restore();
 
-    // 控制主角與大魚左右移動（開始畫面關閉後才可操作）
-    if (gameStarted) {
+    // 控制主角與大魚左右移動（開始畫面關閉後才可操作；結束後凍結）
+    if (gameStarted && !gameOver) {
     if (keyState.left) {
       bigFish.x -= 6 * timeScale;
       playerDir = -1;
@@ -5578,8 +5579,8 @@ function gameLoop(currentTime) {
     bigFish.y = LINE_PARAMS.seaSurfaceY + 20;
     // 釣魚線起點、鉤子都跟著 bigFish.x
 
-    // 控制魚鉤上下移動（慣性/拉力）
-    if (gameStarted && !fishing && !hookThrowing) {
+    // 控制魚鉤上下移動（慣性/拉力；結束後凍結）
+    if (gameStarted && !gameOver && !fishing && !hookThrowing) {
       const HOOK_ACCEL = LINE_PARAMS.hookAccel; // 按下上下鍵時的加速度
       const HOOK_MAX_VEL = LINE_PARAMS.hookMaxVel; // 速度上限，避免無限加速造成飄浮感
 
@@ -6136,8 +6137,8 @@ function gameLoop(currentTime) {
     updateReelMinigame(deltaTime / 1000);
     drawReelMinigame();
 
-    // 粒子：更新 + 繪製（在 HUD 之下、遊戲物件之上）
-    updateParticles(deltaTime / 1000);
+    // 粒子：更新 + 繪製（結束後凍結，仍繪製；YouTube 在 HTML 層繼續播）
+    updateParticles(gameOver ? 0 : deltaTime / 1000);
     drawParticles();
 
     // 分數與元氣 HUD（樣式參考原版：分數在上、元氣量表在下）
