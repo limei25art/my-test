@@ -25,15 +25,17 @@
     --shadow-subtle: 0 2px 12px rgba(0, 0, 0, 0.03);
   }
 
+  /* 禁用雙擊放大 */
   * { 
     box-sizing: border-box; 
     margin: 0; 
     padding: 0; 
     -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang TC", "PingFang HK", "Noto Sans CJK TC", "Microsoft JhengHei", sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -43,7 +45,7 @@
   }
 
   .wrap {
-    max-width: 840px;
+    max-width: 920px;
     margin: 0 auto;
     padding: 0 20px;
   }
@@ -87,7 +89,11 @@
     gap: 4px;
   }
   .tab {
-    padding: 8px 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 20px;
     border: none;
     background: transparent;
     color: var(--muted);
@@ -96,6 +102,9 @@
     font-size: 0.92rem;
     font-weight: 500;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .tab svg {
+    flex-shrink: 0;
   }
   .tab:hover {
     color: var(--text);
@@ -114,7 +123,7 @@
   .card {
     background: var(--card);
     border-radius: var(--rad-lg);
-    padding: 28px;
+    padding: 24px;
     margin-bottom: 20px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
@@ -125,6 +134,14 @@
     color: var(--text);
     font-weight: 600;
     letter-spacing: -0.01em;
+  }
+
+  /* 手寫版面：雙欄對齊 */
+  .hand-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: start;
   }
 
   /* Inputs */
@@ -145,24 +162,32 @@
     box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
   }
 
-  /* Buttons */
+  /* Buttons & SVG */
   .btn-row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     margin-top: 16px;
     flex-wrap: wrap;
+    justify-content: center;
   }
   button, .btn {
-    padding: 10px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 18px;
     border-radius: var(--rad-pill);
     border: none;
     background: var(--accent);
     color: #fff;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.2s ease;
+  }
+  button svg {
+    flex-shrink: 0;
   }
   button:hover { background: var(--accent-hover); }
   button.secondary {
@@ -179,8 +204,6 @@
   #pad-wrap {
     position: relative;
     width: 100%;
-    max-width: 340px;
-    margin: 0 auto;
     aspect-ratio: 1;
     background: #fbfbfd;
     border: 1px solid var(--border-strong);
@@ -202,39 +225,36 @@
     justify-content: center;
     color: var(--muted);
     pointer-events: none;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 400;
   }
   .pad-hint.hide { display: none; }
 
-  /* 候選字列 */
+  /* 候選字列：最多 6 格 */
   .candidates {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 18px;
-    min-height: 52px;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+    min-height: 32px;
   }
   .cand {
-    width: 50px;
-    height: 50px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.05rem;
     background: #fbfbfd;
     border: 1px solid var(--border-strong);
-    border-radius: var(--rad-md);
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: all 0.15s ease;
     box-shadow: var(--shadow-subtle);
   }
   .cand:hover, .cand:active {
     border-color: var(--accent);
     background: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.15);
   }
 
   /* 結果列表 */
@@ -245,16 +265,16 @@
   .result-item {
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 16px 20px;
+    gap: 16px;
+    padding: 14px 18px;
     background: #fbfbfd;
     border-radius: var(--rad-md);
     border: 1px solid var(--border);
   }
   .char-big {
-    font-size: 2.6rem;
-    width: 72px;
-    height: 72px;
+    font-size: 2.2rem;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -266,7 +286,7 @@
   }
   .codes { flex: 1; }
   .codes .label {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -274,61 +294,75 @@
   }
   .codes .code {
     font-family: "SF Mono", ui-monospace, Menlo, monospace;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--text);
   }
   .codes .cj-zh {
     color: var(--accent);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 500;
     margin-top: 1px;
   }
 
-  /* 字根鍵盤 */
+  /* 真實 QWERTY 鍵盤結構 */
   .kb {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    user-select: none;
+    padding: 4px 0;
+  }
+  .kb-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
   }
   .kb-key {
-    aspect-ratio: 1;
+    flex: 1;
+    max-width: 44px;
+    height: 52px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background: #ffffff;
     border: 1px solid var(--border-strong);
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
-    user-select: none;
-    transition: all 0.15s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: all 0.12s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
   }
   .kb-key:hover {
     border-color: var(--accent);
     background: #fbfbfd;
   }
   .kb-key:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
     background: var(--btn-secondary);
   }
   .kb-key .en {
     font-weight: 700;
     color: var(--accent);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    line-height: 1;
   }
   .kb-key .zh {
-    font-size: 0.92rem;
+    font-size: 0.98rem;
     color: var(--text);
+    font-weight: 500;
+    margin-top: 3px;
+    line-height: 1;
   }
 
   .status {
     text-align: center;
     color: var(--muted);
-    font-size: 0.9rem;
-    margin: 16px 0;
+    font-size: 0.85rem;
+    margin-top: 8px;
   }
   .status.ok { color: var(--accent2); font-weight: 500; }
   .status.err { color: var(--danger); font-weight: 500; }
@@ -340,13 +374,14 @@
     font-size: 0.82rem;
   }
 
-  @media (max-width: 580px) {
+  @media (max-width: 720px) {
     header h1 { font-size: 1.8rem; }
     .tabs { width: 100%; justify-content: space-around; }
     .tab { padding: 8px 12px; font-size: 0.85rem; }
-    .card { padding: 20px; }
-    .char-big { font-size: 2.2rem; width: 60px; height: 60px; }
-    .kb { gap: 4px; }
+    .card { padding: 18px; }
+    .hand-grid { grid-template-columns: 1fr; }
+    .kb-key { height: 48px; }
+    .kb-key .zh { font-size: 0.9rem; }
   }
 </style>
 </head>
@@ -359,43 +394,74 @@
 
   <div class="nav-wrapper">
     <div class="tabs">
-      <button class="tab active" data-tab="hand">手寫查字</button>
-      <button class="tab" data-tab="char">漢字查碼</button>
-      <button class="tab" data-tab="code">碼查漢字</button>
-      <button class="tab" data-tab="kb">字根鍵盤</button>
+      <button class="tab active" data-tab="hand">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        手寫
+      </button>
+      <button class="tab" data-tab="char">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        查字
+      </button>
+      <button class="tab" data-tab="kb">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" ry="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M7 16h10"/></svg>
+        拆碼
+      </button>
     </div>
   </div>
 
   <!-- 手寫區 -->
   <div id="panel-hand" class="panel active">
-    <div class="card">
-      <h2>手寫辨識</h2>
-      <div id="pad-wrap">
-        <canvas id="pad"></canvas>
-        <div class="pad-hint" id="padHint">請在此書寫漢字</div>
+    <div class="hand-grid">
+      <div class="card">
+        <h2>手寫辨識</h2>
+        <div id="pad-wrap">
+          <canvas id="pad"></canvas>
+          <div class="pad-hint" id="padHint">請在此書寫漢字</div>
+        </div>
+
+        <div class="status" id="handStatus"></div>
+
+        <div class="candidates" id="handCands"></div>
+
+        <div class="btn-row">
+          <button class="secondary" id="btnClear">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            清除
+          </button>
+          <button class="secondary" id="btnUndo">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            復原
+          </button>
+          <button id="btnRecognize" disabled>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/></svg>
+            辨識
+          </button>
+        </div>
       </div>
-      <div class="btn-row" style="justify-content:center;margin-top:16px">
-        <button class="secondary" id="btnClear">清除</button>
-        <button class="secondary" id="btnUndo">復原上一筆</button>
-        <button id="btnRecognize" disabled>辨識</button>
+
+      <div class="card" id="handResultCard">
+        <h2>查詢結果</h2>
+        <div class="result-list" id="handResult">
+          <div style="color:var(--muted);text-align:center;padding:40px 0;">請在左側書寫或點選候選字</div>
+        </div>
       </div>
-      <div class="candidates" id="handCands"></div>
-      <div class="status" id="handStatus"></div>
-    </div>
-    <div class="card" id="handResultCard" style="display:none">
-      <h2>查詢結果</h2>
-      <div class="result-list" id="handResult"></div>
     </div>
   </div>
 
-  <!-- 漢字查碼 -->
+  <!-- 查字 -->
   <div id="panel-char" class="panel">
     <div class="card">
       <h2>輸入漢字（可輸入多字）</h2>
       <input type="text" id="charInput" placeholder="例如：倉頡輸入法" autocomplete="off">
-      <div class="btn-row">
-        <button id="btnCharSearch">查碼</button>
-        <button class="secondary" id="btnCharClear">清除</button>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button id="btnCharSearch">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          查碼
+        </button>
+        <button class="secondary" id="btnCharClear">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          清除
+        </button>
       </div>
     </div>
     <div class="card" id="charResultCard" style="display:none">
@@ -404,33 +470,26 @@
     </div>
   </div>
 
-  <!-- 碼查字 -->
-  <div id="panel-code" class="panel">
-    <div class="card">
-      <h2>輸入倉頡碼（支援 * 通配符）</h2>
-      <input type="text" id="codeInput" placeholder="例如：oiar 或 oi* " autocomplete="off" style="text-transform:uppercase">
-      <div class="btn-row">
-        <button id="btnCodeSearch">查字</button>
-        <button class="secondary" id="btnCodeClear">清除</button>
-      </div>
-    </div>
-    <div class="card" id="codeResultCard" style="display:none">
-      <h2>結果 <span id="codeCount" style="color:var(--muted);font-weight:400"></span></h2>
-      <div class="result-list" id="codeResult"></div>
-    </div>
-  </div>
-
-  <!-- 字根鍵盤 -->
+  <!-- 拆碼 (真實字根鍵盤) -->
   <div id="panel-kb" class="panel">
     <div class="card">
       <h2>倉頡 24 字根鍵盤</h2>
       <div class="kb" id="kb"></div>
       <div style="margin-top:16px">
         <input type="text" id="kbInput" placeholder="點選上方字根組成碼…" readonly style="text-transform:uppercase">
-        <div class="btn-row">
-          <button id="btnKbSearch">查字</button>
-          <button class="secondary" id="btnKbBack">倒退</button>
-          <button class="secondary" id="btnKbClear">清除</button>
+        <div class="btn-row" style="justify-content:flex-start">
+          <button id="btnKbSearch">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            查字
+          </button>
+          <button class="secondary" id="btnKbBack">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+            倒退
+          </button>
+          <button class="secondary" id="btnKbClear">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            清除
+          </button>
         </div>
       </div>
     </div>
@@ -448,6 +507,16 @@
 </div>
 
 <script>
+/* 防止 iOS 瀏覽器雙擊畫面進行縮放 */
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function (e) {
+  const now = (new Date()).getTime();
+  if (now - lastTouchEnd <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, { passive: false });
+
 /* ========== 倉頡字根對照 ========== */
 const CJ_RADICALS = {
   A:'日', B:'月', C:'金', D:'木', E:'水', F:'火', G:'土',
@@ -466,6 +535,23 @@ function toSucheng(code) {
   const c = code.toUpperCase();
   if (c.length <= 2) return c;
   return c[0] + c[c.length - 1];
+}
+
+/* 常用字判斷：通用 CJK 常用字區 (U+4E00 - U+9FFF) 排前面，生僻字/擴展區 (如 𥫻) 排後面 */
+function isCommonChar(ch) {
+  if (!ch) return false;
+  const cp = ch.codePointAt(0);
+  return cp >= 0x4E00 && cp <= 0x9FFF;
+}
+
+function sortResults(items) {
+  return items.sort((a, b) => {
+    const aCommon = isCommonChar(a.ch);
+    const bCommon = isCommonChar(b.ch);
+    if (aCommon && !bCommon) return -1;
+    if (!aCommon && bCommon) return 1;
+    return a.ch.localeCompare(b.ch, 'zh-Hant');
+  });
 }
 
 /* ========== 資料庫載入 ========== */
@@ -506,7 +592,7 @@ async function loadCangjieDB() {
 /* ========== UI 結果渲染 ========== */
 function renderResults(container, items) {
   if (!items || !items.length) {
-    container.innerHTML = '<div style="color:var(--muted);padding:8px">無對應結果</div>';
+    container.innerHTML = '<div style="color:var(--muted);padding:8px;text-align:center;">無對應結果</div>';
     return;
   }
   container.innerHTML = items.map(({ch, code}) => {
@@ -534,13 +620,15 @@ document.querySelectorAll('.tab').forEach(btn => {
   });
 });
 
-/* ========== 漢字查碼 ========== */
+/* ========== 查字 (漢字查碼) ========== */
 document.getElementById('btnCharSearch').onclick = () => {
   if (!DB_READY) return alert('資料庫尚未載入完成');
   const text = document.getElementById('charInput').value.trim();
   if (!text) return;
+  
+  const chars = Array.from(text);
   const items = [];
-  for (const ch of text) {
+  for (const ch of chars) {
     if (/\s/.test(ch)) continue;
     const code = CJ_DB[ch];
     items.push({ ch, code: code || '（無資料）' });
@@ -556,12 +644,12 @@ document.getElementById('charInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('btnCharSearch').click();
 });
 
-/* ========== 碼查字 ========== */
+/* ========== 拆碼搜尋邏輯 (自動將常用字排前面) ========== */
 function searchByCode(raw) {
   if (!DB_READY) return [];
   let q = raw.trim().toUpperCase().replace(/[^A-Z*]/g, '');
   if (!q) return [];
-  const results = [];
+  let results = [];
   if (q.includes('*')) {
     const re = new RegExp('^' + q.replace(/\*/g, '.*') + '$');
     for (const [code, chars] of Object.entries(CJ_INV)) {
@@ -573,42 +661,36 @@ function searchByCode(raw) {
     const chars = CJ_INV[q] || [];
     for (const ch of chars) results.push({ ch, code: q });
   }
-  return results.slice(0, 200);
+  return sortResults(results).slice(0, 200);
 }
 
-document.getElementById('btnCodeSearch').onclick = () => {
-  const q = document.getElementById('codeInput').value;
-  const items = searchByCode(q);
-  document.getElementById('codeResultCard').style.display = 'block';
-  document.getElementById('codeCount').textContent =
-    items.length ? `（顯示 ${items.length} 筆）` : '';
-  renderResults(document.getElementById('codeResult'), items);
-};
-document.getElementById('btnCodeClear').onclick = () => {
-  document.getElementById('codeInput').value = '';
-  document.getElementById('codeResultCard').style.display = 'none';
-};
-document.getElementById('codeInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('btnCodeSearch').click();
-});
-
-/* ========== 字根鍵盤 ========== */
+/* ========== 真實 QWERTY 字根鍵盤生成 ========== */
 (function buildKB() {
-  const layout = [
-    'Q','W','E','R','T','Y','U','I','O','P',
-    'A','S','D','F','G','H','J','K','L',
-    'Z','X','C','V','B','N','M'
+  const keyboardRows = [
+    ['Q','W','E','R','T','Y','U','I','O','P'],
+    ['A','S','D','F','G','H','J','K','L'],
+    ['Z','X','C','V','B','N','M']
   ];
+  
   const kb = document.getElementById('kb');
-  layout.forEach(k => {
-    if (!CJ_RADICALS[k]) return;
-    const el = document.createElement('div');
-    el.className = 'kb-key';
-    el.innerHTML = `<span class="en">${k}</span><span class="zh">${CJ_RADICALS[k]}</span>`;
-    el.onclick = () => {
-      document.getElementById('kbInput').value += k;
-    };
-    kb.appendChild(el);
+  kb.innerHTML = '';
+
+  keyboardRows.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row';
+    
+    row.forEach(k => {
+      if (!CJ_RADICALS[k]) return;
+      const el = document.createElement('div');
+      el.className = 'kb-key';
+      el.innerHTML = `<span class="en">${k}</span><span class="zh">${CJ_RADICALS[k]}</span>`;
+      el.onclick = () => {
+        document.getElementById('kbInput').value += k;
+      };
+      rowEl.appendChild(el);
+    });
+
+    kb.appendChild(rowEl);
   });
 })();
 
@@ -651,7 +733,7 @@ function redraw() {
   const w = canvas.clientWidth;
   const h = canvas.clientHeight;
   ctx.clearRect(0, 0, w, h);
-  ctx.strokeStyle = '#1d1d1f'; // 深色質感畫筆
+  ctx.strokeStyle = '#1d1d1f';
   ctx.lineWidth = 4.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -715,7 +797,7 @@ document.getElementById('btnClear').onclick = () => {
   redraw();
   hint.classList.remove('hide');
   document.getElementById('handCands').innerHTML = '';
-  document.getElementById('handResultCard').style.display = 'none';
+  document.getElementById('handResult').innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px 0;">請在左側書寫或點選候選字</div>';
   document.getElementById('handStatus').textContent = '';
   document.getElementById('btnRecognize').disabled = true;
 };
@@ -760,17 +842,26 @@ async function doRecognize() {
     
     const data = await res.json();
     if (data[0] === "SUCCESS") {
-      const matches = data[1][0][1];
+      const rawMatches = data[1][0][1];
       const cands = document.getElementById('handCands');
       cands.innerHTML = '';
       
-      if (!matches || !matches.length) {
-        status.textContent = '無法辨識，請重新書寫';
+      if (!rawMatches || !rawMatches.length) {
+        status.textContent = '無法辨識';
         return;
       }
       
       status.textContent = '';
-      matches.slice(0, 10).forEach(char => {
+      
+      const sortedMatches = rawMatches.sort((a, b) => {
+        const aC = isCommonChar(a);
+        const bC = isCommonChar(b);
+        if (aC && !bC) return -1;
+        if (!aC && bC) return 1;
+        return 0;
+      });
+
+      sortedMatches.slice(0, 6).forEach(char => {
         const el = document.createElement('div');
         el.className = 'cand';
         el.textContent = char;
@@ -778,14 +869,14 @@ async function doRecognize() {
         cands.appendChild(el);
       });
       
-      showHandResult(matches[0]);
+      showHandResult(sortedMatches[0]);
     } else {
       status.textContent = '辨識請求超時';
       status.className = 'status err';
     }
   } catch (err) {
     console.error(err);
-    status.textContent = '辨識出錯（請確認網路狀態）';
+    status.textContent = '辨識出錯';
     status.className = 'status err';
   }
 }
@@ -794,19 +885,17 @@ document.getElementById('btnRecognize').onclick = doRecognize;
 
 function showHandResult(ch) {
   if (!DB_READY) {
-    document.getElementById('handResultCard').style.display = 'block';
     document.getElementById('handResult').innerHTML =
       `<div class="result-item"><div class="char-big">${ch}</div><div class="codes">資料庫載入中…</div></div>`;
     return;
   }
   const code = CJ_DB[ch] || '（無資料）';
-  document.getElementById('handResultCard').style.display = 'block';
   renderResults(document.getElementById('handResult'), [{ ch, code }]);
 }
 
 function initHandwriting() {
   const status = document.getElementById('handStatus');
-  status.textContent = '✓ 手寫引擎就緒，請開始書寫';
+  status.textContent = '✓ 手寫引擎就緒';
   status.className = 'status ok';
 }
 
