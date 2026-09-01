@@ -3,124 +3,175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>倉頡／速成字典 · 手寫查碼</title>
+<title>倉頡／速成字典</title>
 <style>
   :root {
-    --bg: #0f1419;
-    --card: #1a2332;
-    --border: #2d3a4f;
-    --text: #e7ecf3;
-    --muted: #8b9bb4;
-    --accent: #3b82f6;
-    --accent2: #22c55e;
-    --danger: #ef4444;
-    --rad: 12px;
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: #d2d2d7;
+    --text: #1d1d1f;
+    --muted: #86868b;
+    --accent: #0071e3;
+    --accent-hover: #0077ed;
+    --accent2: #34c759;
+    --danger: #ff3b30;
+    --btn-secondary: #e8e8ed;
+    --btn-secondary-hover: #dcdce0;
+    --rad-lg: 20px;
+    --rad-md: 14px;
+    --rad-pill: 999px;
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+    --shadow-subtle: 0 2px 12px rgba(0, 0, 0, 0.03);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  * { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    -webkit-font-smoothing: antialiased;
+  }
+
   body {
-    font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    line-height: 1.5;
+    line-height: 1.47059;
+    letter-spacing: -0.022em;
+    padding-bottom: 60px;
   }
+
   .wrap {
-    max-width: 960px;
+    max-width: 840px;
     margin: 0 auto;
-    padding: 16px;
+    padding: 0 20px;
   }
+
+  /* Header */
   header {
     text-align: center;
-    padding: 20px 0 12px;
+    padding: 48px 0 28px;
   }
   header h1 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    font-size: 2.2rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--text);
   }
   header p {
     color: var(--muted);
-    font-size: 0.9rem;
-    margin-top: 4px;
+    font-size: 1.05rem;
+    margin-top: 6px;
+    font-weight: 400;
+  }
+
+  /* Glassmorphism Sticky Tabs */
+  .nav-wrapper {
+    position: sticky;
+    top: 12px;
+    z-index: 100;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: center;
   }
   .tabs {
-    display: flex;
-    gap: 8px;
-    margin: 16px 0;
-    flex-wrap: wrap;
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 5px;
+    border-radius: var(--rad-pill);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    gap: 4px;
   }
   .tab {
-    flex: 1;
-    min-width: 100px;
-    padding: 10px 14px;
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
-    border-radius: 999px;
+    padding: 8px 18px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    border-radius: var(--rad-pill);
     cursor: pointer;
-    font-size: 0.95rem;
-    transition: all 0.15s;
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .tab:hover {
+    color: var(--text);
   }
   .tab.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  .panel { display: none; }
-  .panel.active { display: block; }
-
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--rad);
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-  .card h2 {
-    font-size: 1rem;
-    margin-bottom: 12px;
-    color: var(--muted);
+    background: #ffffff;
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     font-weight: 600;
   }
 
-  input[type="text"], textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 10px;
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Cards & Sections */
+  .card {
+    background: var(--card);
+    border-radius: var(--rad-lg);
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
     border: 1px solid var(--border);
-    background: #0d1218;
-    color: var(--text);
-    font-size: 1.15rem;
-    outline: none;
   }
-  input:focus, textarea:focus {
-    border-color: var(--accent);
+  .card h2 {
+    font-size: 1.15rem;
+    margin-bottom: 16px;
+    color: var(--text);
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
+  /* Inputs */
+  input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: var(--rad-md);
+    border: 1px solid var(--border-strong);
+    background: #fbfbfd;
+    color: var(--text);
+    font-size: 1.05rem;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  input[type="text"]:focus {
+    background: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+  }
+
+  /* Buttons */
   .btn-row {
     display: flex;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 10px;
+    margin-top: 16px;
     flex-wrap: wrap;
   }
   button, .btn {
-    padding: 10px 16px;
-    border-radius: 10px;
+    padding: 10px 20px;
+    border-radius: var(--rad-pill);
     border: none;
     background: var(--accent);
     color: #fff;
     font-size: 0.95rem;
+    font-weight: 500;
     cursor: pointer;
     font-family: inherit;
+    transition: all 0.2s ease;
   }
+  button:hover { background: var(--accent-hover); }
   button.secondary {
-    background: transparent;
-    border: 1px solid var(--border);
+    background: var(--btn-secondary);
     color: var(--text);
   }
-  button.danger { background: var(--danger); }
+  button.secondary:hover { background: var(--btn-secondary-hover); }
   button:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
@@ -128,19 +179,20 @@
   #pad-wrap {
     position: relative;
     width: 100%;
-    max-width: 360px;
+    max-width: 340px;
     margin: 0 auto;
     aspect-ratio: 1;
-    background: #0a0e14;
-    border: 2px dashed var(--border);
-    border-radius: var(--rad);
+    background: #fbfbfd;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--rad-lg);
     touch-action: none;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
   }
   #pad {
     width: 100%;
     height: 100%;
     display: block;
-    border-radius: var(--rad);
   }
   .pad-hint {
     position: absolute;
@@ -150,76 +202,88 @@
     justify-content: center;
     color: var(--muted);
     pointer-events: none;
-    font-size: 0.95rem;
+    font-size: 1rem;
+    font-weight: 400;
   }
   .pad-hint.hide { display: none; }
 
+  /* 候選字列 */
   .candidates {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 14px;
-    min-height: 48px;
+    gap: 10px;
+    margin-top: 18px;
+    min-height: 52px;
+    justify-content: center;
   }
   .cand {
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    background: #0d1218;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    background: #fbfbfd;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--rad-md);
     cursor: pointer;
-    transition: 0.12s;
+    transition: all 0.18s ease;
+    box-shadow: var(--shadow-subtle);
   }
   .cand:hover, .cand:active {
     border-color: var(--accent);
-    background: #152033;
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15);
   }
 
-  /* 結果 */
+  /* 結果列表 */
   .result-list {
     display: grid;
-    gap: 10px;
+    gap: 12px;
   }
   .result-item {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 12px;
-    background: #0d1218;
-    border-radius: 10px;
+    gap: 20px;
+    padding: 16px 20px;
+    background: #fbfbfd;
+    border-radius: var(--rad-md);
     border: 1px solid var(--border);
   }
   .char-big {
-    font-size: 2.4rem;
-    width: 64px;
-    height: 64px;
+    font-size: 2.6rem;
+    width: 72px;
+    height: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #152033;
-    border-radius: 10px;
+    background: #ffffff;
+    border-radius: var(--rad-md);
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    font-weight: 600;
   }
-  .codes {
-    flex: 1;
-  }
+  .codes { flex: 1; }
   .codes .label {
     font-size: 0.75rem;
     color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
   }
   .codes .code {
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 1.1rem;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 1.15rem;
+    font-weight: 600;
     letter-spacing: 0.08em;
+    color: var(--text);
   }
   .codes .cj-zh {
-    color: var(--accent2);
+    color: var(--accent);
     font-size: 0.95rem;
-    margin-top: 2px;
+    font-weight: 500;
+    margin-top: 1px;
   }
 
   /* 字根鍵盤 */
@@ -234,45 +298,54 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #0d1218;
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 0.85rem;
     user-select: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
-  .kb-key:active { background: #1e2a3c; }
+  .kb-key:hover {
+    border-color: var(--accent);
+    background: #fbfbfd;
+  }
+  .kb-key:active {
+    transform: scale(0.95);
+    background: var(--btn-secondary);
+  }
   .kb-key .en {
     font-weight: 700;
     color: var(--accent);
     font-size: 0.8rem;
   }
   .kb-key .zh {
-    font-size: 0.95rem;
-  }
-  .kb-key.wide {
-    grid-column: span 2;
+    font-size: 0.92rem;
+    color: var(--text);
   }
 
   .status {
     text-align: center;
     color: var(--muted);
-    font-size: 0.85rem;
-    margin: 8px 0;
+    font-size: 0.9rem;
+    margin: 16px 0;
   }
-  .status.ok { color: var(--accent2); }
-  .status.err { color: var(--danger); }
+  .status.ok { color: var(--accent2); font-weight: 500; }
+  .status.err { color: var(--danger); font-weight: 500; }
 
   footer {
     text-align: center;
-    padding: 24px 0 40px;
+    padding: 32px 0;
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
   }
-  footer a { color: var(--accent); }
 
-  @media (max-width: 480px) {
-    .char-big { font-size: 2rem; width: 52px; height: 52px; }
+  @media (max-width: 580px) {
+    header h1 { font-size: 1.8rem; }
+    .tabs { width: 100%; justify-content: space-around; }
+    .tab { padding: 8px 12px; font-size: 0.85rem; }
+    .card { padding: 20px; }
+    .char-big { font-size: 2.2rem; width: 60px; height: 60px; }
     .kb { gap: 4px; }
   }
 </style>
@@ -281,28 +354,30 @@
 <div class="wrap">
   <header>
     <h1>倉頡／速成字典</h1>
-    <p>完整倉頡五代資料庫 · 手寫查碼 (Google API)</p>
+    <p>快速查碼 · 手寫辨識 · 完整五代資料庫</p>
   </header>
 
-  <div class="tabs">
-    <button class="tab active" data-tab="hand">手寫查字</button>
-    <button class="tab" data-tab="char">漢字查碼</button>
-    <button class="tab" data-tab="code">碼查漢字</button>
-    <button class="tab" data-tab="kb">字根鍵盤</button>
+  <div class="nav-wrapper">
+    <div class="tabs">
+      <button class="tab active" data-tab="hand">手寫查字</button>
+      <button class="tab" data-tab="char">漢字查碼</button>
+      <button class="tab" data-tab="code">碼查漢字</button>
+      <button class="tab" data-tab="kb">字根鍵盤</button>
+    </div>
   </div>
 
-  <!-- 手寫 -->
+  <!-- 手寫區 -->
   <div id="panel-hand" class="panel active">
     <div class="card">
       <h2>手寫辨識</h2>
       <div id="pad-wrap">
         <canvas id="pad"></canvas>
-        <div class="pad-hint" id="padHint">在此書寫漢字</div>
+        <div class="pad-hint" id="padHint">請在此書寫漢字</div>
       </div>
-      <div class="btn-row" style="justify-content:center;margin-top:12px">
+      <div class="btn-row" style="justify-content:center;margin-top:16px">
         <button class="secondary" id="btnClear">清除</button>
         <button class="secondary" id="btnUndo">復原上一筆</button>
-        <button id="btnRecognize" disabled>手動辨識</button>
+        <button id="btnRecognize" disabled>辨識</button>
       </div>
       <div class="candidates" id="handCands"></div>
       <div class="status" id="handStatus"></div>
@@ -316,7 +391,7 @@
   <!-- 漢字查碼 -->
   <div id="panel-char" class="panel">
     <div class="card">
-      <h2>輸入漢字（可多字）</h2>
+      <h2>輸入漢字（可輸入多字）</h2>
       <input type="text" id="charInput" placeholder="例如：倉頡輸入法" autocomplete="off">
       <div class="btn-row">
         <button id="btnCharSearch">查碼</button>
@@ -332,7 +407,7 @@
   <!-- 碼查字 -->
   <div id="panel-code" class="panel">
     <div class="card">
-      <h2>輸入倉頡碼（英文字母，可 * 模糊）</h2>
+      <h2>輸入倉頡碼（支援 * 通配符）</h2>
       <input type="text" id="codeInput" placeholder="例如：oiar 或 oi* " autocomplete="off" style="text-transform:uppercase">
       <div class="btn-row">
         <button id="btnCodeSearch">查字</button>
@@ -348,10 +423,10 @@
   <!-- 字根鍵盤 -->
   <div id="panel-kb" class="panel">
     <div class="card">
-      <h2>倉頡 24 字根</h2>
+      <h2>倉頡 24 字根鍵盤</h2>
       <div class="kb" id="kb"></div>
-      <div style="margin-top:14px">
-        <input type="text" id="kbInput" placeholder="點選字根組成碼…" readonly style="text-transform:uppercase">
+      <div style="margin-top:16px">
+        <input type="text" id="kbInput" placeholder="點選上方字根組成碼…" readonly style="text-transform:uppercase">
         <div class="btn-row">
           <button id="btnKbSearch">查字</button>
           <button class="secondary" id="btnKbBack">倒退</button>
@@ -368,8 +443,7 @@
   <div class="status" id="dbStatus">正在載入倉頡完整資料庫…</div>
 
   <footer>
-    資料來源：倉頡五代（五倉世紀衍生）<br>
-    手寫辨識引擎：Google Input Tools API
+    資料來源：倉頡五代數據庫 · 手寫辨識：Google Input Tools Engine
   </footer>
 </div>
 
@@ -394,7 +468,7 @@ function toSucheng(code) {
   return c[0] + c[c.length - 1];
 }
 
-/* ========== 資料庫 ========== */
+/* ========== 資料庫載入 ========== */
 let CJ_DB = null;          
 let CJ_INV = null;         
 let DB_READY = false;
@@ -418,21 +492,21 @@ async function loadCangjieDB() {
       }
       DB_READY = true;
       document.getElementById('dbStatus').textContent =
-        `✓ 倉頡資料庫已載入（${Object.keys(CJ_DB).length.toLocaleString()} 字）`;
+        `✓ 倉頡數據庫已就緒（包含 ${Object.keys(CJ_DB).length.toLocaleString()} 字）`;
       document.getElementById('dbStatus').className = 'status ok';
       return;
     } catch (e) {
       console.warn('load fail', url, e);
     }
   }
-  document.getElementById('dbStatus').textContent = '✗ 倉頡資料庫載入失敗，請檢查網路後重新整理';
+  document.getElementById('dbStatus').textContent = '✗ 倉頡資料庫載入失敗，請檢查網路連線';
   document.getElementById('dbStatus').className = 'status err';
 }
 
 /* ========== UI 結果渲染 ========== */
 function renderResults(container, items) {
   if (!items || !items.length) {
-    container.innerHTML = '<div style="color:var(--muted);padding:8px">無結果</div>';
+    container.innerHTML = '<div style="color:var(--muted);padding:8px">無對應結果</div>';
     return;
   }
   container.innerHTML = items.map(({ch, code}) => {
@@ -442,11 +516,9 @@ function renderResults(container, items) {
         <div class="char-big">${ch}</div>
         <div class="codes">
           <div class="label">倉頡</div>
-          <div class="code">${code.toUpperCase()}</div>
-          <div class="cj-zh">${codeToZh(code)}</div>
+          <div class="code">${code.toUpperCase()} <span class="cj-zh">(${codeToZh(code)})</span></div>
           <div class="label" style="margin-top:6px">速成</div>
-          <div class="code">${sc}</div>
-          <div class="cj-zh">${codeToZh(sc)}</div>
+          <div class="code">${sc} <span class="cj-zh">(${codeToZh(sc)})</span></div>
         </div>
       </div>`;
   }).join('');
@@ -555,8 +627,7 @@ document.getElementById('btnKbClear').onclick = () => {
   document.getElementById('kbResultCard').style.display = 'none';
 };
 
-/* ========== 重寫手寫辨識 (Google API) ========== */
-// 資料結構變更為 Google API 接受的格式: [[x1, x2...], [y1, y2...]]
+/* ========== 手寫辨識 (Google Engine) ========== */
 let strokes = [];       
 let currentStroke = null; 
 const canvas = document.getElementById('pad');
@@ -580,8 +651,8 @@ function redraw() {
   const w = canvas.clientWidth;
   const h = canvas.clientHeight;
   ctx.clearRect(0, 0, w, h);
-  ctx.strokeStyle = '#e7ecf3';
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#1d1d1f'; // 深色質感畫筆
+  ctx.lineWidth = 4.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   
@@ -606,7 +677,6 @@ function startDraw(e) {
   e.preventDefault();
   hint.classList.add('hide');
   const p = getPos(e);
-  // 建立新的筆劃 [ [x陣列], [y陣列] ]
   currentStroke = [[p[0]], [p[1]]];
   strokes.push(currentStroke);
 }
@@ -625,11 +695,10 @@ function endDraw(e) {
   currentStroke = null;
   document.getElementById('btnRecognize').disabled = strokes.length === 0;
   
-  // 停止繪畫 450 毫秒後自動觸發辨識
   clearTimeout(window._recogTimer);
   window._recogTimer = setTimeout(() => {
     if (strokes.length > 0) doRecognize();
-  }, 450);
+  }, 400);
 }
 
 canvas.addEventListener('mousedown', startDraw);
@@ -663,7 +732,6 @@ document.getElementById('btnUndo').onclick = () => {
   }
 };
 
-// 呼叫 Google 辨識 API
 async function doRecognize() {
   if (strokes.length === 0) return;
   const status = document.getElementById('handStatus');
@@ -697,7 +765,7 @@ async function doRecognize() {
       cands.innerHTML = '';
       
       if (!matches || !matches.length) {
-        status.textContent = '無法辨識，請再試一次';
+        status.textContent = '無法辨識，請重新書寫';
         return;
       }
       
@@ -710,15 +778,14 @@ async function doRecognize() {
         cands.appendChild(el);
       });
       
-      // 自動顯示第一個結果
       showHandResult(matches[0]);
     } else {
-      status.textContent = '辨識請求失敗';
+      status.textContent = '辨識請求超時';
       status.className = 'status err';
     }
   } catch (err) {
     console.error(err);
-    status.textContent = '辨識出錯（請檢查網路連線）';
+    status.textContent = '辨識出錯（請確認網路狀態）';
     status.className = 'status err';
   }
 }
@@ -729,7 +796,7 @@ function showHandResult(ch) {
   if (!DB_READY) {
     document.getElementById('handResultCard').style.display = 'block';
     document.getElementById('handResult').innerHTML =
-      `<div class="result-item"><div class="char-big">${ch}</div><div class="codes">資料庫尚未就緒</div></div>`;
+      `<div class="result-item"><div class="char-big">${ch}</div><div class="codes">資料庫載入中…</div></div>`;
     return;
   }
   const code = CJ_DB[ch] || '（無資料）';
@@ -739,7 +806,7 @@ function showHandResult(ch) {
 
 function initHandwriting() {
   const status = document.getElementById('handStatus');
-  status.textContent = '✓ 手寫辨識就緒，請開始書寫';
+  status.textContent = '✓ 手寫引擎就緒，請開始書寫';
   status.className = 'status ok';
 }
 
@@ -747,7 +814,7 @@ function initHandwriting() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 loadCangjieDB();
-initHandwriting(); // 直接初始化
+initHandwriting();
 </script>
 </body>
 </html>
