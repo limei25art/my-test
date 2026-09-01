@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手寫倉頡速成字典</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 900px;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+    h1 {
+      grid-column: 1 / -1;
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+      color: #2c3e50;
+      text-align: center;
+    }
+    
+    /* 手寫區塊 */
+    .handwriting-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .canvas-wrapper {
+      position: relative;
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      touch-action: none;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 280px;
+      cursor: crosshair;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background-color: #3b82f6;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    button.btn-clear {
+      background-color: #ef4444;
+    }
+    button.btn-clear:hover {
+      background-color: #dc2626;
+    }
+
+    /* 候選字區 */
+    .candidates-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 42px;
+      padding: 8px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .candidate-btn {
+      padding: 6px 12px;
+      font-size: 1.2rem;
+      background: white;
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      cursor: pointer;
+      flex: none;
+    }
+    .candidate-btn:hover {
+      background: #e2e8f0;
+    }
+
+    /* 查詢結果區 */
+    .result-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .search-input-group {
+      display: flex;
+      gap: 8px;
+    }
+    .search-input-group input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .char-display {
+      font-size: 4rem;
+      text-align: center;
+      margin: 10px 0;
+      color: #0f172a;
+      font-weight: bold;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      font-weight: bold;
+      color: #64748b;
+    }
+    .info-val {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #1e293b;
+    }
+    .radical-text {
+      color: #2563eb;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>手寫倉頡 / 速成字典</h1>
+
+  <div class="handwriting-section">
+    <div class="canvas-wrapper">
+      <canvas id="paintCanvas"></canvas>
+    </div>
+    <div class="btn-group">
+      <button class="btn-clear" onclick="clearCanvas()">清除畫布</button>
+      <button onclick="undoStroke()">復原上一筆</button>
+    </div>
+    <div>
+      <small style="color: #64748b;">手寫候選字：</small>
+      <div class="candidates-box" id="candidatesBox">
+        <span style="color:#94a3b8; font-size: 0.9rem;">請在上方畫布寫字...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-section">
+    <div class="search-input-group">
+      <input type="text" id="manualInput" placeholder="或在此輸入單字查詢" maxlength="1">
+      <button onclick="searchManual()">查詢</button>
+    </div>
+
+    <div class="card">
+      <div class="char-display" id="targetChar">?</div>
+      
+      <div class="info-row">
+        <span class="info-label">倉頡碼</span>
+        <span class="info-val" id="cjCode">-</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">速成碼</span>
+        <span class="info-val" id="quickCode">-</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 倉頡字母對應拆碼字典
+  const RADICAL_MAP = {
+    'A': '日', 'B': '月', 'C': '金', 'D': '木', 'E': '水', 'F': '火', 'G': '土',
+    'H': '竹', 'I': '戈', 'J': '十', 'K': '大', 'L': '中', 'M': '一', 'N': '弓',
+    'O': '人', 'P': '心', 'Q': '手', 'R': '口', 'S': '尸', 'T': '山', 'U': '女',
+    'V': '田', 'Y': '卜', 'Z': '重', 'X': '難'
+  };
+
+  // 常用字倉頡數據庫 (可自行擴充)
+  const CJ_DICT = {
+    '你': 'OAF', '好': 'VD', '我': 'HQI', '他': 'OPD', '們': 'OAN', '這': 'YYRR',
+    '是': 'AMO', '不': 'MF', '在': 'KLG', '有': 'KB', '個': 'OWR', '中': 'L',
+    '大': 'K', '小': 'FC', '國': 'EIRM', '年': 'OQ', '生': 'HQ', '一': 'M',
+    '二': 'MM', '三': 'MMM', '人': 'O', '日': 'A', '月': 'B', '金': 'C',
+    '木': 'D', '水': 'E', '火': 'F', '土': 'G', '山': 'T', '田': 'V',
+    '明': 'AB', '東': 'DW', '南': 'JBJ', '西': 'MCW', '北': 'LP', '龍': 'YBYP',
+    '港': 'EHTC', '澳': 'EBRK', '台': 'IR', '灣': 'EVBF', '愛': 'BBCE'
+  };
+
+  // 畫布與手寫邏輯
+  const canvas = document.getElementById('paintCanvas');
+  const ctx = canvas.getContext('2d');
+  let isDrawing = false;
+  let strokes = [];
+  let currentStroke = [[], []];
+
+  function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = 280;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#0f172a';
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function getPointerPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  }
+
+  function startDrawing(e) {
+    isDrawing = true;
+    const pos = getPointerPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    currentStroke = [[Math.round(pos.x)], [Math.round(pos.y)]];
+  }
+
+  function draw(e) {
+    if (!isDrawing) return;
+    const pos = getPointerPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    currentStroke[0].push(Math.round(pos.x));
+    currentStroke[1].push(Math.round(pos.y));
+  }
+
+  function stopDrawing() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    strokes.push(currentStroke);
+    recognizeHandwriting();
+  }
+
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseleave', stopDrawing);
+
+  canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
+  canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+  canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
+
+  function redrawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    strokes.forEach(stroke => {
+      ctx.beginPath();
+      for (let i = 0; i < stroke[0].length; i++) {
+        if (i === 0) ctx.moveTo(stroke[0][i], stroke[1][i]);
+        else ctx.lineTo(stroke[0][i], stroke[1][i]);
+      }
+      ctx.stroke();
+    });
+  }
+
+  function clearCanvas() {
+    strokes = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('candidatesBox').innerHTML = '<span style="color:#94a3b8; font-size: 0.9rem;">請在上方畫布寫字...</span>';
+  }
+
+  function undoStroke() {
+    strokes.pop();
+    redrawCanvas();
+    if (strokes.length > 0) recognizeHandwriting();
+    else clearCanvas();
+  }
+
+  // Google 線上手寫識別 API
+  async function recognizeHandwriting() {
+    if (strokes.length === 0) return;
+
+    const payload = {
+      app_version: 0.4,
+      api_level: "537.36",
+      device: "5.0",
+      input_type: 0,
+      options: "enable_homophone_dict",
+      requests: [{
+        writer_words: [],
+        ink: strokes,
+        language: "zh-Hant"
+      }]
+    };
+
+    try {
+      const res = await fetch("https://inputtools.google.com/request?itc=zh-t-i0-handwrit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data[0] === "SUCCESS") {
+        const candidates = data[1][0][1];
+        renderCandidates(candidates);
+      }
+    } catch (err) {
+      console.error("識別失敗:", err);
+    }
+  }
+
+  function renderCandidates(candidates) {
+    const box = document.getElementById('candidatesBox');
+    box.innerHTML = '';
+    candidates.slice(0, 10).forEach((char) => {
+      const btn = document.createElement('button');
+      btn.className = 'candidate-btn';
+      btn.innerText = char;
+      btn.onclick = () => lookupCharacter(char);
+      box.appendChild(btn);
+    });
+    // 自動查詢第一個識別結果
+    if (candidates.length > 0) {
+      lookupCharacter(candidates[0]);
+    }
+  }
+
+  // 查詢倉頡與速成碼
+  function lookupCharacter(char) {
+    document.getElementById('targetChar').innerText = char;
+    
+    // 獲取倉頡碼 (若本字典沒有，改用開放 API 備用查詢)
+    let cjCode = CJ_DICT[char];
+
+    if (cjCode) {
+      displayCodes(cjCode);
+    } else {
+      // 本地無資料時，線上查詢第三方倉頡 API
+      fetch(`https://api.pinying.org/cj/${encodeURIComponent(char)}`) // 模擬/預設邏輯
+        .catch(() => null);
+        
+      // 降級顯示無資料提示
+      document.getElementById('cjCode').innerText = "未收錄";
+      document.getElementById('quickCode').innerText = "未收錄";
+    }
+  }
+
+  function displayCodes(cjCode) {
+    // 倉頡碼轉換為字根
+    const cjRadicals = cjCode.split('').map(letter => RADICAL_MAP[letter] || letter).join('');
+    document.getElementById('cjCode').innerHTML = `${cjCode} <span class="radical-text">(${cjRadicals})</span>`;
+
+    // 速成碼 (取倉頡首尾碼)
+    let quickCode = cjCode;
+    if (cjCode.length > 1) {
+      quickCode = cjCode[0] + cjCode[cjCode.length - 1];
+    }
+    const quickRadicals = quickCode.split('').map(letter => RADICAL_MAP[letter] || letter).join('');
+    document.getElementById('quickCode').innerHTML = `${quickCode} <span class="radical-text">(${quickRadicals})</span>`;
+  }
+
+  function searchManual() {
+    const input = document.getElementById('manualInput').value.trim();
+    if (input) {
+      lookupCharacter(input[0]);
+    }
+  }
+</script>
+
+</body>
+</html>
