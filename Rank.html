@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>遊戲排行榜</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { text-align: center; }
+    .form-box, .list-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover { background: #45a049; }
+    #refreshBtn { background: #2196F3; }
+    ol { padding-left: 20px; }
+    li {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+    }
+    .rank { font-weight: bold; color: #666; margin-right: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>遊戲排行榜</h1>
+
+  <!-- 提交分數 -->
+  <div class="form-box">
+    <h3>提交分數</h3>
+    <input type="text" id="playerName" placeholder="玩家名稱" maxlength="20">
+    <input type="number" id="playerScore" placeholder="分數" min="0">
+    <button onclick="submitScore()">提交分數</button>
+  </div>
+
+  <!-- 排行榜 -->
+  <div class="list-box">
+    <h3>排行榜 <button id="refreshBtn" onclick="loadLeaderboard()">重新整理</button></h3>
+    <ol id="leaderboardList">
+      <li>載入中...</li>
+    </ol>
+  </div>
+
+  <script>
+    // ★★★ 把你剛才拿到的 Game ID 貼喺呢度 ★★★
+    const GAME_ID = 'Zl4d7IVkemOTTVg2fUdz';   // ← 改成你自己的 ID
+    const API_URL = `https://us-central1-js-capstone-backend.cloudfunctions.net/api/games/${GAME_ID}/scores/`;
+
+    // 提交分數
+    async function submitScore() {
+      const name = document.getElementById('playerName').value.trim();
+      const score = Number(document.getElementById('playerScore').value);
+
+      if (!name || isNaN(score) || score < 0) {
+        alert('請輸入正確的玩家名稱同分數');
+        return;
+      }
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: name, score: score })
+        });
+        const data = await res.json();
+        alert(data.result || '提交成功！');
+        document.getElementById('playerName').value = '';
+        document.getElementById('playerScore').value = '';
+        loadLeaderboard(); // 提交後自動刷新
+      } catch (err) {
+        alert('提交失敗，請檢查網路');
+        console.error(err);
+      }
+    }
+
+    // 載入排行榜
+    async function loadLeaderboard() {
+      const list = document.getElementById('leaderboardList');
+      list.innerHTML = '<li>載入中...</li>';
+
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        
+        // 按分數由高到低排序
+        const scores = data.result.sort((a, b) => b.score - a.score);
+
+        if (scores.length === 0) {
+          list.innerHTML = '<li>暫時未有分數</li>';
+          return;
+        }
+
+        list.innerHTML = scores.map((item, index) => `
+          <li>
+            <span><span class="rank">${index + 1}.</span> ${item.user}</span>
+            <strong>${item.score}</strong>
+          </li>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = '<li>載入失敗</li>';
+        console.error(err);
+      }
+    }
+
+    // 頁面一打開就自動載入
+    loadLeaderboard();
+  </script>
+</body>
+</html>
