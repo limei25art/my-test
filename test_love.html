@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【情侶矛盾大對決】測雙標 恐怖情人心裡測試</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700;900&display=swap');
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1a0505 0%, #000000 100%);
+            color: #fce7e7;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(40, 5, 10, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 100, 120, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 20px rgba(200, 20, 40, 0.2);
+        }
+
+        .btn-choice {
+            transition: all 0.3s ease;
+            background: rgba(20, 0, 5, 0.6);
+            border: 1px solid #7a1f2e;
+        }
+
+        .btn-choice:hover, .btn-choice:focus, .btn-choice:active {
+            background: #7a1f2e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.4);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #8b0000, #ff1a40);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 26, 64, 0.6);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Glitch effect for the title to make it dramatic */
+        .glitch-text {
+            text-shadow: 2px 2px 0px rgba(255,0,0,0.5), -2px -2px 0px rgba(0,255,255,0.3);
+        }
+
+        .hidden-screen {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6">
+
+    <main id="app-container" class="w-full max-w-lg mx-auto glass-panel rounded-2xl p-6 sm:p-10 text-center relative overflow-hidden">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="fade-in flex flex-col items-center justify-center min-h-[60vh]">
+            <div class="mb-8">
+                <p class="text-sm tracking-widest text-[#ff4d6d] mb-2 font-bold uppercase">Psychological Test</p>
+                <h1 class="text-3xl sm:text-4xl font-black mb-4 glitch-text leading-tight">【情侶矛盾大對決】<br><span class="text-2xl text-gray-300">測恐怖情人心裡測試</span></h1>
+                <p class="text-gray-400 text-sm sm:text-base mt-4 leading-relaxed">
+                    在愛情裡，你是一張白紙，還是隱藏的控制狂？<br>
+                    10條情侶日常矛盾題，揭開你內心最真實的戀愛模樣。
+                </p>
+                
+            </div>
+            <button onclick="startGame()" class="btn-primary text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs shadow-lg shadow-red-900/50">
+                開始測試
+            </button>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="question-screen" class="hidden-screen flex flex-col min-h-[60vh]">
+            <div class="flex justify-between items-center mb-6">
+                <span id="question-counter" class="text-[#ff4d6d] font-bold text-lg">1 / 10</span>
+                <div class="w-2/3 bg-gray-800 rounded-full h-2">
+                    <div id="progress-bar" class="bg-[#ff1a40] h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
+                </div>
+            </div>
+
+            <div id="question-container" class="slide-up flex-grow flex flex-col justify-center">
+                <h2 id="question-text" class="text-xl sm:text-2xl font-bold mb-8 text-left leading-relaxed">
+                    <!-- Question goes here -->
+                </h2>
+
+                <div id="options-container" class="flex flex-col gap-4 w-full">
+                    <!-- Options go here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden-screen flex flex-col items-center justify-center min-h-[60vh]">
+            <p class="text-[#ff4d6d] font-bold tracking-widest mb-2">你的測試結果是...</p>
+            <h2 id="result-title" class="text-3xl sm:text-4xl font-black mb-6 text-white glitch-text">
+                <!-- Result Title -->
+            </h2>
+            
+            <div class="bg-black/40 border border-[#ff4d6d]/30 rounded-xl p-6 mb-8 w-full">
+                <p id="result-desc" class="text-base sm:text-lg text-gray-200 leading-relaxed text-left">
+                    <!-- Result Description -->
+                </p>
+            </div>
+
+            <button onclick="restartGame()" class="btn-primary text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs shadow-lg shadow-red-900/50 mb-4">
+                再測一次
+            </button>
+        </div>
+    </main>
+
+    <script>
+        const questions = [
+            {
+                question: "1. 另一半單獨和異性朋友食飯，你會：",
+                options: [
+                    { text: "A. 毫不介意，祝佢玩得開心", points: 1 },
+                    { text: "B. 有點吃醋，但會讓他去", points: 2 },
+                    { text: "C. 表面說OK，事後瘋狂單打", points: 3 },
+                    { text: "D. 絕對禁止，並偷偷查看對方定位", points: 4 }
+                ]
+            },
+            {
+                question: "2. 深夜另一半手機突然亮起，彈出未知訊息，你會：",
+                options: [
+                    { text: "A. 繼續瞓覺，唔關我事", points: 1 },
+                    { text: "B. 隨口問一句是誰", points: 2 },
+                    { text: "C. 記低時間，第二朝盤問", points: 3 },
+                    { text: "D. 趁佢瞓著，用佢指紋解鎖偷睇", points: 4 }
+                ]
+            },
+            {
+                question: "3. 另一半忘記了你們的紀念日，你會：",
+                options: [
+                    { text: "A. 溫柔提醒，一齊補祝", points: 1 },
+                    { text: "B. 扭計一陣，要求對方請食飯補償", points: 2 },
+                    { text: "C. 記仇，等對方生日時我也故意忘記", points: 3 },
+                    { text: "D. 大發雷霆，認定對方已經不愛我，鬧足一星期", points: 4 }
+                ]
+            },
+            {
+                question: "4. 發現另一半IG仲有follow前度，你會：",
+                options: [
+                    { text: "A. 覺得無所謂，大家都係過去式", points: 1 },
+                    { text: "B. 心裡有點不爽，暗示對方unfollow", points: 2 },
+                    { text: "C. 自己也可以follow前度，但對方不行", points: 3 },
+                    { text: "D. 逼對方當面block，兼刪除所有過往合照", points: 4 }
+                ]
+            },
+            {
+                question: "5. 你發訊息給另一半，對方三個小時都沒回覆，你會：",
+                options: [
+                    { text: "A. 估計對方在忙，等佢得閒自然會覆", points: 1 },
+                    { text: "B. 傳個貼圖引佢注意", points: 2 },
+                    { text: "C. 覺得對方態度冷淡，自己也決定冷暴力回敬", points: 3 },
+                    { text: "D. 奪命追魂call，打到對方聽為止", points: 4 }
+                ]
+            },
+            {
+                question: "6. 另一半表示最近壓力大，週末想自己一個人獨處，你會：",
+                options: [
+                    { text: "A. 尊重對方，自己去約朋友", points: 1 },
+                    { text: "B. 有點失落，但依然答應", points: 2 },
+                    { text: "C. 覺得對方自私，要求對方必須陪自己", points: 3 },
+                    { text: "D. 懷疑對方有第三者，週末偷偷跟蹤", points: 4 }
+                ]
+            },
+            {
+                question: "7. 關於手機密碼，你的態度是：",
+                options: [
+                    { text: "A. 互相保有私隱，不需要知道", points: 1 },
+                    { text: "B. 知道密碼，但平時不會刻意去查", points: 2 },
+                    { text: "C. 對方必須公開密碼，但自己的密碼不能說", points: 3 },
+                    { text: "D. 綁定定位，並隨時抽查對方手機的所有App", points: 4 }
+                ]
+            },
+            {
+                question: "8. 另一半買了件極度性感的衣服準備出街，你會：",
+                options: [
+                    { text: "A. 讚嘆對方好靚/好有型", points: 1 },
+                    { text: "B. 提醒對方小心走光", points: 2 },
+                    { text: "C. 自己著就可以，對方著就絕對唔得", points: 3 },
+                    { text: "D. 強制對方換衫，否則唔准出街", points: 4 }
+                ]
+            },
+            {
+                question: "9. 兩人發生激烈爭吵，你會怎麼收場：",
+                options: [
+                    { text: "A. 冷靜下來，互相溝通解決問題", points: 1 },
+                    { text: "B. 等對方先開口氹自己", points: 2 },
+                    { text: "C. 翻舊帳，將對方以前所有的錯事數出來", points: 3 },
+                    { text: "D. 以死相逼或摔東西，直到對方完全屈服認錯", points: 4 }
+                ]
+            },
+            {
+                question: "10. 另一半因為工作需要，結識了條件很好的異性客戶，你會：",
+                options: [
+                    { text: "A. 相信對方，支持對方工作", points: 1 },
+                    { text: "B. 偶爾查問一下工作進度", points: 2 },
+                    { text: "C. 要求對方交代所有細節，有一點隱瞞就發脾氣", points: 3 },
+                    { text: "D. 直接介入，要求對方推掉這個項目或辭職", points: 4 }
+                ]
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let totalScore = 0;
+        let isTransitioning = false;
+
+        const startScreen = document.getElementById('start-screen');
+        const questionScreen = document.getElementById('question-screen');
+        const resultScreen = document.getElementById('result-screen');
+        
+        const questionCounter = document.getElementById('question-counter');
+        const progressBar = document.getElementById('progressBar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            totalScore = 0;
+            
+            startScreen.classList.add('hidden-screen');
+            resultScreen.classList.add('hidden-screen');
+            questionScreen.classList.remove('hidden-screen');
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            isTransitioning = false;
+            const q = questions[currentQuestionIndex];
+            
+            // Update Progress
+            questionCounter.innerText = `${currentQuestionIndex + 1} / ${questions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+            
+            // Animation reset
+            const qContainer = document.getElementById('question-container');
+            qContainer.classList.remove('slide-up');
+            void qContainer.offsetWidth; // trigger reflow
+            qContainer.classList.add('slide-up');
+
+            // Render text
+            questionText.innerText = q.question;
+            
+            // Render options
+            optionsContainer.innerHTML = '';
+            q.options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-choice w-full text-left p-4 rounded-xl text-sm sm:text-base text-gray-200 cursor-pointer';
+                btn.innerText = opt.text;
+                btn.onclick = () => selectAnswer(opt.points, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(points, btnElement) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            // Visual feedback
+            btnElement.style.background = '#ff1a40';
+            btnElement.style.color = '#fff';
+            
+            totalScore += points;
+
+            // Delay for effect before next question
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    showQuestion();
+                } else {
+                    showResults();
+                }
+            }, 400);
+        }
+
+        function showResults() {
+            questionScreen.classList.add('hidden-screen');
+            resultScreen.classList.remove('hidden-screen');
+            
+            // Re-trigger animation
+            resultScreen.classList.remove('fade-in');
+            void resultScreen.offsetWidth; 
+            resultScreen.classList.add('fade-in');
+
+            const titleEl = document.getElementById('result-title');
+            const descEl = document.getElementById('result-desc');
+
+            if (totalScore >= 10 && totalScore <= 15) {
+                titleEl.innerText = '【佛系神仙伴侶】';
+                titleEl.style.color = '#a7f3d0';
+                descEl.innerText = '完全信任對方，給予極大自由，健康關係的典範！你明白愛情需要呼吸的空間，不會無端猜忌。';
+            } else if (totalScore >= 16 && totalScore <= 25) {
+                titleEl.innerText = '【正常帶點微醋】';
+                titleEl.style.color = '#fde047';
+                descEl.innerText = '正常的戀愛腦，偶爾呷醋反而增添情趣，是很可愛的伴侶。你在意對方，但也懂得拿捏分寸。';
+            } else if (totalScore >= 26 && totalScore <= 33) {
+                titleEl.innerText = '【終極雙標大師】';
+                titleEl.style.color = '#f97316';
+                descEl.innerText = '「我可以，你唔得！」常常用兩把尺衡量雙方，小心令對方覺得委屈啊！你需要學習將心比心。';
+            } else if (totalScore >= 34 && totalScore <= 40) {
+                titleEl.innerText = '【窒息系恐怖情人】';
+                titleEl.style.color = '#dc2626';
+                descEl.innerText = '控制慾爆棚！你的愛讓人喘不過氣，甚至帶有危險性。請快點調整心態，否則這段關係遲早會爆炸！';
+            }
+        }
+
+        function restartGame() {
+            startGame();
+        }
+    </script>
+</body>
+</html>

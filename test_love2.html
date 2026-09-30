@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情侶矛盾大對決｜恐怖情人檢測</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: linear-gradient(135deg, #1a0a0a 0%, #2d0a1a 40%, #1a0a2d 100%);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* 開始畫面 */
+  #start-screen {
+    text-align: center;
+    padding-top: 40px;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, #ff4d6d, #ff8fa3, #ff4d6d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    color: #ffb3c1;
+    margin-bottom: 30px;
+  }
+
+  .desc {
+    background: rgba(255,77,109,0.12);
+    border: 1px solid rgba(255,77,109,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 30px;
+    text-align: left;
+    line-height: 1.7;
+    font-size: 0.95rem;
+    color: #ffccd5;
+  }
+
+  .desc strong {
+    color: #ff6b8a;
+  }
+
+  .btn {
+    display: inline-block;
+    background: linear-gradient(90deg, #ff4d6d, #c9184a);
+    color: white;
+    border: none;
+    padding: 16px 48px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(255,77,109,0.4);
+    letter-spacing: 1px;
+  }
+
+  .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(255,77,109,0.55);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  /* 進度條 */
+  .progress-wrap {
+    margin-bottom: 24px;
+  }
+
+  .progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #ffb3c1;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4d6d, #ff8fa3);
+    border-radius: 10px;
+    transition: width 0.4s ease;
+  }
+
+  /* 問題卡片 */
+  .question-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 28px 22px;
+    margin-bottom: 20px;
+    animation: slideIn 0.4s ease;
+  }
+
+  .q-num {
+    display: inline-block;
+    background: rgba(255,77,109,0.2);
+    color: #ff6b8a;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  .q-text {
+    font-size: 1.15rem;
+    font-weight: 500;
+    line-height: 1.6;
+    margin-bottom: 22px;
+    color: #fff;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option {
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .option:hover {
+    background: rgba(255,77,109,0.15);
+    border-color: rgba(255,77,109,0.4);
+    transform: translateX(4px);
+  }
+
+  .option.selected {
+    background: rgba(255,77,109,0.25);
+    border-color: #ff4d6d;
+    box-shadow: 0 0 0 2px rgba(255,77,109,0.3);
+  }
+
+  .opt-label {
+    background: rgba(255,77,109,0.3);
+    color: #ff8fa3;
+    font-weight: 700;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .option.selected .opt-label {
+    background: #ff4d6d;
+    color: white;
+  }
+
+  .opt-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #e8e0e4;
+    padding-top: 2px;
+  }
+
+  /* 結果畫面 */
+  #result-screen {
+    display: none;
+    text-align: center;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .result-badge {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 8px 24px;
+    border-radius: 50px;
+    margin-bottom: 16px;
+  }
+
+  .result-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .result-score {
+    font-size: 3.5rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, #ff4d6d, #ff8fa3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 10px 0;
+  }
+
+  .result-desc {
+    background: rgba(255,255,109,0.08);
+    border: 1px solid rgba(255,77,109,0.25);
+    border-radius: 16px;
+    padding: 22px;
+    text-align: left;
+    line-height: 1.8;
+    font-size: 0.98rem;
+    color: #ffccd5;
+    margin: 24px 0;
+  }
+
+  .result-desc h3 {
+    color: #ff6b8a;
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+  }
+
+  .tips {
+    text-align: left;
+    margin: 20px 0;
+  }
+
+  .tips li {
+    margin-bottom: 8px;
+    padding-left: 8px;
+    color: #e8d0d6;
+    font-size: 0.93rem;
+  }
+
+  .restart-btn {
+    margin-top: 10px;
+  }
+
+  /* 動畫 */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* 隱藏 */
+  .hidden {
+    display: none !important;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- 開始畫面 -->
+    <div id="start-screen">
+      <div class="title">情侶矛盾大對決</div>
+      <div class="subtitle">恐怖情人檢測｜雙標 × 情緒勒索</div>
+      
+      <div class="desc">
+        <strong>測一測你的另一半，是不是「表面溫柔，實際恐怖」的類型？</strong><br><br>
+        本測驗以情侶日常最常發生的衝突為題，共 10 題。<br>
+        請根據「你伴侶真實的行為」選擇最接近的選項。<br><br>
+        重點檢測：<br>
+        • 雙標（對你嚴格、對自己寬鬆）<br>
+        • 情緒勒索（用愧疚、哭泣、冷戰控制你）
+      </div>
+
+      <button class="btn" onclick="startQuiz()">開始挑戰</button>
+    </div>
+
+    <!-- 測驗畫面 -->
+    <div id="quiz-screen" class="hidden">
+      <div class="progress-wrap">
+        <div class="progress-text">
+          <span id="q-counter">第 1 / 10 題</span>
+          <span id="score-preview"></span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress" style="width: 10%"></div>
+        </div>
+      </div>
+
+      <div class="question-card" id="question-card">
+        <!-- 動態填入 -->
+      </div>
+    </div>
+
+    <!-- 結果畫面 -->
+    <div id="result-screen">
+      <div class="result-badge" id="result-badge"></div>
+      <div class="result-title" id="result-title"></div>
+      <div class="result-score" id="result-score"></div>
+      <div class="result-desc" id="result-desc"></div>
+      <button class="btn restart-btn" onclick="restartQuiz()">再測一次</button>
+    </div>
+
+  </div>
+
+<script>
+const questions = [
+  {
+    q: "你加班到很晚回家，他/她的第一反應是？",
+    options: [
+      { text: "先關心你累不累，主動幫你準備吃的或讓你休息", score: 0 },
+      { text: "有點不高興，但還是接受你解釋", score: 1 },
+      { text: "開始質問「為什麼總是工作比較重要？是不是不想回家？」", score: 3 },
+      { text: "直接冷戰或哭，說「你從來都不把我放在第一位」", score: 4 }
+    ]
+  },
+  {
+    q: "你和異性朋友單純聚會，他/她的態度是？",
+    options: [
+      { text: "相信你，頂多提醒注意安全", score: 0 },
+      { text: "有點吃醋，但不會阻止，事後會問發生什麼事", score: 1 },
+      { text: "要求你必須報備、報定位，甚至要你中途拍照證明", score: 3 },
+      { text: "直接禁止或說「如果你去，我們就分手」", score: 4 }
+    ]
+  },
+  {
+    q: "吵架時，他/她最常使用的方式是？",
+    options: [
+      { text: "冷靜討論問題本身，就事論事", score: 0 },
+      { text: "會情緒化，但最後願意道歉與溝通", score: 1 },
+      { text: "翻舊帳、人身攻擊，或說「你就是這樣的人」", score: 3 },
+      { text: "用哭、冷暴力、威脅分手來讓你妥協", score: 4 }
+    ]
+  },
+  {
+    q: "關於家務分工，實際情況是？",
+    options: [
+      { text: "雙方都主動分擔，誰有空誰多做", score: 0 },
+      { text: "大致公平，偶爾會有小抱怨", score: 1 },
+      { text: "他/她覺得「這本來就是你該做的」，自己很少動手", score: 3 },
+      { text: "你做不好就會被唸，但他/她自己卻常常不做", score: 4 }
+    ]
+  },
+  {
+    q: "你買了喜歡的東西或為自己花錢時，他/她的反應？",
+    options: [
+      { text: "替你開心，甚至鼓勵你偶爾寵自己", score: 0 },
+      { text: "會提醒注意預算，但不會阻攔", score: 1 },
+      { text: "開始比較「你對自己很大方，對我卻很吝嗇」", score: 3 },
+      { text: "生氣或冷戰，覺得你「亂花錢」或「不把錢放在家裡」", score: 4 }
+    ]
+  },
+  {
+    q: "他/她自己加班或和朋友出去時，對你的要求是？",
+    options: [
+      { text: "會提前告知，也希望你有自己的生活", score: 0 },
+      { text: "會報備，但不會要求你完全一樣", score: 1 },
+      { text: "自己很自由，卻要求你必須隨時回覆訊息", score: 3 },
+      { text: "自己想怎樣就怎樣，卻對你各種限制與質疑", score: 4 }
+    ]
+  },
+  {
+    q: "當你表現得比他/她優秀（工作升遷、被誇讚）時？",
+    options: [
+      { text: "真心替你開心，甚至幫你慶祝", score: 0 },
+      { text: "表面恭喜，但情緒有點複雜", score: 1 },
+      { text: "開始酸言酸語，或說「那你以後就不用靠我了」", score: 3 },
+      { text: "明顯吃味，甚至用言語打擊你的成就", score: 4 }
+    ]
+  },
+  {
+    q: "你因為他/她的事情感到難過，向他/她表達時？",
+    options: [
+      { text: "會認真聽，並嘗試理解你的感受", score: 0 },
+      { text: "一開始會辯解，但最後願意道歉", score: 1 },
+      { text: "直接說「你太敏感了」或「又在無理取鬧」", score: 3 },
+      { text: "反過來指責你「動不動就哭」或「你才是問題」", score: 4 }
+    ]
+  },
+  {
+    q: "關於「過去的感情史」，他/她的態度是？",
+    options: [
+      { text: "雙方都可以正常聊，不會過度追問", score: 0 },
+      { text: "會好奇，但尊重你的隱私", score: 1 },
+      { text: "要求你詳細交代，卻對自己的過去含糊其辭", score: 3 },
+      { text: "對你的過去極度在意甚至翻舊帳，自己卻不願被問", score: 4 }
+    ]
+  },
+  {
+    q: "當你想結束一段不愉快的對話或暫時冷靜時？",
+    options: [
+      { text: "尊重你需要空間，之後再好好談", score: 0 },
+      { text: "有點不甘心，但還是會給你時間", score: 1 },
+      { text: "不讓你走，持續追問或拉住你", score: 3 },
+      { text: "用「如果你現在走，我們就完了」這類話威脅你留下", score: 4 }
+    ]
+  }
+];
+
+let currentQ = 0;
+let totalScore = 0;
+let answers = [];
+
+function startQuiz() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('quiz-screen').classList.remove('hidden');
+  document.getElementById('result-screen').style.display = 'none';
+  currentQ = 0;
+  totalScore = 0;
+  answers = [];
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentQ];
+  const card = document.getElementById('question-card');
+  
+  document.getElementById('q-counter').textContent = `第 ${currentQ + 1} / 10 題`;
+  document.getElementById('progress').style.width = `${((currentQ + 1) / 10) * 100}%`;
+
+  let html = `
+    <div class="q-num">問題 ${currentQ + 1}</div>
+    <div class="q-text">${q.q}</div>
+    <div class="options">
+  `;
+
+  q.options.forEach((opt, i) => {
+    const label = String.fromCharCode(65 + i); // A B C D
+    html += `
+      <div class="option" onclick="selectOption(${i})">
+        <div class="opt-label">${label}</div>
+        <div class="opt-text">${opt.text}</div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  card.innerHTML = html;
+}
+
+function selectOption(index) {
+  // 視覺回饋
+  const options = document.querySelectorAll('.option');
+  options.forEach(opt => opt.classList.remove('selected'));
+  options[index].classList.add('selected');
+
+  // 記錄分數
+  const score = questions[currentQ].options[index].score;
+  answers[currentQ] = score;
+
+  // 短暫延遲後進入下一題
+  setTimeout(() => {
+    totalScore += score;
+    currentQ++;
+
+    if (currentQ < questions.length) {
+      showQuestion();
+    } else {
+      showResult();
+    }
+  }, 350);
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').classList.add('hidden');
+  document.getElementById('result-screen').style.display = 'block';
+
+  const score = totalScore;
+  let badge, title, desc, color;
+
+  if (score <= 8) {
+    badge = "💚 健康伴侶";
+    title = "恭喜！你遇到的是相對成熟的另一半";
+    color = "#4ade80";
+    desc = `
+      <h3>分析結果</h3>
+      你的伴侶在大多數情境中表現出尊重、信任與溝通能力。雙標與情緒勒索的跡象較少。<br><br>
+      <h3>建議</h3>
+      <ul class="tips">
+        <li>繼續保持雙向溝通與界線</li>
+        <li>偶爾也可以主動表達感謝，強化正向循環</li>
+        <li>沒有完美的人，偶爾小摩擦很正常</li>
+      </ul>
+    `;
+  } else if (score <= 18) {
+    badge = "💛 需要留意";
+    title = "有些雙標與控制傾向正在萌芽";
+    color = "#facc15";
+    desc = `
+      <h3>分析結果</h3>
+      你的伴侶在部分情境中出現了不對等的標準，或用情緒影響你的選擇。目前還不算嚴重，但值得正視。<br><br>
+      <h3>建議</h3>
+      <ul class="tips">
+        <li>下次發生時，冷靜指出「這件事的雙重標準」</li>
+        <li>用「我覺得……」而非指責的方式表達感受</li>
+        <li>觀察對方是否願意調整，還是總是把責任推給你</li>
+      </ul>
+    `;
+  } else if (score <= 28) {
+    badge = "🧡 危險訊號";
+    title = "明顯的雙標與情緒勒索模式";
+    color = "#fb923c";
+    desc = `
+      <h3>分析結果</h3>
+      你的伴侶經常對你有一套標準、對自己另一套；或習慣用愧疚、冷戰、威脅來控制你的行為與情緒。<br><br>
+      <h3>建議</h3>
+      <ul class="tips">
+        <li>開始建立清楚的個人界線，並堅持執行</li>
+        <li>不要每次都為了「息事寧人」而妥協</li>
+        <li>考慮與信任的朋友或諮商師討論現況</li>
+        <li>關係的改善需要雙方意願，不是單方面努力就能成功</li>
+      </ul>
+    `;
+  } else {
+    badge = "❤️‍🔥 恐怖情人警報";
+    title = "高度控制與情緒勒索傾向";
+    color = "#f87171";
+    desc = `
+      <h3>分析結果</h3>
+      你的伴侶在多個面向都展現出強烈的雙標、控制欲與情緒勒索行為。這不是「愛你很深」，而是缺乏尊重與安全感的表現。<br><br>
+      <h3>重要提醒</h3>
+      <ul class="tips">
+        <li>長期處於這種關係會嚴重消耗你的自信與心理健康</li>
+        <li>請優先保護自己的情緒與安全</li>
+        <li>必要時尋求專業協助或信任的人支持</li>
+        <li>你有權利擁有一個被尊重、被平等對待的關係</li>
+      </ul>
+    `;
+  }
+
+  document.getElementById('result-badge').textContent = badge;
+  document.getElementById('result-badge').style.background = color + "22";
+  document.getElementById('result-badge').style.color = color;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-score').textContent = score + " 分";
+  document.getElementById('result-desc').innerHTML = desc;
+}
+
+function restartQuiz() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('start-screen').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
