@@ -3,606 +3,576 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>【追星族矛盾大對決】測你的雙標與情緒勒索指數</title>
+<title>情侶矛盾大對決｜恐怖情人檢測</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-  
-  :root {
-    --pink: #ff6b9d;
-    --purple: #9b59b6;
-    --dark: #2c3e50;
-    --light: #fef6f9;
-    --card: #ffffff;
-    --shadow: 0 10px 30px rgba(255, 107, 157, 0.15);
-  }
-  
+
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
-  
+
   body {
     font-family: 'Noto Sans TC', sans-serif;
-    background: linear-gradient(135deg, #fff0f5 0%, #f3e5f5 50%, #e8f4fd 100%);
+    background: linear-gradient(135deg, #1a0a0a 0%, #2d0a1a 40%, #1a0a2d 100%);
     min-height: 100vh;
-    color: var(--dark);
-    line-height: 1.6;
+    color: #fff;
+    overflow-x: hidden;
   }
-  
+
   .container {
-    max-width: 720px;
+    max-width: 640px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px 16px 40px;
   }
-  
-  /* Header */
-  .header {
+
+  /* 開始畫面 */
+  #start-screen {
     text-align: center;
-    padding: 40px 20px 30px;
-    animation: fadeIn 0.8s ease;
+    padding-top: 40px;
+    animation: fadeIn 0.6s ease;
   }
-  
-  .header h1 {
-    font-size: 2rem;
+
+  .title {
+    font-size: 2.2rem;
     font-weight: 900;
-    background: linear-gradient(90deg, var(--pink), var(--purple));
+    background: linear-gradient(90deg, #ff4d6d, #ff8fa3, #ff4d6d);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 10px;
-  }
-  
-  .header p {
-    color: #666;
-    font-size: 1rem;
-  }
-  
-  .badge {
-    display: inline-block;
-    background: linear-gradient(90deg, var(--pink), var(--purple));
-    color: white;
-    padding: 6px 16px;
-    border-radius: 50px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    margin-top: 12px;
-  }
-  
-  /* Progress */
-  .progress-bar {
-    height: 8px;
-    background: #eee;
-    border-radius: 10px;
-    margin: 20px 0 30px;
-    overflow: hidden;
-  }
-  
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--pink), var(--purple));
-    border-radius: 10px;
-    transition: width 0.4s ease;
-    width: 0%;
-  }
-  
-  /* Card */
-  .card {
-    background: var(--card);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: var(--shadow);
-    margin-bottom: 20px;
-    animation: slideUp 0.5s ease;
-  }
-  
-  .question-num {
-    font-size: 0.9rem;
-    color: var(--pink);
-    font-weight: 700;
+    background-clip: text;
     margin-bottom: 8px;
+    letter-spacing: 2px;
   }
-  
-  .question-text {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 25px;
-    color: var(--dark);
+
+  .subtitle {
+    font-size: 1.1rem;
+    color: #ffb3c1;
+    margin-bottom: 30px;
   }
-  
-  .option {
-    display: block;
-    width: 100%;
+
+  .desc {
+    background: rgba(255,77,109,0.12);
+    border: 1px solid rgba(255,77,109,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 30px;
     text-align: left;
-    padding: 16px 20px;
-    margin-bottom: 12px;
-    border: 2px solid #f0e6ef;
-    border-radius: 14px;
-    background: #fafafa;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    font-size: 1rem;
-    color: var(--dark);
+    line-height: 1.7;
+    font-size: 0.95rem;
+    color: #ffccd5;
   }
-  
-  .option:hover {
-    border-color: var(--pink);
-    background: #fff5f8;
-    transform: translateX(6px);
+
+  .desc strong {
+    color: #ff6b8a;
   }
-  
-  .option.selected {
-    border-color: var(--pink);
-    background: linear-gradient(90deg, #fff0f5, #fce4ec);
-    box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);
-  }
-  
-  .option span {
-    font-weight: 700;
-    color: var(--pink);
-    margin-right: 10px;
-  }
-  
-  /* Buttons */
-  .btn-group {
-    display: flex;
-    gap: 12px;
-    margin-top: 10px;
-  }
-  
+
   .btn {
-    flex: 1;
-    padding: 16px;
+    display: inline-block;
+    background: linear-gradient(90deg, #ff4d6d, #c9184a);
+    color: white;
     border: none;
-    border-radius: 14px;
-    font-size: 1.05rem;
+    padding: 16px 48px;
+    font-size: 1.15rem;
     font-weight: 700;
+    border-radius: 50px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-family: inherit;
+    box-shadow: 0 8px 25px rgba(255,77,109,0.4);
+    letter-spacing: 1px;
   }
-  
-  .btn-primary {
-    background: linear-gradient(90deg, var(--pink), var(--purple));
-    color: white;
+
+  .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(255,77,109,0.55);
   }
-  
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4);
+
+  .btn:active {
+    transform: translateY(0);
   }
-  
-  .btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+
+  /* 進度條 */
+  .progress-wrap {
+    margin-bottom: 24px;
   }
-  
-  .btn-secondary {
-    background: #f0e6ef;
-    color: var(--dark);
-  }
-  
-  .btn-secondary:hover {
-    background: #e8d5e4;
-  }
-  
-  /* Result */
-  .result-card {
-    text-align: center;
-    padding: 40px 30px;
-  }
-  
-  .result-level {
-    font-size: 1.1rem;
-    color: var(--pink);
-    font-weight: 700;
+
+  .progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #ffb3c1;
     margin-bottom: 8px;
   }
-  
+
+  .progress-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4d6d, #ff8fa3);
+    border-radius: 10px;
+    transition: width 0.4s ease;
+  }
+
+  /* 問題卡片 */
+  .question-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 28px 22px;
+    margin-bottom: 20px;
+    animation: slideIn 0.4s ease;
+  }
+
+  .q-num {
+    display: inline-block;
+    background: rgba(255,77,109,0.2);
+    color: #ff6b8a;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  .q-text {
+    font-size: 1.15rem;
+    font-weight: 500;
+    line-height: 1.6;
+    margin-bottom: 22px;
+    color: #fff;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option {
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .option:hover {
+    background: rgba(255,77,109,0.15);
+    border-color: rgba(255,77,109,0.4);
+    transform: translateX(4px);
+  }
+
+  .option.selected {
+    background: rgba(255,77,109,0.25);
+    border-color: #ff4d6d;
+    box-shadow: 0 0 0 2px rgba(255,77,109,0.3);
+  }
+
+  .opt-label {
+    background: rgba(255,77,109,0.3);
+    color: #ff8fa3;
+    font-weight: 700;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .option.selected .opt-label {
+    background: #ff4d6d;
+    color: white;
+  }
+
+  .opt-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #e8e0e4;
+    padding-top: 2px;
+  }
+
+  /* 結果畫面 */
+  #result-screen {
+    display: none;
+    text-align: center;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .result-badge {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 8px 24px;
+    border-radius: 50px;
+    margin-bottom: 16px;
+  }
+
   .result-title {
     font-size: 1.8rem;
     font-weight: 900;
-    margin-bottom: 20px;
-    background: linear-gradient(90deg, var(--pink), var(--purple));
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .result-score {
+    font-size: 3.5rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, #ff4d6d, #ff8fa3);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 10px 0;
   }
-  
-  .result-emoji {
-    font-size: 4rem;
-    margin: 20px 0;
-  }
-  
+
   .result-desc {
-    font-size: 1.05rem;
-    color: #555;
+    background: rgba(255,255,109,0.08);
+    border: 1px solid rgba(255,77,109,0.25);
+    border-radius: 16px;
+    padding: 22px;
     text-align: left;
     line-height: 1.8;
-    background: #faf5f8;
-    padding: 20px;
-    border-radius: 14px;
-    margin-bottom: 25px;
+    font-size: 0.98rem;
+    color: #ffccd5;
+    margin: 24px 0;
   }
-  
-  .result-score {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--purple);
-    margin-bottom: 25px;
-  }
-  
-  .share-tip {
-    font-size: 0.9rem;
-    color: #888;
-    margin-top: 15px;
-  }
-  
-  /* Start Screen */
-  .start-card {
-    text-align: center;
-    padding: 50px 30px;
-  }
-  
-  .start-card h2 {
-    font-size: 1.6rem;
-    margin-bottom: 15px;
-  }
-  
-  .start-card p {
-    color: #666;
-    margin-bottom: 30px;
+
+  .result-desc h3 {
+    color: #ff6b8a;
+    margin-bottom: 10px;
     font-size: 1.05rem;
   }
-  
-  .feature-list {
+
+  .tips {
     text-align: left;
-    margin: 25px auto;
-    max-width: 360px;
+    margin: 20px 0;
   }
-  
-  .feature-list li {
-    margin-bottom: 10px;
-    list-style: none;
-    position: relative;
-    padding-left: 28px;
+
+  .tips li {
+    margin-bottom: 8px;
+    padding-left: 8px;
+    color: #e8d0d6;
+    font-size: 0.93rem;
   }
-  
-  .feature-list li::before {
-    content: "✦";
-    position: absolute;
-    left: 0;
-    color: var(--pink);
+
+  .restart-btn {
+    margin-top: 10px;
   }
-  
-  /* Animations */
+
+  /* 動畫 */
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  
-  /* Hidden */
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* 隱藏 */
   .hidden {
     display: none !important;
-  }
-  
-  /* Responsive */
-  @media (max-width: 480px) {
-    .header h1 { font-size: 1.5rem; }
-    .question-text { font-size: 1.1rem; }
-    .card { padding: 22px; }
-    .result-title { font-size: 1.5rem; }
   }
 </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <h1>追星族矛盾大對決</h1>
-      <p>測測你的雙標指數 & 情緒勒索傾向</p>
-      <div class="badge">10 題 · 6 級結果 · 誠實作答</div>
+
+    <!-- 開始畫面 -->
+    <div id="start-screen">
+      <div class="title">情侶矛盾大對決</div>
+      <div class="subtitle">恐怖情人檢測｜雙標 × 情緒勒索</div>
+      
+      <div class="desc">
+        <strong>測一測你的另一半，是不是「表面溫柔，實際恐怖」的類型？</strong><br><br>
+        本測驗以情侶日常最常發生的衝突為題，共 10 題。<br>
+        請根據「你伴侶真實的行為」選擇最接近的選項。<br><br>
+        重點檢測：<br>
+        • 雙標（對你嚴格、對自己寬鬆）<br>
+        • 情緒勒索（用愧疚、哭泣、冷戰控制你）
+      </div>
+
+      <button class="btn" onclick="startQuiz()">開始挑戰</button>
     </div>
-    
-    <!-- Progress -->
-    <div class="progress-bar" id="progressBar">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    
-    <!-- Start Screen -->
-    <div class="card start-card" id="startScreen">
-      <h2>準備好面對真實的自己了嗎？</h2>
-      <p>這個測試會挖掘你在追星路上可能出現的雙標行為與情緒勒索傾向。<br>沒有標準答案，只有更了解自己。</p>
-      <ul class="feature-list">
-        <li>共 10 題情境選擇</li>
-        <li>每題選最符合你的敘述</li>
-        <li>結果分 6 個等級</li>
-        <li>完全匿名 · 本地計算</li>
-      </ul>
-      <button class="btn btn-primary" onclick="startQuiz()" style="max-width:280px;margin:0 auto;">開始挑戰</button>
-    </div>
-    
-    <!-- Quiz Screen -->
-    <div class="card hidden" id="quizScreen">
-      <div class="question-num" id="qNum">第 1 題 / 10</div>
-      <div class="question-text" id="qText"></div>
-      <div id="options"></div>
-      <div class="btn-group">
-        <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()" style="display:none;">上一題</button>
-        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>下一題</button>
+
+    <!-- 測驗畫面 -->
+    <div id="quiz-screen" class="hidden">
+      <div class="progress-wrap">
+        <div class="progress-text">
+          <span id="q-counter">第 1 / 10 題</span>
+          <span id="score-preview"></span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress" style="width: 10%"></div>
+        </div>
+      </div>
+
+      <div class="question-card" id="question-card">
+        <!-- 動態填入 -->
       </div>
     </div>
-    
-    <!-- Result Screen -->
-    <div class="card result-card hidden" id="resultScreen">
-      <div class="result-level" id="resultLevel"></div>
-      <div class="result-title" id="resultTitle"></div>
-      <div class="result-emoji" id="resultEmoji"></div>
-      <div class="result-score" id="resultScore"></div>
-      <div class="result-desc" id="resultDesc"></div>
-      <button class="btn btn-primary" onclick="restartQuiz()">再測一次</button>
-      <p class="share-tip">截圖分享結果給同擔朋友，一起對決吧！</p>
+
+    <!-- 結果畫面 -->
+    <div id="result-screen">
+      <div class="result-badge" id="result-badge"></div>
+      <div class="result-title" id="result-title"></div>
+      <div class="result-score" id="result-score"></div>
+      <div class="result-desc" id="result-desc"></div>
+      <button class="btn restart-btn" onclick="restartQuiz()">再測一次</button>
     </div>
+
   </div>
 
 <script>
-// 10 題題庫（每題選項分數 0~4，越高代表雙標/情緒勒索傾向越強）
 const questions = [
   {
-    q: "偶像出道多年，突然宣佈戀愛了。你第一反應是？",
+    q: "你加班到很晚回家，他/她的第一反應是？",
     options: [
-      { text: "祝福他找到幸福，並繼續支持作品", score: 0 },
-      { text: "有點失落，但理性告訴自己偶像也是普通人", score: 1 },
-      { text: "內心酸酸的，開始翻以前「永遠單身」的承諾影片", score: 2 },
-      { text: "覺得被背叛，發文表達失望甚至退圈威脅", score: 3 },
-      { text: "直接罵對方「不配」，並組織其他粉絲一起抵制", score: 4 }
+      { text: "先關心你累不累，主動幫你準備吃的或讓你休息", score: 0 },
+      { text: "有點不高興，但還是接受你解釋", score: 1 },
+      { text: "開始質問「為什麼總是工作比較重要？是不是不想回家？」", score: 3 },
+      { text: "直接冷戰或哭，說「你從來都不把我放在第一位」", score: 4 }
     ]
   },
   {
-    q: "同擔粉絲因為偶像小失誤而開噴，你的態度是？",
+    q: "你和異性朋友單純聚會，他/她的態度是？",
     options: [
-      { text: "理性討論問題，不上升到人身攻擊", score: 0 },
-      { text: "默默觀察，覺得大家情緒需要宣洩", score: 1 },
-      { text: "加入批評行列，但只針對這次失誤", score: 2 },
-      { text: "覺得「愛之深責之切」，必須嚴厲提醒偶像", score: 3 },
-      { text: "用最難聽的話罵，認為這才是真愛的表現", score: 4 }
+      { text: "相信你，頂多提醒注意安全", score: 0 },
+      { text: "有點吃醋，但不會阻止，事後會問發生什麼事", score: 1 },
+      { text: "要求你必須報備、報定位，甚至要你中途拍照證明", score: 3 },
+      { text: "直接禁止或說「如果你去，我們就分手」", score: 4 }
     ]
   },
   {
-    q: "你和朋友因為「誰比較愛偶像」起爭執時，你會？",
+    q: "吵架時，他/她最常使用的方式是？",
     options: [
-      { text: "覺得沒必要比較，愛的方式本來就不同", score: 0 },
-      { text: "輕鬆帶過，繼續聊其他話題", score: 1 },
-      { text: "內心不服氣，開始列舉自己的貢獻", score: 2 },
-      { text: "直接說對方「不夠愛」，要求對方證明", score: 3 },
-      { text: "用「你根本不懂真正的愛」來情緒施壓對方", score: 4 }
+      { text: "冷靜討論問題本身，就事論事", score: 0 },
+      { text: "會情緒化，但最後願意道歉與溝通", score: 1 },
+      { text: "翻舊帳、人身攻擊，或說「你就是這樣的人」", score: 3 },
+      { text: "用哭、冷暴力、威脅分手來讓你妥協", score: 4 }
     ]
   },
   {
-    q: "偶像因為健康問題減少活動，你的反應是？",
+    q: "關於家務分工，實際情況是？",
     options: [
-      { text: "完全理解並祝福他好好休息", score: 0 },
-      { text: "有點擔心，但尊重他的決定", score: 1 },
-      { text: "內心焦慮，不斷刷消息確認近況", score: 2 },
-      { text: "覺得「粉絲需要他」，希望他盡快回歸", score: 3 },
-      { text: "發文抱怨「這樣對粉絲太不負責任」", score: 4 }
+      { text: "雙方都主動分擔，誰有空誰多做", score: 0 },
+      { text: "大致公平，偶爾會有小抱怨", score: 1 },
+      { text: "他/她覺得「這本來就是你該做的」，自己很少動手", score: 3 },
+      { text: "你做不好就會被唸，但他/她自己卻常常不做", score: 4 }
     ]
   },
   {
-    q: "看到其他粉絲獲得偶像親簽或合照，你會？",
+    q: "你買了喜歡的東西或為自己花錢時，他/她的反應？",
     options: [
-      { text: "真心替對方開心，並繼續努力自己的方式支持", score: 0 },
-      { text: "有點羨慕，但很快調整心情", score: 1 },
-      { text: "開始懷疑自己是不是不夠努力", score: 2 },
-      { text: "覺得不公平，質疑對方是不是用不正當手段", score: 3 },
-      { text: "酸對方「有錢就是了不起」，並暗示自己比較純粹", score: 4 }
+      { text: "替你開心，甚至鼓勵你偶爾寵自己", score: 0 },
+      { text: "會提醒注意預算，但不會阻攔", score: 1 },
+      { text: "開始比較「你對自己很大方，對我卻很吝嗇」", score: 3 },
+      { text: "生氣或冷戰，覺得你「亂花錢」或「不把錢放在家裡」", score: 4 }
     ]
   },
   {
-    q: "當偶像被黑粉攻擊時，你的處理方式是？",
+    q: "他/她自己加班或和朋友出去時，對你的要求是？",
     options: [
-      { text: "理性反擊或直接忽略，保護自己情緒", score: 0 },
-      { text: "回報給官方，並提醒其他粉絲不要被帶節奏", score: 1 },
-      { text: "忍不住回擊幾句，但控制在合理範圍", score: 2 },
-      { text: "組織粉絲團集體反擊，要求對方道歉", score: 3 },
-      { text: "用人身攻擊回擊，認為「以暴制暴」才有效", score: 4 }
+      { text: "會提前告知，也希望你有自己的生活", score: 0 },
+      { text: "會報備，但不會要求你完全一樣", score: 1 },
+      { text: "自己很自由，卻要求你必須隨時回覆訊息", score: 3 },
+      { text: "自己想怎樣就怎樣，卻對你各種限制與質疑", score: 4 }
     ]
   },
   {
-    q: "朋友因為你過度追星而疏遠你，你的想法是？",
+    q: "當你表現得比他/她優秀（工作升遷、被誇讚）時？",
     options: [
-      { text: "反思自己是否失衡，並試著調整時間分配", score: 0 },
-      { text: "有點難過，但尊重對方的感受", score: 1 },
-      { text: "覺得對方不理解自己，開始減少聯繫", score: 2 },
-      { text: "認為「真正的朋友應該支持我的愛好」", score: 3 },
-      { text: "直接說對方「不夠愛我」，用情緒綁架對方留下", score: 4 }
+      { text: "真心替你開心，甚至幫你慶祝", score: 0 },
+      { text: "表面恭喜，但情緒有點複雜", score: 1 },
+      { text: "開始酸言酸語，或說「那你以後就不用靠我了」", score: 3 },
+      { text: "明顯吃味，甚至用言語打擊你的成就", score: 4 }
     ]
   },
   {
-    q: "偶像在演唱會上對其他粉絲特別親切，你會？",
+    q: "你因為他/她的事情感到難過，向他/她表達時？",
     options: [
-      { text: "覺得偶像對所有粉絲都一樣好，很溫暖", score: 0 },
-      { text: "有點小失落，但理解舞台有限", score: 1 },
-      { text: "反覆看重播，想像如果是自己會怎樣", score: 2 },
-      { text: "開始比較「為什麼不是我」，並在社群發文暗示", score: 3 },
-      { text: "酸那些粉絲「搶戲」，並覺得偶像應該更平均", score: 4 }
+      { text: "會認真聽，並嘗試理解你的感受", score: 0 },
+      { text: "一開始會辯解，但最後願意道歉", score: 1 },
+      { text: "直接說「你太敏感了」或「又在無理取鬧」", score: 3 },
+      { text: "反過來指責你「動不動就哭」或「你才是問題」", score: 4 }
     ]
   },
   {
-    q: "當你因為追星花太多錢被家人反對時，你會？",
+    q: "關於「過去的感情史」，他/她的態度是？",
     options: [
-      { text: "理性溝通，並制定預算控制", score: 0 },
-      { text: "暫時減少支出，等經濟狀況改善", score: 1 },
-      { text: "偷偷繼續，但心裡有罪惡感", score: 2 },
-      { text: "覺得家人「不懂我的快樂」，開始冷战", score: 3 },
-      { text: "用「你們都不支持我」來情緒勒索家人妥協", score: 4 }
+      { text: "雙方都可以正常聊，不會過度追問", score: 0 },
+      { text: "會好奇，但尊重你的隱私", score: 1 },
+      { text: "要求你詳細交代，卻對自己的過去含糊其辭", score: 3 },
+      { text: "對你的過去極度在意甚至翻舊帳，自己卻不願被問", score: 4 }
     ]
   },
   {
-    q: "最後一題：你覺得「真正的粉絲」應該是什麼樣子？",
+    q: "當你想結束一段不愉快的對話或暫時冷靜時？",
     options: [
-      { text: "理性支持、尊重偶像隱私、不傷害他人", score: 0 },
-      { text: "熱情投入，但保持生活平衡", score: 1 },
-      { text: "願意為偶像犧牲一些個人時間與金錢", score: 2 },
-      { text: "必須比其他粉絲更付出、更忠誠才算真粉", score: 3 },
-      { text: "愛就要控制、要求、甚至用情緒綁定偶像與其他粉絲", score: 4 }
+      { text: "尊重你需要空間，之後再好好談", score: 0 },
+      { text: "有點不甘心，但還是會給你時間", score: 1 },
+      { text: "不讓你走，持續追問或拉住你", score: 3 },
+      { text: "用「如果你現在走，我們就完了」這類話威脅你留下", score: 4 }
     ]
-  }
-];
-
-// 6 級結果
-const results = [
-  {
-    min: 0, max: 6,
-    level: "Level 1 · 純淨天使粉",
-    title: "零雙標 · 零情緒勒索",
-    emoji: "😇",
-    desc: "恭喜你！你是追星界的清流。你能清楚區分偶像與現實、支持與控制。你尊重偶像作為獨立個體的權利，也尊重其他粉絲的不同愛法。你的愛是溫柔而自由的，幾乎沒有雙標與情緒勒索的痕跡。請繼續保持這份清醒與善意，你是粉絲中的榜樣。"
-  },
-  {
-    min: 7, max: 13,
-    level: "Level 2 · 小情緒正常粉",
-    title: "偶爾心動 · 基本理性",
-    emoji: "😊",
-    desc: "你整體很健康！偶爾會因為偶像的行為或同擔的比較而心裡波動，但大多能快速調整回來。你幾乎不會用情緒去綁架別人，也很少明顯雙標。只要繼續提醒自己「偶像不是所有物」，你就能一直享受追星的快樂而不被情緒反噬。"
-  },
-  {
-    min: 14, max: 20,
-    level: "Level 3 · 矛盾萌動粉",
-    title: "雙標初現 · 情緒偶爾失控",
-    emoji: "😌",
-    desc: "你開始出現一些小矛盾了。你可能會在「祝福偶像」與「希望偶像只屬於粉絲」之間拉扯，也會在和同擔比較時產生微妙的優越感或失落感。這些都是正常的粉絲情緒，但要注意不要讓它們變成對他人的要求或指責。試著多練習「這是我的感受，不是對方的錯」。"
-  },
-  {
-    min: 21, max: 27,
-    level: "Level 4 · 雙標爆發粉",
-    title: "明顯雙標 · 情緒勒索傾向中等",
-    emoji: "😤",
-    desc: "你的雙標已經相當明顯了。你可能會對偶像的戀愛、失誤、和其他粉絲的互動產生強烈的佔有慾與批判，同時卻要求別人「理解你的愛」。你偶爾會用「你不夠愛」「真正的粉絲應該……」這類話來施壓同擔或身邊人。建議停下來想想：愛如果變成控制與比較，還剩下多少純粹？"
-  },
-  {
-    min: 28, max: 34,
-    level: "Level 5 · 情緒綁架粉",
-    title: "高雙標 · 情緒勒索明顯",
-    emoji: "😠",
-    desc: "警告訊號亮起！你在追星過程中已經習慣用情緒來定義「真愛」的標準，並以此要求偶像、同擔甚至身邊的人。你可能會把「我為你付出這麼多」當作籌碼，讓對方產生罪惡感。長期下來，這不僅傷害人際關係，也會讓自己活在不斷的焦慮與比較中。建議重新檢視「愛」的定義，真正的愛應該是自由的。"
-  },
-  {
-    min: 35, max: 40,
-    level: "Level 6 · 終極矛盾魔王",
-    title: "極致雙標 · 情緒勒索大師",
-    emoji: "👹",
-    desc: "你已經到達矛盾的頂點。你可能認為「愛就要完全佔有、完全控制」，並用最激烈的方式表達對偶像與其他粉絲的不滿。雙標與情緒勒索幾乎成為你的日常語言。請務必停下來：偶像不是你的所有物，其他粉絲也沒有義務符合你的標準。過度的控制最終只會讓自己與愛一起崩壞。建議尋求朋友或專業協助，重新找回健康的追星方式。"
   }
 ];
 
 let currentQ = 0;
-let answers = new Array(questions.length).fill(null);
-let scores = new Array(questions.length).fill(0);
+let totalScore = 0;
+let answers = [];
 
 function startQuiz() {
-  document.getElementById('startScreen').classList.add('hidden');
-  document.getElementById('quizScreen').classList.remove('hidden');
-  document.getElementById('progressBar').style.display = 'block';
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('quiz-screen').classList.remove('hidden');
+  document.getElementById('result-screen').style.display = 'none';
   currentQ = 0;
-  answers.fill(null);
-  scores.fill(0);
+  totalScore = 0;
+  answers = [];
   showQuestion();
 }
 
 function showQuestion() {
   const q = questions[currentQ];
-  document.getElementById('qNum').textContent = `第 ${currentQ + 1} 題 / ${questions.length}`;
-  document.getElementById('qText').textContent = q.q;
+  const card = document.getElementById('question-card');
   
-  const optionsDiv = document.getElementById('options');
-  optionsDiv.innerHTML = '';
-  
-  q.options.forEach((opt, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'option' + (answers[currentQ] === idx ? ' selected' : '');
-    btn.innerHTML = `<span>${String.fromCharCode(65 + idx)}</span>${opt.text}`;
-    btn.onclick = () => selectOption(idx);
-    optionsDiv.appendChild(btn);
+  document.getElementById('q-counter').textContent = `第 ${currentQ + 1} / 10 題`;
+  document.getElementById('progress').style.width = `${((currentQ + 1) / 10) * 100}%`;
+
+  let html = `
+    <div class="q-num">問題 ${currentQ + 1}</div>
+    <div class="q-text">${q.q}</div>
+    <div class="options">
+  `;
+
+  q.options.forEach((opt, i) => {
+    const label = String.fromCharCode(65 + i); // A B C D
+    html += `
+      <div class="option" onclick="selectOption(${i})">
+        <div class="opt-label">${label}</div>
+        <div class="opt-text">${opt.text}</div>
+      </div>
+    `;
   });
-  
-  // 更新進度
-  const progress = ((currentQ) / questions.length) * 100;
-  document.getElementById('progressFill').style.width = progress + '%';
-  
-  // 按鈕狀態
-  document.getElementById('prevBtn').style.display = currentQ === 0 ? 'none' : 'block';
-  document.getElementById('nextBtn').disabled = answers[currentQ] === null;
-  document.getElementById('nextBtn').textContent = currentQ === questions.length - 1 ? '查看結果' : '下一題';
+
+  html += `</div>`;
+  card.innerHTML = html;
 }
 
-function selectOption(idx) {
-  answers[currentQ] = idx;
-  scores[currentQ] = questions[currentQ].options[idx].score;
-  
-  // 更新選中樣式
-  const btns = document.querySelectorAll('#options .option');
-  btns.forEach((b, i) => {
-    b.classList.toggle('selected', i === idx);
-  });
-  
-  document.getElementById('nextBtn').disabled = false;
-}
+function selectOption(index) {
+  // 視覺回饋
+  const options = document.querySelectorAll('.option');
+  options.forEach(opt => opt.classList.remove('selected'));
+  options[index].classList.add('selected');
 
-function nextQuestion() {
-  if (answers[currentQ] === null) return;
-  
-  if (currentQ < questions.length - 1) {
+  // 記錄分數
+  const score = questions[currentQ].options[index].score;
+  answers[currentQ] = score;
+
+  // 短暫延遲後進入下一題
+  setTimeout(() => {
+    totalScore += score;
     currentQ++;
-    showQuestion();
-  } else {
-    showResult();
-  }
-}
 
-function prevQuestion() {
-  if (currentQ > 0) {
-    currentQ--;
-    showQuestion();
-  }
+    if (currentQ < questions.length) {
+      showQuestion();
+    } else {
+      showResult();
+    }
+  }, 350);
 }
 
 function showResult() {
-  const total = scores.reduce((a, b) => a + b, 0);
-  
-  let result = results[results.length - 1];
-  for (const r of results) {
-    if (total >= r.min && total <= r.max) {
-      result = r;
-      break;
-    }
+  document.getElementById('quiz-screen').classList.add('hidden');
+  document.getElementById('result-screen').style.display = 'block';
+
+  const score = totalScore;
+  let badge, title, desc, color;
+
+  if (score <= 8) {
+    badge = "💚 健康伴侶";
+    title = "恭喜！你遇到的是相對成熟的另一半";
+    color = "#4ade80";
+    desc = `
+      <h3>分析結果</h3>
+      你的伴侶在大多數情境中表現出尊重、信任與溝通能力。雙標與情緒勒索的跡象較少。<br><br>
+      <h3>建議</h3>
+      <ul class="tips">
+        <li>繼續保持雙向溝通與界線</li>
+        <li>偶爾也可以主動表達感謝，強化正向循環</li>
+        <li>沒有完美的人，偶爾小摩擦很正常</li>
+      </ul>
+    `;
+  } else if (score <= 18) {
+    badge = "💛 需要留意";
+    title = "有些雙標與控制傾向正在萌芽";
+    color = "#facc15";
+    desc = `
+      <h3>分析結果</h3>
+      你的伴侶在部分情境中出現了不對等的標準，或用情緒影響你的選擇。目前還不算嚴重，但值得正視。<br><br>
+      <h3>建議</h3>
+      <ul class="tips">
+        <li>下次發生時，冷靜指出「這件事的雙重標準」</li>
+        <li>用「我覺得……」而非指責的方式表達感受</li>
+        <li>觀察對方是否願意調整，還是總是把責任推給你</li>
+      </ul>
+    `;
+  } else if (score <= 28) {
+    badge = "🧡 危險訊號";
+    title = "明顯的雙標與情緒勒索模式";
+    color = "#fb923c";
+    desc = `
+      <h3>分析結果</h3>
+      你的伴侶經常對你有一套標準、對自己另一套；或習慣用愧疚、冷戰、威脅來控制你的行為與情緒。<br><br>
+      <h3>建議</h3>
+      <ul class="tips">
+        <li>開始建立清楚的個人界線，並堅持執行</li>
+        <li>不要每次都為了「息事寧人」而妥協</li>
+        <li>考慮與信任的朋友或諮商師討論現況</li>
+        <li>關係的改善需要雙方意願，不是單方面努力就能成功</li>
+      </ul>
+    `;
+  } else {
+    badge = "❤️‍🔥 恐怖情人警報";
+    title = "高度控制與情緒勒索傾向";
+    color = "#f87171";
+    desc = `
+      <h3>分析結果</h3>
+      你的伴侶在多個面向都展現出強烈的雙標、控制欲與情緒勒索行為。這不是「愛你很深」，而是缺乏尊重與安全感的表現。<br><br>
+      <h3>重要提醒</h3>
+      <ul class="tips">
+        <li>長期處於這種關係會嚴重消耗你的自信與心理健康</li>
+        <li>請優先保護自己的情緒與安全</li>
+        <li>必要時尋求專業協助或信任的人支持</li>
+        <li>你有權利擁有一個被尊重、被平等對待的關係</li>
+      </ul>
+    `;
   }
-  
-  document.getElementById('quizScreen').classList.add('hidden');
-  document.getElementById('resultScreen').classList.remove('hidden');
-  document.getElementById('progressFill').style.width = '100%';
-  
-  document.getElementById('resultLevel').textContent = result.level;
-  document.getElementById('resultTitle').textContent = result.title;
-  document.getElementById('resultEmoji').textContent = result.emoji;
-  document.getElementById('resultScore').textContent = `你的矛盾指數：${total} / 40`;
-  document.getElementById('resultDesc').textContent = result.desc;
+
+  document.getElementById('result-badge').textContent = badge;
+  document.getElementById('result-badge').style.background = color + "22";
+  document.getElementById('result-badge').style.color = color;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-score').textContent = score + " 分";
+  document.getElementById('result-desc').innerHTML = desc;
 }
 
 function restartQuiz() {
-  document.getElementById('resultScreen').classList.add('hidden');
-  document.getElementById('startScreen').classList.remove('hidden');
-  document.getElementById('progressFill').style.width = '0%';
-  document.getElementById('progressBar').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('start-screen').classList.remove('hidden');
 }
-
-// 初始隱藏進度條
-document.getElementById('progressBar').style.display = 'none';
 </script>
 </body>
 </html>
