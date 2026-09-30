@@ -1,343 +1,608 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【情侶矛盾大對決】測雙標 恐怖情人心裡測試</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700;900&display=swap');
-
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background: linear-gradient(135deg, #1a0505 0%, #000000 100%);
-            color: #fce7e7;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-        }
-
-        .glass-panel {
-            background: rgba(40, 5, 10, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 100, 120, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 20px rgba(200, 20, 40, 0.2);
-        }
-
-        .btn-choice {
-            transition: all 0.3s ease;
-            background: rgba(20, 0, 5, 0.6);
-            border: 1px solid #7a1f2e;
-        }
-
-        .btn-choice:hover, .btn-choice:focus, .btn-choice:active {
-            background: #7a1f2e;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.4);
-            outline: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #8b0000, #ff1a40);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255, 26, 64, 0.6);
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-in forwards;
-        }
-
-        .slide-up {
-            animation: slideUp 0.5s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Glitch effect for the title to make it dramatic */
-        .glitch-text {
-            text-shadow: 2px 2px 0px rgba(255,0,0,0.5), -2px -2px 0px rgba(0,255,255,0.3);
-        }
-
-        .hidden-screen {
-            display: none !important;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>【追星族矛盾大對決】測你的雙標與情緒勒索指數</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+  
+  :root {
+    --pink: #ff6b9d;
+    --purple: #9b59b6;
+    --dark: #2c3e50;
+    --light: #fef6f9;
+    --card: #ffffff;
+    --shadow: 0 10px 30px rgba(255, 107, 157, 0.15);
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: linear-gradient(135deg, #fff0f5 0%, #f3e5f5 50%, #e8f4fd 100%);
+    min-height: 100vh;
+    color: var(--dark);
+    line-height: 1.6;
+  }
+  
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 40px 20px 30px;
+    animation: fadeIn 0.8s ease;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+  
+  .header p {
+    color: #666;
+    font-size: 1rem;
+  }
+  
+  .badge {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+    color: white;
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 12px;
+  }
+  
+  /* Progress */
+  .progress-bar {
+    height: 8px;
+    background: #eee;
+    border-radius: 10px;
+    margin: 20px 0 30px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+    border-radius: 10px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  
+  /* Card */
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    animation: slideUp 0.5s ease;
+  }
+  
+  .question-num {
+    font-size: 0.9rem;
+    color: var(--pink);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  
+  .question-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: var(--dark);
+  }
+  
+  .option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    border: 2px solid #f0e6ef;
+    border-radius: 14px;
+    background: #fafafa;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-size: 1rem;
+    color: var(--dark);
+  }
+  
+  .option:hover {
+    border-color: var(--pink);
+    background: #fff5f8;
+    transform: translateX(6px);
+  }
+  
+  .option.selected {
+    border-color: var(--pink);
+    background: linear-gradient(90deg, #fff0f5, #fce4ec);
+    box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);
+  }
+  
+  .option span {
+    font-weight: 700;
+    color: var(--pink);
+    margin-right: 10px;
+  }
+  
+  /* Buttons */
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  
+  .btn {
+    flex: 1;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4);
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .btn-secondary {
+    background: #f0e6ef;
+    color: var(--dark);
+  }
+  
+  .btn-secondary:hover {
+    background: #e8d5e4;
+  }
+  
+  /* Result */
+  .result-card {
+    text-align: center;
+    padding: 40px 30px;
+  }
+  
+  .result-level {
+    font-size: 1.1rem;
+    color: var(--pink);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  
+  .result-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 20px;
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .result-emoji {
+    font-size: 4rem;
+    margin: 20px 0;
+  }
+  
+  .result-desc {
+    font-size: 1.05rem;
+    color: #555;
+    text-align: left;
+    line-height: 1.8;
+    background: #faf5f8;
+    padding: 20px;
+    border-radius: 14px;
+    margin-bottom: 25px;
+  }
+  
+  .result-score {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--purple);
+    margin-bottom: 25px;
+  }
+  
+  .share-tip {
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 15px;
+  }
+  
+  /* Start Screen */
+  .start-card {
+    text-align: center;
+    padding: 50px 30px;
+  }
+  
+  .start-card h2 {
+    font-size: 1.6rem;
+    margin-bottom: 15px;
+  }
+  
+  .start-card p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.05rem;
+  }
+  
+  .feature-list {
+    text-align: left;
+    margin: 25px auto;
+    max-width: 360px;
+  }
+  
+  .feature-list li {
+    margin-bottom: 10px;
+    list-style: none;
+    position: relative;
+    padding-left: 28px;
+  }
+  
+  .feature-list li::before {
+    content: "✦";
+    position: absolute;
+    left: 0;
+    color: var(--pink);
+  }
+  
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Hidden */
+  .hidden {
+    display: none !important;
+  }
+  
+  /* Responsive */
+  @media (max-width: 480px) {
+    .header h1 { font-size: 1.5rem; }
+    .question-text { font-size: 1.1rem; }
+    .card { padding: 22px; }
+    .result-title { font-size: 1.5rem; }
+  }
+</style>
 </head>
-<body class="p-4 sm:p-6">
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>追星族矛盾大對決</h1>
+      <p>測測你的雙標指數 & 情緒勒索傾向</p>
+      <div class="badge">10 題 · 6 級結果 · 誠實作答</div>
+    </div>
+    
+    <!-- Progress -->
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    
+    <!-- Start Screen -->
+    <div class="card start-card" id="startScreen">
+      <h2>準備好面對真實的自己了嗎？</h2>
+      <p>這個測試會挖掘你在追星路上可能出現的雙標行為與情緒勒索傾向。<br>沒有標準答案，只有更了解自己。</p>
+      <ul class="feature-list">
+        <li>共 10 題情境選擇</li>
+        <li>每題選最符合你的敘述</li>
+        <li>結果分 6 個等級</li>
+        <li>完全匿名 · 本地計算</li>
+      </ul>
+      <button class="btn btn-primary" onclick="startQuiz()" style="max-width:280px;margin:0 auto;">開始挑戰</button>
+    </div>
+    
+    <!-- Quiz Screen -->
+    <div class="card hidden" id="quizScreen">
+      <div class="question-num" id="qNum">第 1 題 / 10</div>
+      <div class="question-text" id="qText"></div>
+      <div id="options"></div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()" style="display:none;">上一題</button>
+        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>下一題</button>
+      </div>
+    </div>
+    
+    <!-- Result Screen -->
+    <div class="card result-card hidden" id="resultScreen">
+      <div class="result-level" id="resultLevel"></div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-emoji" id="resultEmoji"></div>
+      <div class="result-score" id="resultScore"></div>
+      <div class="result-desc" id="resultDesc"></div>
+      <button class="btn btn-primary" onclick="restartQuiz()">再測一次</button>
+      <p class="share-tip">截圖分享結果給同擔朋友，一起對決吧！</p>
+    </div>
+  </div>
 
-    <main id="app-container" class="w-full max-w-lg mx-auto glass-panel rounded-2xl p-6 sm:p-10 text-center relative overflow-hidden">
-        
-        <!-- Start Screen -->
-        <div id="start-screen" class="fade-in flex flex-col items-center justify-center min-h-[60vh]">
-            <div class="mb-8">
-                <p class="text-sm tracking-widest text-[#ff4d6d] mb-2 font-bold uppercase">Psychological Test</p>
-                <h1 class="text-3xl sm:text-4xl font-black mb-4 glitch-text leading-tight">【情侶矛盾大對決】<br><span class="text-2xl text-gray-300">測恐怖情人心裡測試</span></h1>
-                <p class="text-gray-400 text-sm sm:text-base mt-4 leading-relaxed">
-                    在愛情裡，你是一張白紙，還是隱藏的控制狂？<br>
-                    10條情侶日常矛盾題，揭開你內心最真實的戀愛模樣。
-                </p>
-                
-            </div>
-            <button onclick="startGame()" class="btn-primary text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs shadow-lg shadow-red-900/50">
-                開始測試
-            </button>
-        </div>
+<script>
+// 10 題題庫（每題選項分數 0~4，越高代表雙標/情緒勒索傾向越強）
+const questions = [
+  {
+    q: "偶像出道多年，突然宣佈戀愛了。你第一反應是？",
+    options: [
+      { text: "祝福他找到幸福，並繼續支持作品", score: 0 },
+      { text: "有點失落，但理性告訴自己偶像也是普通人", score: 1 },
+      { text: "內心酸酸的，開始翻以前「永遠單身」的承諾影片", score: 2 },
+      { text: "覺得被背叛，發文表達失望甚至退圈威脅", score: 3 },
+      { text: "直接罵對方「不配」，並組織其他粉絲一起抵制", score: 4 }
+    ]
+  },
+  {
+    q: "同擔粉絲因為偶像小失誤而開噴，你的態度是？",
+    options: [
+      { text: "理性討論問題，不上升到人身攻擊", score: 0 },
+      { text: "默默觀察，覺得大家情緒需要宣洩", score: 1 },
+      { text: "加入批評行列，但只針對這次失誤", score: 2 },
+      { text: "覺得「愛之深責之切」，必須嚴厲提醒偶像", score: 3 },
+      { text: "用最難聽的話罵，認為這才是真愛的表現", score: 4 }
+    ]
+  },
+  {
+    q: "你和朋友因為「誰比較愛偶像」起爭執時，你會？",
+    options: [
+      { text: "覺得沒必要比較，愛的方式本來就不同", score: 0 },
+      { text: "輕鬆帶過，繼續聊其他話題", score: 1 },
+      { text: "內心不服氣，開始列舉自己的貢獻", score: 2 },
+      { text: "直接說對方「不夠愛」，要求對方證明", score: 3 },
+      { text: "用「你根本不懂真正的愛」來情緒施壓對方", score: 4 }
+    ]
+  },
+  {
+    q: "偶像因為健康問題減少活動，你的反應是？",
+    options: [
+      { text: "完全理解並祝福他好好休息", score: 0 },
+      { text: "有點擔心，但尊重他的決定", score: 1 },
+      { text: "內心焦慮，不斷刷消息確認近況", score: 2 },
+      { text: "覺得「粉絲需要他」，希望他盡快回歸", score: 3 },
+      { text: "發文抱怨「這樣對粉絲太不負責任」", score: 4 }
+    ]
+  },
+  {
+    q: "看到其他粉絲獲得偶像親簽或合照，你會？",
+    options: [
+      { text: "真心替對方開心，並繼續努力自己的方式支持", score: 0 },
+      { text: "有點羨慕，但很快調整心情", score: 1 },
+      { text: "開始懷疑自己是不是不夠努力", score: 2 },
+      { text: "覺得不公平，質疑對方是不是用不正當手段", score: 3 },
+      { text: "酸對方「有錢就是了不起」，並暗示自己比較純粹", score: 4 }
+    ]
+  },
+  {
+    q: "當偶像被黑粉攻擊時，你的處理方式是？",
+    options: [
+      { text: "理性反擊或直接忽略，保護自己情緒", score: 0 },
+      { text: "回報給官方，並提醒其他粉絲不要被帶節奏", score: 1 },
+      { text: "忍不住回擊幾句，但控制在合理範圍", score: 2 },
+      { text: "組織粉絲團集體反擊，要求對方道歉", score: 3 },
+      { text: "用人身攻擊回擊，認為「以暴制暴」才有效", score: 4 }
+    ]
+  },
+  {
+    q: "朋友因為你過度追星而疏遠你，你的想法是？",
+    options: [
+      { text: "反思自己是否失衡，並試著調整時間分配", score: 0 },
+      { text: "有點難過，但尊重對方的感受", score: 1 },
+      { text: "覺得對方不理解自己，開始減少聯繫", score: 2 },
+      { text: "認為「真正的朋友應該支持我的愛好」", score: 3 },
+      { text: "直接說對方「不夠愛我」，用情緒綁架對方留下", score: 4 }
+    ]
+  },
+  {
+    q: "偶像在演唱會上對其他粉絲特別親切，你會？",
+    options: [
+      { text: "覺得偶像對所有粉絲都一樣好，很溫暖", score: 0 },
+      { text: "有點小失落，但理解舞台有限", score: 1 },
+      { text: "反覆看重播，想像如果是自己會怎樣", score: 2 },
+      { text: "開始比較「為什麼不是我」，並在社群發文暗示", score: 3 },
+      { text: "酸那些粉絲「搶戲」，並覺得偶像應該更平均", score: 4 }
+    ]
+  },
+  {
+    q: "當你因為追星花太多錢被家人反對時，你會？",
+    options: [
+      { text: "理性溝通，並制定預算控制", score: 0 },
+      { text: "暫時減少支出，等經濟狀況改善", score: 1 },
+      { text: "偷偷繼續，但心裡有罪惡感", score: 2 },
+      { text: "覺得家人「不懂我的快樂」，開始冷战", score: 3 },
+      { text: "用「你們都不支持我」來情緒勒索家人妥協", score: 4 }
+    ]
+  },
+  {
+    q: "最後一題：你覺得「真正的粉絲」應該是什麼樣子？",
+    options: [
+      { text: "理性支持、尊重偶像隱私、不傷害他人", score: 0 },
+      { text: "熱情投入，但保持生活平衡", score: 1 },
+      { text: "願意為偶像犧牲一些個人時間與金錢", score: 2 },
+      { text: "必須比其他粉絲更付出、更忠誠才算真粉", score: 3 },
+      { text: "愛就要控制、要求、甚至用情緒綁定偶像與其他粉絲", score: 4 }
+    ]
+  }
+];
 
-        <!-- Question Screen -->
-        <div id="question-screen" class="hidden-screen flex flex-col min-h-[60vh]">
-            <div class="flex justify-between items-center mb-6">
-                <span id="question-counter" class="text-[#ff4d6d] font-bold text-lg">1 / 10</span>
-                <div class="w-2/3 bg-gray-800 rounded-full h-2">
-                    <div id="progress-bar" class="bg-[#ff1a40] h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
-                </div>
-            </div>
+// 6 級結果
+const results = [
+  {
+    min: 0, max: 6,
+    level: "Level 1 · 純淨天使粉",
+    title: "零雙標 · 零情緒勒索",
+    emoji: "😇",
+    desc: "恭喜你！你是追星界的清流。你能清楚區分偶像與現實、支持與控制。你尊重偶像作為獨立個體的權利，也尊重其他粉絲的不同愛法。你的愛是溫柔而自由的，幾乎沒有雙標與情緒勒索的痕跡。請繼續保持這份清醒與善意，你是粉絲中的榜樣。"
+  },
+  {
+    min: 7, max: 13,
+    level: "Level 2 · 小情緒正常粉",
+    title: "偶爾心動 · 基本理性",
+    emoji: "😊",
+    desc: "你整體很健康！偶爾會因為偶像的行為或同擔的比較而心裡波動，但大多能快速調整回來。你幾乎不會用情緒去綁架別人，也很少明顯雙標。只要繼續提醒自己「偶像不是所有物」，你就能一直享受追星的快樂而不被情緒反噬。"
+  },
+  {
+    min: 14, max: 20,
+    level: "Level 3 · 矛盾萌動粉",
+    title: "雙標初現 · 情緒偶爾失控",
+    emoji: "😌",
+    desc: "你開始出現一些小矛盾了。你可能會在「祝福偶像」與「希望偶像只屬於粉絲」之間拉扯，也會在和同擔比較時產生微妙的優越感或失落感。這些都是正常的粉絲情緒，但要注意不要讓它們變成對他人的要求或指責。試著多練習「這是我的感受，不是對方的錯」。"
+  },
+  {
+    min: 21, max: 27,
+    level: "Level 4 · 雙標爆發粉",
+    title: "明顯雙標 · 情緒勒索傾向中等",
+    emoji: "😤",
+    desc: "你的雙標已經相當明顯了。你可能會對偶像的戀愛、失誤、和其他粉絲的互動產生強烈的佔有慾與批判，同時卻要求別人「理解你的愛」。你偶爾會用「你不夠愛」「真正的粉絲應該……」這類話來施壓同擔或身邊人。建議停下來想想：愛如果變成控制與比較，還剩下多少純粹？"
+  },
+  {
+    min: 28, max: 34,
+    level: "Level 5 · 情緒綁架粉",
+    title: "高雙標 · 情緒勒索明顯",
+    emoji: "😠",
+    desc: "警告訊號亮起！你在追星過程中已經習慣用情緒來定義「真愛」的標準，並以此要求偶像、同擔甚至身邊的人。你可能會把「我為你付出這麼多」當作籌碼，讓對方產生罪惡感。長期下來，這不僅傷害人際關係，也會讓自己活在不斷的焦慮與比較中。建議重新檢視「愛」的定義，真正的愛應該是自由的。"
+  },
+  {
+    min: 35, max: 40,
+    level: "Level 6 · 終極矛盾魔王",
+    title: "極致雙標 · 情緒勒索大師",
+    emoji: "👹",
+    desc: "你已經到達矛盾的頂點。你可能認為「愛就要完全佔有、完全控制」，並用最激烈的方式表達對偶像與其他粉絲的不滿。雙標與情緒勒索幾乎成為你的日常語言。請務必停下來：偶像不是你的所有物，其他粉絲也沒有義務符合你的標準。過度的控制最終只會讓自己與愛一起崩壞。建議尋求朋友或專業協助，重新找回健康的追星方式。"
+  }
+];
 
-            <div id="question-container" class="slide-up flex-grow flex flex-col justify-center">
-                <h2 id="question-text" class="text-xl sm:text-2xl font-bold mb-8 text-left leading-relaxed">
-                    <!-- Question goes here -->
-                </h2>
+let currentQ = 0;
+let answers = new Array(questions.length).fill(null);
+let scores = new Array(questions.length).fill(0);
 
-                <div id="options-container" class="flex flex-col gap-4 w-full">
-                    <!-- Options go here -->
-                </div>
-            </div>
-        </div>
+function startQuiz() {
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('quizScreen').classList.remove('hidden');
+  document.getElementById('progressBar').style.display = 'block';
+  currentQ = 0;
+  answers.fill(null);
+  scores.fill(0);
+  showQuestion();
+}
 
-        <!-- Result Screen -->
-        <div id="result-screen" class="hidden-screen flex flex-col items-center justify-center min-h-[60vh]">
-            <p class="text-[#ff4d6d] font-bold tracking-widest mb-2">你的測試結果是...</p>
-            <h2 id="result-title" class="text-3xl sm:text-4xl font-black mb-6 text-white glitch-text">
-                <!-- Result Title -->
-            </h2>
-            
-            <div class="bg-black/40 border border-[#ff4d6d]/30 rounded-xl p-6 mb-8 w-full">
-                <p id="result-desc" class="text-base sm:text-lg text-gray-200 leading-relaxed text-left">
-                    <!-- Result Description -->
-                </p>
-            </div>
+function showQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('qNum').textContent = `第 ${currentQ + 1} 題 / ${questions.length}`;
+  document.getElementById('qText').textContent = q.q;
+  
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = '';
+  
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option' + (answers[currentQ] === idx ? ' selected' : '');
+    btn.innerHTML = `<span>${String.fromCharCode(65 + idx)}</span>${opt.text}`;
+    btn.onclick = () => selectOption(idx);
+    optionsDiv.appendChild(btn);
+  });
+  
+  // 更新進度
+  const progress = ((currentQ) / questions.length) * 100;
+  document.getElementById('progressFill').style.width = progress + '%';
+  
+  // 按鈕狀態
+  document.getElementById('prevBtn').style.display = currentQ === 0 ? 'none' : 'block';
+  document.getElementById('nextBtn').disabled = answers[currentQ] === null;
+  document.getElementById('nextBtn').textContent = currentQ === questions.length - 1 ? '查看結果' : '下一題';
+}
 
-            <button onclick="restartGame()" class="btn-primary text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs shadow-lg shadow-red-900/50 mb-4">
-                再測一次
-            </button>
-        </div>
-    </main>
+function selectOption(idx) {
+  answers[currentQ] = idx;
+  scores[currentQ] = questions[currentQ].options[idx].score;
+  
+  // 更新選中樣式
+  const btns = document.querySelectorAll('#options .option');
+  btns.forEach((b, i) => {
+    b.classList.toggle('selected', i === idx);
+  });
+  
+  document.getElementById('nextBtn').disabled = false;
+}
 
-    <script>
-        const questions = [
-            {
-                question: "1. 另一半單獨和異性朋友食飯，你會：",
-                options: [
-                    { text: "A. 毫不介意，祝佢玩得開心", points: 1 },
-                    { text: "B. 有點吃醋，但會讓他去", points: 2 },
-                    { text: "C. 表面說OK，事後瘋狂單打", points: 3 },
-                    { text: "D. 絕對禁止，並偷偷查看對方定位", points: 4 }
-                ]
-            },
-            {
-                question: "2. 深夜另一半手機突然亮起，彈出未知訊息，你會：",
-                options: [
-                    { text: "A. 繼續瞓覺，唔關我事", points: 1 },
-                    { text: "B. 隨口問一句是誰", points: 2 },
-                    { text: "C. 記低時間，第二朝盤問", points: 3 },
-                    { text: "D. 趁佢瞓著，用佢指紋解鎖偷睇", points: 4 }
-                ]
-            },
-            {
-                question: "3. 另一半忘記了你們的紀念日，你會：",
-                options: [
-                    { text: "A. 溫柔提醒，一齊補祝", points: 1 },
-                    { text: "B. 扭計一陣，要求對方請食飯補償", points: 2 },
-                    { text: "C. 記仇，等對方生日時我也故意忘記", points: 3 },
-                    { text: "D. 大發雷霆，認定對方已經不愛我，鬧足一星期", points: 4 }
-                ]
-            },
-            {
-                question: "4. 發現另一半IG仲有follow前度，你會：",
-                options: [
-                    { text: "A. 覺得無所謂，大家都係過去式", points: 1 },
-                    { text: "B. 心裡有點不爽，暗示對方unfollow", points: 2 },
-                    { text: "C. 自己也可以follow前度，但對方不行", points: 3 },
-                    { text: "D. 逼對方當面block，兼刪除所有過往合照", points: 4 }
-                ]
-            },
-            {
-                question: "5. 你發訊息給另一半，對方三個小時都沒回覆，你會：",
-                options: [
-                    { text: "A. 估計對方在忙，等佢得閒自然會覆", points: 1 },
-                    { text: "B. 傳個貼圖引佢注意", points: 2 },
-                    { text: "C. 覺得對方態度冷淡，自己也決定冷暴力回敬", points: 3 },
-                    { text: "D. 奪命追魂call，打到對方聽為止", points: 4 }
-                ]
-            },
-            {
-                question: "6. 另一半表示最近壓力大，週末想自己一個人獨處，你會：",
-                options: [
-                    { text: "A. 尊重對方，自己去約朋友", points: 1 },
-                    { text: "B. 有點失落，但依然答應", points: 2 },
-                    { text: "C. 覺得對方自私，要求對方必須陪自己", points: 3 },
-                    { text: "D. 懷疑對方有第三者，週末偷偷跟蹤", points: 4 }
-                ]
-            },
-            {
-                question: "7. 關於手機密碼，你的態度是：",
-                options: [
-                    { text: "A. 互相保有私隱，不需要知道", points: 1 },
-                    { text: "B. 知道密碼，但平時不會刻意去查", points: 2 },
-                    { text: "C. 對方必須公開密碼，但自己的密碼不能說", points: 3 },
-                    { text: "D. 綁定定位，並隨時抽查對方手機的所有App", points: 4 }
-                ]
-            },
-            {
-                question: "8. 另一半買了件極度性感的衣服準備出街，你會：",
-                options: [
-                    { text: "A. 讚嘆對方好靚/好有型", points: 1 },
-                    { text: "B. 提醒對方小心走光", points: 2 },
-                    { text: "C. 自己著就可以，對方著就絕對唔得", points: 3 },
-                    { text: "D. 強制對方換衫，否則唔准出街", points: 4 }
-                ]
-            },
-            {
-                question: "9. 兩人發生激烈爭吵，你會怎麼收場：",
-                options: [
-                    { text: "A. 冷靜下來，互相溝通解決問題", points: 1 },
-                    { text: "B. 等對方先開口氹自己", points: 2 },
-                    { text: "C. 翻舊帳，將對方以前所有的錯事數出來", points: 3 },
-                    { text: "D. 以死相逼或摔東西，直到對方完全屈服認錯", points: 4 }
-                ]
-            },
-            {
-                question: "10. 另一半因為工作需要，結識了條件很好的異性客戶，你會：",
-                options: [
-                    { text: "A. 相信對方，支持對方工作", points: 1 },
-                    { text: "B. 偶爾查問一下工作進度", points: 2 },
-                    { text: "C. 要求對方交代所有細節，有一點隱瞞就發脾氣", points: 3 },
-                    { text: "D. 直接介入，要求對方推掉這個項目或辭職", points: 4 }
-                ]
-            }
-        ];
+function nextQuestion() {
+  if (answers[currentQ] === null) return;
+  
+  if (currentQ < questions.length - 1) {
+    currentQ++;
+    showQuestion();
+  } else {
+    showResult();
+  }
+}
 
-        let currentQuestionIndex = 0;
-        let totalScore = 0;
-        let isTransitioning = false;
+function prevQuestion() {
+  if (currentQ > 0) {
+    currentQ--;
+    showQuestion();
+  }
+}
 
-        const startScreen = document.getElementById('start-screen');
-        const questionScreen = document.getElementById('question-screen');
-        const resultScreen = document.getElementById('result-screen');
-        
-        const questionCounter = document.getElementById('question-counter');
-        const progressBar = document.getElementById('progressBar');
-        const questionText = document.getElementById('question-text');
-        const optionsContainer = document.getElementById('options-container');
+function showResult() {
+  const total = scores.reduce((a, b) => a + b, 0);
+  
+  let result = results[results.length - 1];
+  for (const r of results) {
+    if (total >= r.min && total <= r.max) {
+      result = r;
+      break;
+    }
+  }
+  
+  document.getElementById('quizScreen').classList.add('hidden');
+  document.getElementById('resultScreen').classList.remove('hidden');
+  document.getElementById('progressFill').style.width = '100%';
+  
+  document.getElementById('resultLevel').textContent = result.level;
+  document.getElementById('resultTitle').textContent = result.title;
+  document.getElementById('resultEmoji').textContent = result.emoji;
+  document.getElementById('resultScore').textContent = `你的矛盾指數：${total} / 40`;
+  document.getElementById('resultDesc').textContent = result.desc;
+}
 
-        function startGame() {
-            currentQuestionIndex = 0;
-            totalScore = 0;
-            
-            startScreen.classList.add('hidden-screen');
-            resultScreen.classList.add('hidden-screen');
-            questionScreen.classList.remove('hidden-screen');
-            
-            showQuestion();
-        }
+function restartQuiz() {
+  document.getElementById('resultScreen').classList.add('hidden');
+  document.getElementById('startScreen').classList.remove('hidden');
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressBar').style.display = 'none';
+}
 
-        function showQuestion() {
-            isTransitioning = false;
-            const q = questions[currentQuestionIndex];
-            
-            // Update Progress
-            questionCounter.innerText = `${currentQuestionIndex + 1} / ${questions.length}`;
-            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
-            
-            // Animation reset
-            const qContainer = document.getElementById('question-container');
-            qContainer.classList.remove('slide-up');
-            void qContainer.offsetWidth; // trigger reflow
-            qContainer.classList.add('slide-up');
-
-            // Render text
-            questionText.innerText = q.question;
-            
-            // Render options
-            optionsContainer.innerHTML = '';
-            q.options.forEach((opt) => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-choice w-full text-left p-4 rounded-xl text-sm sm:text-base text-gray-200 cursor-pointer';
-                btn.innerText = opt.text;
-                btn.onclick = () => selectAnswer(opt.points, btn);
-                optionsContainer.appendChild(btn);
-            });
-        }
-
-        function selectAnswer(points, btnElement) {
-            if (isTransitioning) return;
-            isTransitioning = true;
-
-            // Visual feedback
-            btnElement.style.background = '#ff1a40';
-            btnElement.style.color = '#fff';
-            
-            totalScore += points;
-
-            // Delay for effect before next question
-            setTimeout(() => {
-                currentQuestionIndex++;
-                if (currentQuestionIndex < questions.length) {
-                    showQuestion();
-                } else {
-                    showResults();
-                }
-            }, 400);
-        }
-
-        function showResults() {
-            questionScreen.classList.add('hidden-screen');
-            resultScreen.classList.remove('hidden-screen');
-            
-            // Re-trigger animation
-            resultScreen.classList.remove('fade-in');
-            void resultScreen.offsetWidth; 
-            resultScreen.classList.add('fade-in');
-
-            const titleEl = document.getElementById('result-title');
-            const descEl = document.getElementById('result-desc');
-
-            if (totalScore >= 10 && totalScore <= 15) {
-                titleEl.innerText = '【佛系神仙伴侶】';
-                titleEl.style.color = '#a7f3d0';
-                descEl.innerText = '完全信任對方，給予極大自由，健康關係的典範！你明白愛情需要呼吸的空間，不會無端猜忌。';
-            } else if (totalScore >= 16 && totalScore <= 25) {
-                titleEl.innerText = '【正常帶點微醋】';
-                titleEl.style.color = '#fde047';
-                descEl.innerText = '正常的戀愛腦，偶爾呷醋反而增添情趣，是很可愛的伴侶。你在意對方，但也懂得拿捏分寸。';
-            } else if (totalScore >= 26 && totalScore <= 33) {
-                titleEl.innerText = '【終極雙標大師】';
-                titleEl.style.color = '#f97316';
-                descEl.innerText = '「我可以，你唔得！」常常用兩把尺衡量雙方，小心令對方覺得委屈啊！你需要學習將心比心。';
-            } else if (totalScore >= 34 && totalScore <= 40) {
-                titleEl.innerText = '【窒息系恐怖情人】';
-                titleEl.style.color = '#dc2626';
-                descEl.innerText = '控制慾爆棚！你的愛讓人喘不過氣，甚至帶有危險性。請快點調整心態，否則這段關係遲早會爆炸！';
-            }
-        }
-
-        function restartGame() {
-            startGame();
-        }
-    </script>
+// 初始隱藏進度條
+document.getElementById('progressBar').style.display = 'none';
+</script>
 </body>
 </html>
