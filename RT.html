@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可調文字、速度、大小、顏色的走馬燈</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    background: #111;
+    height: 100vh;
+    overflow: hidden;
+    font-family: "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+    color: #fff;
+  }
+
+  /* 上方控制區 */
+  .controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.9);
+    padding: 10px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    align-items: center;
+    z-index: 100;
+    border-bottom: 1px solid #333;
+  }
+  .controls label {
+    font-size: 13px;
+    color: #ccc;
+    white-space: nowrap;
+  }
+  .controls input[type="text"] {
+    flex: 1;
+    min-width: 180px;
+    padding: 7px 10px;
+    font-size: 15px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: #222;
+    color: #fff;
+  }
+  .controls input[type="range"] {
+    width: 120px;
+  }
+  .controls input[type="color"] {
+    width: 40px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+  }
+  .value {
+    min-width: 48px;
+    font-size: 13px;
+    color: #FFD700;
+  }
+  button {
+    padding: 7px 14px;
+    font-size: 14px;
+    background: #FFD700;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover {
+    background: #ffea00;
+  }
+
+  /* 走馬燈區域 */
+  .marquee-area {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    padding-top: 70px;
+  }
+  .marquee-container {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .marquee {
+    display: inline-block;
+    font-weight: 900;
+    animation: scroll linear infinite;
+    padding-left: 100%;
+  }
+  @keyframes scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+  .marquee-container:hover .marquee {
+    animation-play-state: paused;
+  }
+</style>
+</head>
+<body>
+
+  <!-- 控制面板 -->
+  <div class="controls">
+    <label>文字：</label>
+    <input type="text" id="textInput" value="★ 大大的字 ★ 走馬燈 ★ HTML GAME ★" placeholder="輸入要顯示的文字">
+
+    <label>速度：</label>
+    <input type="range" id="speedRange" min="3" max="30" value="12" step="1">
+    <span class="value" id="speedValue">12秒</span>
+
+    <label>大小：</label>
+    <input type="range" id="sizeRange" min="40" max="300" value="160" step="10">
+    <span class="value" id="sizeValue">160px</span>
+
+    <label>顏色：</label>
+    <input type="color" id="colorPicker" value="#FFD700">
+
+    <button onclick="updateMarquee()">更新</button>
+  </div>
+
+  <!-- 走馬燈 -->
+  <div class="marquee-area">
+    <div class="marquee-container">
+      <div class="marquee" id="marqueeText">★ 大大的字 ★ 走馬燈 ★ HTML GAME ★</div>
+    </div>
+  </div>
+
+<script>
+  const textInput   = document.getElementById('textInput');
+  const speedRange  = document.getElementById('speedRange');
+  const speedValue  = document.getElementById('speedValue');
+  const sizeRange   = document.getElementById('sizeRange');
+  const sizeValue   = document.getElementById('sizeValue');
+  const colorPicker = document.getElementById('colorPicker');
+  const marqueeText = document.getElementById('marqueeText');
+
+  // 即時顯示數值
+  speedRange.addEventListener('input', () => {
+    speedValue.textContent = speedRange.value + '秒';
+  });
+  sizeRange.addEventListener('input', () => {
+    sizeValue.textContent = sizeRange.value + 'px';
+  });
+
+  // 按 Enter 更新
+  textInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') updateMarquee();
+  });
+
+  function updateMarquee() {
+    const text  = textInput.value.trim() || '請輸入文字';
+    const speed = speedRange.value;
+    const size  = sizeRange.value;
+    const color = colorPicker.value;
+
+    marqueeText.textContent = text;
+    marqueeText.style.animationDuration = speed + 's';
+    marqueeText.style.fontSize = size + 'px';
+    marqueeText.style.color = color;
+    marqueeText.style.textShadow = `0 0 15px ${color}, 0 0 30px ${color}`;
+  }
+
+  // 一開始就套用設定
+  updateMarquee();
+</script>
+</body>
+</html>
