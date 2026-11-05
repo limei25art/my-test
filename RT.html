@@ -16,6 +16,7 @@
     overflow: hidden;
     font-family: "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
     color: #fff;
+    cursor: default;
   }
 
   /* 上方控制區 */
@@ -24,7 +25,7 @@
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(0,0,0,0.9);
+    background: rgba(0,0,0,0.92);
     padding: 10px 14px;
     display: flex;
     flex-wrap: wrap;
@@ -32,6 +33,10 @@
     align-items: center;
     z-index: 100;
     border-bottom: 1px solid #333;
+    transition: opacity 0.25s;
+  }
+  .controls.hidden {
+    display: none;
   }
   .controls label {
     font-size: 13px;
@@ -83,7 +88,7 @@
     height: 100vh;
     display: flex;
     align-items: center;
-    padding-top: 70px;
+    padding-top: 0;
   }
   .marquee-container {
     width: 100%;
@@ -103,12 +108,32 @@
   .marquee-container:hover .marquee {
     animation-play-state: paused;
   }
+
+  /* 提示文字（全畫面時短暫顯示） */
+  .hint {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: #FFD700;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+    z-index: 50;
+  }
+  .hint.show {
+    opacity: 1;
+  }
 </style>
 </head>
 <body>
 
   <!-- 控制面板 -->
-  <div class="controls">
+  <div class="controls" id="controls">
     <label>文字：</label>
     <input type="text" id="textInput" value="★ 大大的字 ★ 走馬燈 ★ HTML GAME ★" placeholder="輸入要顯示的文字">
 
@@ -123,15 +148,18 @@
     <label>顏色：</label>
     <input type="color" id="colorPicker" value="#FFD700">
 
-    <button onclick="updateMarquee()">更新</button>
+    <button onclick="updateAndFullscreen()">更新並全畫面</button>
   </div>
 
   <!-- 走馬燈 -->
-  <div class="marquee-area">
+  <div class="marquee-area" id="marqueeArea">
     <div class="marquee-container">
-      <div class="marquee" id="marqueeText">★ 大大的字 ★ 走馬燈 ★ HTML GAME ★</div>
+      <div class="marquee" id="marqueeText">★ 呂爵安世界第一 ★</div>
     </div>
   </div>
+
+  <!-- 提示 -->
+  <div class="hint" id="hint">連按兩下畫面可返回設定</div>
 
 <script>
   const textInput   = document.getElementById('textInput');
@@ -141,6 +169,8 @@
   const sizeValue   = document.getElementById('sizeValue');
   const colorPicker = document.getElementById('colorPicker');
   const marqueeText = document.getElementById('marqueeText');
+  const controls    = document.getElementById('controls');
+  const hint        = document.getElementById('hint');
 
   // 即時顯示數值
   speedRange.addEventListener('input', () => {
@@ -150,12 +180,13 @@
     sizeValue.textContent = sizeRange.value + 'px';
   });
 
-  // 按 Enter 更新
+  // 按 Enter 也可以更新
   textInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') updateMarquee();
+    if (e.key === 'Enter') updateAndFullscreen();
   });
 
-  function updateMarquee() {
+  // 套用設定
+  function applySettings() {
     const text  = textInput.value.trim() || '請輸入文字';
     const speed = speedRange.value;
     const size  = sizeRange.value;
@@ -168,8 +199,60 @@
     marqueeText.style.textShadow = `0 0 15px ${color}, 0 0 30px ${color}`;
   }
 
-  // 一開始就套用設定
-  updateMarquee();
+  // 更新 + 進入全畫面
+  function updateAndFullscreen() {
+    applySettings();
+
+    // 隱藏控制列
+    controls.classList.add('hidden');
+
+    // 進入全畫面
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen().catch(() => {});
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    }
+
+    // 顯示提示 2.5 秒
+    hint.classList.add('show');
+    setTimeout(() => hint.classList.remove('show'), 2500);
+  }
+
+  // 顯示控制列 + 退出全畫面
+  function showUI() {
+    controls.classList.remove('hidden');
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  }
+
+  // 連按兩下畫面 → 顯示 UI
+  document.addEventListener('dblclick', (e) => {
+    // 避免在控制列上雙擊也觸發
+    if (!controls.contains(e.target)) {
+      showUI();
+    }
+  });
+
+  // 按 Esc 退出全畫面時也顯示 UI
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+      controls.classList.remove('hidden');
+    }
+  });
+  document.addEventListener('webkitfullscreenchange', () => {
+    if (!document.webkitFullscreenElement) {
+      controls.classList.remove('hidden');
+    }
+  });
+
+  // 一開始套用預設設定
+  applySettings();
 </script>
 </body>
 </html>
