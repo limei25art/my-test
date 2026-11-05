@@ -2,41 +2,46 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>可調文字、速度、大小、顏色的走馬燈</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>手機全畫面走馬燈</title>
 <style>
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
   }
-  body {
+  html, body {
     background: #111;
-    height: 100vh;
+    height: 100%;
+    height: 100dvh;
     overflow: hidden;
     font-family: "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
     color: #fff;
-    cursor: default;
+    touch-action: manipulation;
   }
 
-  /* 上方控制區 */
+  /* 控制列 */
   .controls {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(0,0,0,0.92);
-    padding: 10px 14px;
+    background: rgba(0,0,0,0.94);
+    padding: 10px 12px;
+    padding-top: max(10px, env(safe-area-inset-top));
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 14px;
+    gap: 8px 12px;
     align-items: center;
     z-index: 100;
     border-bottom: 1px solid #333;
-    transition: opacity 0.25s;
   }
   .controls.hidden {
-    display: none;
+    display: none !important;
   }
   .controls label {
     font-size: 13px;
@@ -45,33 +50,33 @@
   }
   .controls input[type="text"] {
     flex: 1;
-    min-width: 180px;
-    padding: 7px 10px;
-    font-size: 15px;
+    min-width: 140px;
+    padding: 8px 10px;
+    font-size: 16px; /* 避免 iOS 自動放大 */
     border: 1px solid #555;
     border-radius: 6px;
     background: #222;
     color: #fff;
   }
   .controls input[type="range"] {
-    width: 120px;
+    width: 100px;
   }
   .controls input[type="color"] {
-    width: 40px;
-    height: 32px;
+    width: 42px;
+    height: 34px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     background: none;
   }
   .value {
-    min-width: 48px;
+    min-width: 42px;
     font-size: 13px;
     color: #FFD700;
   }
   button {
-    padding: 7px 14px;
-    font-size: 14px;
+    padding: 8px 14px;
+    font-size: 15px;
     background: #FFD700;
     color: #000;
     border: none;
@@ -79,16 +84,13 @@
     cursor: pointer;
     font-weight: bold;
   }
-  button:hover {
-    background: #ffea00;
-  }
 
-  /* 走馬燈區域 */
+  /* 走馬燈 */
   .marquee-area {
-    height: 100vh;
+    height: 100%;
+    height: 100dvh;
     display: flex;
     align-items: center;
-    padding-top: 0;
   }
   .marquee-container {
     width: 100%;
@@ -105,17 +107,38 @@
     0%   { transform: translateX(0); }
     100% { transform: translateX(-100%); }
   }
-  .marquee-container:hover .marquee {
-    animation-play-state: paused;
+
+  /* 全畫面時的「設定」按鈕 */
+  .back-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    bottom: max(24px, env(safe-area-inset-bottom));
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.9);
+    color: #000;
+    font-size: 22px;
+    border: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 90;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    cursor: pointer;
+  }
+  .back-btn.show {
+    display: flex;
   }
 
-  /* 提示文字（全畫面時短暫顯示） */
+  /* 提示 */
   .hint {
     position: fixed;
-    bottom: 20px;
+    bottom: 90px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.75);
     color: #FFD700;
     padding: 8px 16px;
     border-radius: 20px;
@@ -124,6 +147,7 @@
     pointer-events: none;
     transition: opacity 0.4s;
     z-index: 50;
+    white-space: nowrap;
   }
   .hint.show {
     opacity: 1;
@@ -135,15 +159,15 @@
   <!-- 控制面板 -->
   <div class="controls" id="controls">
     <label>文字：</label>
-    <input type="text" id="textInput" value="★ 呂爵安世界第一 ★" placeholder="輸入要顯示的文字">
+    <input type="text" id="textInput" value="★ 大大的字 ★ 走馬燈 ★" placeholder="輸入文字">
 
     <label>速度：</label>
     <input type="range" id="speedRange" min="3" max="30" value="12" step="1">
     <span class="value" id="speedValue">12秒</span>
 
     <label>大小：</label>
-    <input type="range" id="sizeRange" min="40" max="300" value="160" step="10">
-    <span class="value" id="sizeValue">160px</span>
+    <input type="range" id="sizeRange" min="40" max="280" value="140" step="10">
+    <span class="value" id="sizeValue">140px</span>
 
     <label>顏色：</label>
     <input type="color" id="colorPicker" value="#FFD700">
@@ -152,14 +176,17 @@
   </div>
 
   <!-- 走馬燈 -->
-  <div class="marquee-area" id="marqueeArea">
+  <div class="marquee-area">
     <div class="marquee-container">
-      <div class="marquee" id="marqueeText">★ 呂爵安世界第一 ★</div>
+      <div class="marquee" id="marqueeText">★ 大大的字 ★ 走馬燈 ★</div>
     </div>
   </div>
 
+  <!-- 全畫面返回按鈕 -->
+  <button class="back-btn" id="backBtn" onclick="showUI()">⚙</button>
+
   <!-- 提示 -->
-  <div class="hint" id="hint">連按兩下畫面可返回設定</div>
+  <div class="hint" id="hint">點右下角設定按鈕可返回</div>
 
 <script>
   const textInput   = document.getElementById('textInput');
@@ -170,9 +197,9 @@
   const colorPicker = document.getElementById('colorPicker');
   const marqueeText = document.getElementById('marqueeText');
   const controls    = document.getElementById('controls');
+  const backBtn     = document.getElementById('backBtn');
   const hint        = document.getElementById('hint');
 
-  // 即時顯示數值
   speedRange.addEventListener('input', () => {
     speedValue.textContent = speedRange.value + '秒';
   });
@@ -180,12 +207,10 @@
     sizeValue.textContent = sizeRange.value + 'px';
   });
 
-  // 按 Enter 也可以更新
   textInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') updateAndFullscreen();
   });
 
-  // 套用設定
   function applySettings() {
     const text  = textInput.value.trim() || '請輸入文字';
     const speed = speedRange.value;
@@ -196,17 +221,15 @@
     marqueeText.style.animationDuration = speed + 's';
     marqueeText.style.fontSize = size + 'px';
     marqueeText.style.color = color;
-    marqueeText.style.textShadow = `0 0 15px ${color}, 0 0 30px ${color}`;
+    marqueeText.style.textShadow = `0 0 12px ${color}, 0 0 24px ${color}`;
   }
 
-  // 更新 + 進入全畫面
   function updateAndFullscreen() {
     applySettings();
-
-    // 隱藏控制列
     controls.classList.add('hidden');
+    backBtn.classList.add('show');
 
-    // 進入全畫面
+    // 嘗試進入全畫面（手機支援程度不同）
     const elem = document.documentElement;
     if (elem.requestFullscreen) {
       elem.requestFullscreen().catch(() => {});
@@ -214,44 +237,53 @@
       elem.webkitRequestFullscreen();
     }
 
-    // 顯示提示 2.5 秒
+    // 顯示提示
     hint.classList.add('show');
-    setTimeout(() => hint.classList.remove('show'), 2500);
+    setTimeout(() => hint.classList.remove('show'), 2800);
   }
 
-  // 顯示控制列 + 退出全畫面
   function showUI() {
     controls.classList.remove('hidden');
+    backBtn.classList.remove('show');
+
     if (document.fullscreenElement || document.webkitFullscreenElement) {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      }
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     }
   }
 
-  // 連按兩下畫面 → 顯示 UI
+  // 連按兩下也能返回（電腦 + 部分手機）
+  let lastTap = 0;
+  document.addEventListener('touchend', (e) => {
+    if (controls.classList.contains('hidden') && !backBtn.contains(e.target)) {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        showUI();
+      }
+      lastTap = now;
+    }
+  });
+
   document.addEventListener('dblclick', (e) => {
-    // 避免在控制列上雙擊也觸發
-    if (!controls.contains(e.target)) {
+    if (controls.classList.contains('hidden') && !backBtn.contains(e.target)) {
       showUI();
     }
   });
 
-  // 按 Esc 退出全畫面時也顯示 UI
+  // 退出全畫面時自動顯示 UI
   document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement) {
       controls.classList.remove('hidden');
+      backBtn.classList.remove('show');
     }
   });
   document.addEventListener('webkitfullscreenchange', () => {
     if (!document.webkitFullscreenElement) {
       controls.classList.remove('hidden');
+      backBtn.classList.remove('show');
     }
   });
 
-  // 一開始套用預設設定
   applySettings();
 </script>
 </body>
