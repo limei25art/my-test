@@ -24,64 +24,86 @@
     touch-action: manipulation;
   }
 
+  /* 控制列 */
   .controls {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     background: rgba(0,0,0,0.95);
-    padding: 6px 10px;
-    padding-top: max(6px, env(safe-area-inset-top));
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 10px;
-    align-items: center;
+    padding: 8px 12px;
+    padding-top: max(8px, env(safe-area-inset-top));
     z-index: 100;
     border-bottom: 1px solid #333;
-    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
   .controls.hidden {
     display: none !important;
   }
-  .controls label {
-    color: #aaa;
-    white-space: nowrap;
-    font-size: 12px;
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
-  .controls input[type="text"] {
+  .row label {
+    color: #aaa;
+    font-size: 13px;
+    white-space: nowrap;
+    min-width: 36px;
+  }
+  #textInput {
     flex: 1;
-    min-width: 120px;
-    padding: 5px 8px;
+    padding: 6px 10px;
     font-size: 15px;
     border: 1px solid #555;
     border-radius: 5px;
     background: #222;
     color: #fff;
   }
-  .controls input[type="range"] {
-    width: 80px;
+
+  .row-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
   }
-  .controls input[type="color"] {
-    width: 32px;
-    height: 26px;
+  .control-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .control-item label {
+    color: #aaa;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .control-item input[type="range"] {
+    width: 90px;
+  }
+  .control-item input[type="color"] {
+    width: 30px;
+    height: 24px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     background: none;
     padding: 0;
   }
-  .controls input[type="file"] {
+  .control-item input[type="file"] {
     font-size: 12px;
     color: #ccc;
-    max-width: 110px;
+    max-width: 100px;
   }
   .value {
-    min-width: 36px;
     font-size: 12px;
     color: #FFD700;
+    min-width: 36px;
   }
   button {
-    padding: 5px 10px;
+    padding: 5px 12px;
     font-size: 13px;
     background: #FFD700;
     color: #000;
@@ -96,7 +118,16 @@
     padding: 4px 8px;
     font-size: 12px;
   }
+  .btn-running {
+    background: #22c55e;
+    color: #fff;
+    min-width: 90px;
+  }
+  .btn-running.off {
+    background: #ef4444;
+  }
 
+  /* 走馬燈模式 */
   .marquee-area {
     height: 100%;
     height: 100dvh;
@@ -127,6 +158,34 @@
     100% { transform: translateX(-100%); }
   }
 
+  /* 靜止模式（Running OFF） */
+  .static-area {
+    display: none;
+    height: 100%;
+    height: 100dvh;
+    padding: 20px;
+    padding-top: 120px;
+    overflow: auto;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .static-area.active {
+    display: flex;
+  }
+  .static-content {
+    font-weight: 900;
+    max-width: 95%;
+    word-break: break-word;
+  }
+  .static-content img {
+    height: 1em;
+    width: auto;
+    vertical-align: middle;
+    margin-right: 12px;
+    border-radius: 6px;
+  }
+
   .hint {
     position: fixed;
     bottom: 30px;
@@ -151,30 +210,54 @@
 <body>
 
   <div class="controls" id="controls">
-    <label>文字</label>
-    <input type="text" id="textInput" value="★ 呂爵安世界第一 ★" placeholder="輸入文字">
+    <!-- 第一行：文字 -->
+    <div class="row">
+      <label>文字</label>
+      <input type="text" id="textInput" value="★ 呂爵安世界第一 ★" placeholder="輸入要顯示的文字">
+    </div>
 
-    <label>速度</label>
-    <input type="range" id="speedRange" min="3" max="30" value="12" step="1">
-    <span class="value" id="speedValue">12s</span>
+    <!-- 第二行：控制項 -->
+    <div class="row-controls">
+      <div class="control-item">
+        <label>速度</label>
+        <input type="range" id="speedRange" min="3" max="30" value="12" step="1">
+        <span class="value" id="speedValue">12s</span>
+      </div>
 
-    <label>大小</label>
-    <input type="range" id="sizeRange" min="40" max="260" value="130" step="10">
-    <span class="value" id="sizeValue">130</span>
+      <div class="control-item">
+        <label>大小</label>
+        <input type="range" id="sizeRange" min="40" max="300" value="130" step="10">
+        <span class="value" id="sizeValue">130</span>
+      </div>
 
-    <label>字色</label>
-    <input type="color" id="colorPicker" value="#FFD700">
+      <div class="control-item" id="lineHeightItem" style="display:none;">
+        <label>行距</label>
+        <input type="range" id="lineHeightRange" min="1" max="3" value="1.4" step="0.1">
+        <span class="value" id="lineHeightValue">1.4</span>
+      </div>
 
-    <label>背景</label>
-    <input type="color" id="bgColorPicker" value="#111111">
+      <div class="control-item">
+        <label>字色</label>
+        <input type="color" id="colorPicker" value="#FFD700">
+      </div>
 
-    <label>圖片</label>
-    <input type="file" id="imageInput" accept="image/*">
-    <button class="btn-remove" id="removeImgBtn" style="display:none;" onclick="removeImage()">移除</button>
+      <div class="control-item">
+        <label>背景</label>
+        <input type="color" id="bgColorPicker" value="#111111">
+      </div>
 
-    <button onclick="goFullscreen()">全畫面</button>
+      <div class="control-item">
+        <label>圖片</label>
+        <input type="file" id="imageInput" accept="image/*">
+        <button class="btn-remove" id="removeImgBtn" style="display:none;" onclick="removeImage()">移除</button>
+      </div>
+
+      <button class="btn-running" id="runningBtn" onclick="toggleRunning()">Running ON</button>
+      <button onclick="goFullscreen()">全畫面</button>
+    </div>
   </div>
 
+  <!-- 走馬燈模式 -->
   <div class="marquee-area" id="marqueeArea">
     <div class="marquee-container">
       <div class="marquee" id="marqueeText">
@@ -183,25 +266,40 @@
     </div>
   </div>
 
+  <!-- 靜止模式 -->
+  <div class="static-area" id="staticArea">
+    <div class="static-content" id="staticContent">
+      <span id="staticText">★ 呂爵安世界第一 ★</span>
+    </div>
+  </div>
+
   <div class="hint" id="hint">連按兩下畫面可返回設定</div>
 
 <script>
-  const textInput     = document.getElementById('textInput');
-  const speedRange    = document.getElementById('speedRange');
-  const speedValue    = document.getElementById('speedValue');
-  const sizeRange     = document.getElementById('sizeRange');
-  const sizeValue     = document.getElementById('sizeValue');
-  const colorPicker   = document.getElementById('colorPicker');
-  const bgColorPicker = document.getElementById('bgColorPicker');
-  const imageInput    = document.getElementById('imageInput');
-  const removeImgBtn  = document.getElementById('removeImgBtn');
-  const marqueeText   = document.getElementById('marqueeText');
-  const textSpan      = document.getElementById('textSpan');
-  const controls      = document.getElementById('controls');
-  const hint          = document.getElementById('hint');
-  const marqueeArea   = document.getElementById('marqueeArea');
+  const textInput       = document.getElementById('textInput');
+  const speedRange      = document.getElementById('speedRange');
+  const speedValue      = document.getElementById('speedValue');
+  const sizeRange       = document.getElementById('sizeRange');
+  const sizeValue       = document.getElementById('sizeValue');
+  const lineHeightRange = document.getElementById('lineHeightRange');
+  const lineHeightValue = document.getElementById('lineHeightValue');
+  const lineHeightItem  = document.getElementById('lineHeightItem');
+  const colorPicker     = document.getElementById('colorPicker');
+  const bgColorPicker   = document.getElementById('bgColorPicker');
+  const imageInput      = document.getElementById('imageInput');
+  const removeImgBtn    = document.getElementById('removeImgBtn');
+  const marqueeText     = document.getElementById('marqueeText');
+  const textSpan        = document.getElementById('textSpan');
+  const staticContent   = document.getElementById('staticContent');
+  const staticText      = document.getElementById('staticText');
+  const marqueeArea     = document.getElementById('marqueeArea');
+  const staticArea      = document.getElementById('staticArea');
+  const controls        = document.getElementById('controls');
+  const runningBtn      = document.getElementById('runningBtn');
+  const hint            = document.getElementById('hint');
 
   let currentImage = null;
+  let isRunning = true; // 預設 ON
 
   function applySettings() {
     const text  = textInput.value.trim() || '請輸入文字';
@@ -209,16 +307,29 @@
     const size  = sizeRange.value;
     const color = colorPicker.value;
     const bg    = bgColorPicker.value;
+    const lh    = lineHeightRange.value;
 
+    // 更新走馬燈
     textSpan.textContent = text;
     marqueeText.style.animationDuration = speed + 's';
     marqueeText.style.fontSize = size + 'px';
     marqueeText.style.color = color;
     marqueeText.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+
+    // 更新靜止模式
+    staticText.textContent = text;
+    staticContent.style.fontSize = size + 'px';
+    staticContent.style.color = color;
+    staticContent.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+    staticContent.style.lineHeight = lh;
+
+    // 背景
     document.body.style.background = bg;
     marqueeArea.style.background = bg;
+    staticArea.style.background = bg;
   }
 
+  // 即時更新
   textInput.addEventListener('input', applySettings);
   speedRange.addEventListener('input', () => {
     speedValue.textContent = speedRange.value + 's';
@@ -228,22 +339,38 @@
     sizeValue.textContent = sizeRange.value;
     applySettings();
   });
+  lineHeightRange.addEventListener('input', () => {
+    lineHeightValue.textContent = lineHeightRange.value;
+    applySettings();
+  });
   colorPicker.addEventListener('input', applySettings);
   bgColorPicker.addEventListener('input', applySettings);
 
+  // 上傳圖片
   imageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      if (currentImage) currentImage.remove();
+      if (currentImage) {
+        currentImage.remove();
+        // 也移除靜止模式的圖片
+        const oldStaticImg = staticContent.querySelector('img');
+        if (oldStaticImg) oldStaticImg.remove();
+      }
 
+      // 走馬燈圖片
       const img = document.createElement('img');
       img.src = event.target.result;
-      img.alt = '上傳圖片';
       marqueeText.insertBefore(img, textSpan);
       currentImage = img;
+
+      // 靜止模式圖片
+      const staticImg = document.createElement('img');
+      staticImg.src = event.target.result;
+      staticContent.insertBefore(staticImg, staticText);
+
       removeImgBtn.style.display = 'inline-block';
     };
     reader.readAsDataURL(file);
@@ -254,10 +381,36 @@
       currentImage.remove();
       currentImage = null;
     }
+    const staticImg = staticContent.querySelector('img');
+    if (staticImg) staticImg.remove();
+
     imageInput.value = '';
     removeImgBtn.style.display = 'none';
   }
 
+  // Running ON / OFF 切換
+  function toggleRunning() {
+    isRunning = !isRunning;
+
+    if (isRunning) {
+      // 開啟滾動
+      runningBtn.textContent = 'Running ON';
+      runningBtn.classList.remove('off');
+      marqueeArea.style.display = 'flex';
+      staticArea.classList.remove('active');
+      lineHeightItem.style.display = 'none';
+    } else {
+      // 關閉滾動 → 靜止排版
+      runningBtn.textContent = 'Running OFF';
+      runningBtn.classList.add('off');
+      marqueeArea.style.display = 'none';
+      staticArea.classList.add('active');
+      lineHeightItem.style.display = 'flex';
+    }
+    applySettings();
+  }
+
+  // 全畫面
   function goFullscreen() {
     controls.classList.add('hidden');
 
