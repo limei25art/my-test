@@ -99,7 +99,7 @@
   .value {
     font-size: 12px;
     color: #FFD700;
-    min-width: 36px;
+    min-width: 42px;
   }
   button {
     padding: 5px 12px;
@@ -148,7 +148,7 @@
     display: inline-flex;
     align-items: center;
     gap: 30px;
-    padding-right: 80px; /* 兩段之間的間距 */
+    padding-right: 80px;
   }
   .marquee img {
     height: 1em;
@@ -158,7 +158,7 @@
   }
   @keyframes scroll {
     0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); } /* 因為內容複製了兩份 */
+    100% { transform: translateX(-50%); }
   }
 
   /* 靜止模式 */
@@ -227,8 +227,8 @@
 
       <div class="control-item">
         <label>大小</label>
-        <input type="range" id="sizeRange" min="40" max="300" value="130" step="10">
-        <span class="value" id="sizeValue">130</span>
+        <input type="range" id="sizeRange" min="40" max="800" value="200" step="10">
+        <span class="value" id="sizeValue">200</span>
       </div>
 
       <div class="control-item" id="lineHeightItem" style="display:none;">
@@ -258,11 +258,9 @@
     </div>
   </div>
 
-  <!-- 走馬燈模式 -->
   <div class="marquee-area" id="marqueeArea">
     <div class="marquee-container">
       <div class="marquee" id="marquee">
-        <!-- 內容會由 JS 動態產生兩份，做到無縫 -->
         <div class="marquee-content" id="content1">
           <span id="textSpan1">★ 呂爵安世界第一 ★</span>
         </div>
@@ -273,7 +271,6 @@
     </div>
   </div>
 
-  <!-- 靜止模式 -->
   <div class="static-area" id="staticArea">
     <div class="static-content" id="staticContent">
       <span id="staticText">★ 呂爵安世界第一 ★</span>
@@ -311,6 +308,21 @@
   let currentImageSrc = null;
   let isRunning = true;
 
+  // 根據目前螢幕計算「接近全畫面」的最大字級
+  function getMaxFitSize() {
+    const h = window.innerHeight;
+    const w = window.innerWidth;
+    // 取高度的 65% 與寬度的 22% 中較小的值，讓文字在大多數螢幕都很大但不會過度溢出
+    return Math.floor(Math.min(h * 0.65, w * 0.22, 800));
+  }
+
+  function setToMaxSize() {
+    const maxSize = getMaxFitSize();
+    sizeRange.value = maxSize;
+    sizeValue.textContent = maxSize;
+    applySettings();
+  }
+
   function applySettings() {
     const text  = textInput.value.trim() || '請輸入文字';
     const speed = speedRange.value;
@@ -319,7 +331,6 @@
     const bg    = bgColorPicker.value;
     const lh    = lineHeightRange.value;
 
-    // 更新兩份走馬燈內容
     textSpan1.textContent = text;
     textSpan2.textContent = text;
 
@@ -328,45 +339,37 @@
     marquee.style.color = color;
     marquee.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
 
-    // 更新靜止模式
     staticText.textContent = text;
     staticContent.style.fontSize = size + 'px';
     staticContent.style.color = color;
     staticContent.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
     staticContent.style.lineHeight = lh;
 
-    // 背景
     document.body.style.background = bg;
     marqueeArea.style.background = bg;
     staticArea.style.background = bg;
 
-    // 同步圖片
     updateImages();
   }
 
   function updateImages() {
-    // 清除舊圖片
     content1.querySelectorAll('img').forEach(img => img.remove());
     content2.querySelectorAll('img').forEach(img => img.remove());
     const oldStaticImg = staticContent.querySelector('img');
     if (oldStaticImg) oldStaticImg.remove();
 
     if (currentImageSrc) {
-      // 走馬燈兩份都加圖片
       [content1, content2].forEach(container => {
         const img = document.createElement('img');
         img.src = currentImageSrc;
         container.insertBefore(img, container.querySelector('span'));
       });
-
-      // 靜止模式
       const staticImg = document.createElement('img');
       staticImg.src = currentImageSrc;
       staticContent.insertBefore(staticImg, staticText);
     }
   }
 
-  // 即時更新
   textInput.addEventListener('input', applySettings);
   speedRange.addEventListener('input', () => {
     speedValue.textContent = speedRange.value + 's';
@@ -383,11 +386,9 @@
   colorPicker.addEventListener('input', applySettings);
   bgColorPicker.addEventListener('input', applySettings);
 
-  // 上傳圖片
   imageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (event) => {
       currentImageSrc = event.target.result;
@@ -404,10 +405,8 @@
     applySettings();
   }
 
-  // Running ON / OFF
   function toggleRunning() {
     isRunning = !isRunning;
-
     if (isRunning) {
       runningBtn.textContent = 'Running ON';
       runningBtn.classList.remove('off');
@@ -426,21 +425,18 @@
 
   function goFullscreen() {
     controls.classList.add('hidden');
-
     const elem = document.documentElement;
     if (elem.requestFullscreen) {
       elem.requestFullscreen().catch(() => {});
     } else if (elem.webkitRequestFullscreen) {
       elem.webkitRequestFullscreen();
     }
-
     hint.classList.add('show');
     setTimeout(() => hint.classList.remove('show'), 2500);
   }
 
   function showUI() {
     controls.classList.remove('hidden');
-
     if (document.fullscreenElement || document.webkitFullscreenElement) {
       if (document.exitFullscreen) document.exitFullscreen();
       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -466,7 +462,11 @@
     if (!document.webkitFullscreenElement) controls.classList.remove('hidden');
   });
 
-  applySettings();
+  // 一開始就設成目前螢幕的最大適合字級
+  setToMaxSize();
+
+  // 視窗大小改變時也可重新計算（選擇性）
+  // window.addEventListener('resize', setToMaxSize);
 </script>
 </body>
 </html>
