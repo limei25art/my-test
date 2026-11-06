@@ -126,7 +126,7 @@
     background: #ef4444;
   }
 
-  /* 走馬燈 */
+  /* 走馬燈 - 加強防閃爍 */
   .marquee-area {
     height: 100%;
     height: 100dvh;
@@ -143,12 +143,17 @@
     white-space: nowrap;
     font-weight: 900;
     animation: scroll linear infinite;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-font-smoothing: antialiased;
   }
   .marquee-content {
     display: inline-flex;
     align-items: center;
     gap: 30px;
-    padding-right: 80px;
+    padding-right: 100px;
+    flex-shrink: 0;
   }
   .marquee img {
     height: 1em;
@@ -157,8 +162,8 @@
     border-radius: 6px;
   }
   @keyframes scroll {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
   }
 
   /* 靜止模式 */
@@ -307,12 +312,12 @@
 
   let currentImageSrc = null;
   let isRunning = true;
+  let lastSpeed = null;
+  let lastSize = null;
 
-  // 根據目前螢幕計算「接近全畫面」的最大字級
   function getMaxFitSize() {
     const h = window.innerHeight;
     const w = window.innerWidth;
-    // 取高度的 65% 與寬度的 22% 中較小的值，讓文字在大多數螢幕都很大但不會過度溢出
     return Math.floor(Math.min(h * 0.65, w * 0.22, 800));
   }
 
@@ -320,10 +325,10 @@
     const maxSize = getMaxFitSize();
     sizeRange.value = maxSize;
     sizeValue.textContent = maxSize;
-    applySettings();
+    applySettings(true);
   }
 
-  function applySettings() {
+  function applySettings(force = false) {
     const text  = textInput.value.trim() || '請輸入文字';
     const speed = speedRange.value;
     const size  = sizeRange.value;
@@ -331,15 +336,26 @@
     const bg    = bgColorPicker.value;
     const lh    = lineHeightRange.value;
 
+    // 更新文字內容（不會中斷動畫）
     textSpan1.textContent = text;
     textSpan2.textContent = text;
+    staticText.textContent = text;
 
-    marquee.style.animationDuration = speed + 's';
-    marquee.style.fontSize = size + 'px';
+    // 只在速度真正改變時才更新 animationDuration，避免重啟動畫造成閃失
+    if (force || lastSpeed !== speed) {
+      marquee.style.animationDuration = speed + 's';
+      lastSpeed = speed;
+    }
+
+    // 字體大小
+    if (force || lastSize !== size) {
+      marquee.style.fontSize = size + 'px';
+      lastSize = size;
+    }
+
     marquee.style.color = color;
     marquee.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
 
-    staticText.textContent = text;
     staticContent.style.fontSize = size + 'px';
     staticContent.style.color = color;
     staticContent.style.textShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
@@ -370,7 +386,7 @@
     }
   }
 
-  textInput.addEventListener('input', applySettings);
+  textInput.addEventListener('input', () => applySettings());
   speedRange.addEventListener('input', () => {
     speedValue.textContent = speedRange.value + 's';
     applySettings();
@@ -383,8 +399,8 @@
     lineHeightValue.textContent = lineHeightRange.value;
     applySettings();
   });
-  colorPicker.addEventListener('input', applySettings);
-  bgColorPicker.addEventListener('input', applySettings);
+  colorPicker.addEventListener('input', () => applySettings());
+  bgColorPicker.addEventListener('input', () => applySettings());
 
   imageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -393,7 +409,7 @@
     reader.onload = (event) => {
       currentImageSrc = event.target.result;
       removeImgBtn.style.display = 'inline-block';
-      applySettings();
+      applySettings(true);
     };
     reader.readAsDataURL(file);
   });
@@ -402,7 +418,7 @@
     currentImageSrc = null;
     imageInput.value = '';
     removeImgBtn.style.display = 'none';
-    applySettings();
+    applySettings(true);
   }
 
   function toggleRunning() {
@@ -420,7 +436,7 @@
       staticArea.classList.add('active');
       lineHeightItem.style.display = 'flex';
     }
-    applySettings();
+    applySettings(true);
   }
 
   function goFullscreen() {
@@ -462,11 +478,8 @@
     if (!document.webkitFullscreenElement) controls.classList.remove('hidden');
   });
 
-  // 一開始就設成目前螢幕的最大適合字級
+  // 一開始設成最大適合字級
   setToMaxSize();
-
-  // 視窗大小改變時也可重新計算（選擇性）
-  // window.addEventListener('resize', setToMaxSize);
 </script>
 </body>
 </html>
